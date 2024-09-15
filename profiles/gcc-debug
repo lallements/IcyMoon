@@ -1,0 +1,4 @@
+include(bases/gcc)
+
+[settings]
+build_type=Debug
