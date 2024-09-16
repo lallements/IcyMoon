@@ -13,6 +13,7 @@
 The following must be installed manually:
 
 - [Conan](https://conan.io/downloads.html) (tested with v2.7.1)
+- [Vulkan SDK](https://vulkan.lunarg.com/) (tested with 1.3.290.0)
 
 ### Conan
 

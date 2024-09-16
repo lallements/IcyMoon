@@ -1,0 +1,1 @@
+include(im3e_tests.cmake)

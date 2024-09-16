@@ -29,4 +29,9 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+add_subdirectory(cmake)
+
+find_package(GTest REQUIRED)
+
 add_subdirectory(applications)
+add_subdirectory(im3e)
