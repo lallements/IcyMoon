@@ -28,7 +28,7 @@ cd build
 Then, run the `conan install` command from the `build` folder with one of the profiles under the `profiles` folder:
 
 ```base
-conan install .. -pr ../profiles/<my_profile> --build=missing
+conan install .. -pr:a ../profiles/<my_profile> --build=missing
 ```
 
 We use Conan to download some tools needed for compilation (e.g. CMake). To use these tools during compilation, we need to first start a virtual environment. To do so, Conan generates a `conanbuild.sh` and `deactivate_conanbuild.sh` scripts for each profile, located under `build/<my_profile>/generators/`. For example, to build `gcc-debug`, we start the corresponding virtual environment as follows:

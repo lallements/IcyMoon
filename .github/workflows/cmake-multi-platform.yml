@@ -1,0 +1,61 @@
+name: CMake on multiple platforms
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations.
+      # Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-latest]
+        build_type: [release]
+        c_compiler: [gcc]
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set reusable strings
+        # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be
+        # used throughout the workflow file.
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+          mkdir ${{ github.workspace }}/build
+          echo "cmake-preset=${{ matrix.c_compiler }}-${{ matrix.build_type }}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Conan
+        id: conan
+        uses: turtlebrowser/get-conan@main
+
+      - name: Conan Install
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        run: |
+          cd ${{ steps.strings.outputs.build-output-dir }}
+          conan install .. -pr:a ../profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+          source ./${{ steps.strings.outputs.cmake-preset }}/generators/conanbuild.sh
+
+      - name: Configure CMake
+        working-directory: ${{ github.workspace }}
+        run: cmake --preset ${{ steps.strings.outputs.cmake-preset }}
+
+      - name: Build
+        working-directory: ${{ github.workspace }}
+        run: cmake --build --preset ${{ steps.strings.outputs.cmake-preset }}
+
+      - name: Unit Tests
+        working-directory: ${{ github.workspace }}
+        run: ctest --preset ${{ steps.strings.outputs.cmake-preset }} -L "unit_test" -j 10
