@@ -24,7 +24,6 @@ class IcyMoonEngineRecipe(ConanFile):
 
     tool_requires = {
         "cmake/3.30.1",
-        "gcc/12.2.0",
         "ninja/1.12.1",
     }
 
