@@ -13,12 +13,18 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
+set(IM3E_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
 # ccache
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
     message(STATUS "Setting up ccache")
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ${CCACHE_PROGRAM})
 endif()
+
+add_definitions(
+    -DVK_NO_PROTOTYPES # for vulkan headers: we link dynamically and do not want vk function definitions
+)
 
 if (MSVC)
     # warning level 4 and all warnings as errors
@@ -29,4 +35,11 @@ else()
     add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+add_subdirectory(cmake)
+
+find_package(GTest REQUIRED)
+find_package(VulkanHeaders REQUIRED)
+
+
 add_subdirectory(applications)
+add_subdirectory(im3e)
