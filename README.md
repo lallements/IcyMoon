@@ -4,6 +4,7 @@
   - [Dependencies](#dependencies)
   - [Conan](#conan)
   - [Compiling](#compiling)
+  - [Running tests](#running-tests)
 
 
 ## How to Build
@@ -56,4 +57,27 @@ Once we have CMake Presets and an active Conan virtual environment, the project 
 ```bash
 cmake --preset <my_preset>
 cmake --build --preset <my_preset>
+```
+
+### Running tests
+
+The project uses `ctest` to handle tests and supports presets. To get a list of ctest presets, run the following command from the root folder:
+```bash
+ctest --list-presets
+
+Available test presets:
+
+  "gcc-debug"
+  "gcc-release"
+```
+
+All tests can be run with the `--preset` argument:
+```bash
+ctest --preset gcc-debug
+```
+
+Each test is labelled as a `"unit_test"` or an `"integration_test"`. This allows to filter out tests by type:
+```bash
+ctest --preset gcc-debug -L "unit_test" # to run unit tests only
+ctest --preset gcc-debug -L "integration_test" # to run integration tests only
 ```
