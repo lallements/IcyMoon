@@ -1,10 +1,3 @@
-add_library(im3e_api INTERFACE
-    api/vulkan_loader.h
-)
-
-target_include_directories(im3e_api
-  INTERFACE
-    ..
-)
-
-add_subdirectory(vulkan_loader)
+add_subdirectory(api)
+add_subdirectory(utils)
+add_subdirectory(vulkan_loaders)
