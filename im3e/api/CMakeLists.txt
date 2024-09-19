@@ -1,4 +1,5 @@
 add_library(im3e_api INTERFACE
+    device.h
     vulkan_loader.h
 )
 
