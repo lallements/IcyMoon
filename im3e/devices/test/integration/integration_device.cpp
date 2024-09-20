@@ -10,5 +10,6 @@ class DeviceIntegration : public ::testing::Test
 
 TEST_F(DeviceIntegration, constructor)
 {
-    EXPECT_THAT(true, ::testing::IsFalse());
+    auto pDevice = createDevice();
+    ASSERT_THAT(pDevice, ::testing::NotNull());
 }

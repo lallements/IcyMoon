@@ -10,5 +10,5 @@ target_include_directories(im3e_api
 
 target_link_libraries(im3e_api
   INTERFACE
-    vulkan-headers::vulkan-headers  
+    Vulkan::Headers  
 )

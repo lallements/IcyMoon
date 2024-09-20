@@ -12,6 +12,7 @@ target_include_directories(test_im3e_vulkan_loaders
 
 target_link_libraries(test_im3e_vulkan_loaders
   PRIVATE
+    fmt::fmt
     GTest::gmock
     GTest::gtest_main
     im3e_vulkan_loaders

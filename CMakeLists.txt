@@ -33,10 +33,17 @@ if (MSVC)
 else()
     # lots of warnings and all warnings as errors
     add_compile_options(-Wall -Wextra -pedantic -Werror)
+
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        add_compile_options(
+            -Wno-missing-field-initializers
+        )
+    endif()
 endif()
 
 add_subdirectory(cmake)
 
+find_package(fmt REQUIRED)
 find_package(GTest REQUIRED)
 find_package(VulkanHeaders REQUIRED)
 

@@ -11,6 +11,7 @@ class IcyMoonEngineRecipe(ConanFile):
     generators = "VirtualBuildEnv"
 
     requires = {
+        "fmt/11.0.2",
         "gtest/1.15.0",
         "vulkan-headers/1.3.290.0",
     }
