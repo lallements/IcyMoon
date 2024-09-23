@@ -1,7 +1,6 @@
 #include "vulkan_instance.h"
 
 #include <im3e/utils/throw_utils.h>
-#include <im3e/vulkan_loaders/vulkan_loaders.h>
 
 using namespace im3e;
 using namespace std;
@@ -30,8 +29,8 @@ auto createVulkanInstanceCreateInfo(const VkApplicationInfo& rVkAppInfo)
 
 }  // namespace
 
-VulkanInstance::VulkanInstance()
-  : m_pLoader(createVulkanLoader())
+VulkanInstance::VulkanInstance(unique_ptr<IVulkanLoader> pLoader)
+  : m_pLoader(throwIfArgNull(move(pLoader), "Vulkan instance requires a Vulkan loader"))
   , m_globalFcts(m_pLoader->loadGlobalFcts())
 {
     const auto vkAppInfo = createVulkanAppInfo();

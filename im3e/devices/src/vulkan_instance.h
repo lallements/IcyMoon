@@ -2,13 +2,14 @@
 
 #include <im3e/api/vulkan_loader.h>
 #include <im3e/utils/types.h>
+#include <im3e/vulkan_loaders/vulkan_loaders.h>
 
 namespace im3e {
 
 class VulkanInstance
 {
 public:
-    VulkanInstance();
+    VulkanInstance(std::unique_ptr<IVulkanLoader> pLoader = createVulkanLoader());
 
     auto getFcts() -> VulkanInstanceFcts& { return m_fcts; }
 
