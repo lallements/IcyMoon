@@ -1,8 +1,10 @@
 #pragma once
 
+#include "devices.h"
 #include "vulkan_instance.h"
 
 #include <im3e/api/device.h>
+#include <im3e/api/logger.h>
 #include <im3e/api/vulkan_loader.h>
 #include <im3e/utils/types.h>
 
@@ -13,9 +15,11 @@ namespace im3e {
 class Device : public IDevice
 {
 public:
-    Device();
+    Device(const ILogger& rLogger, DeviceConfig config);
 
 private:
+    std::unique_ptr<ILogger> m_pLogger;
+    const DeviceConfig m_config;
     VulkanInstance m_instance;
 };
 

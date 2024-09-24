@@ -2,6 +2,8 @@ add_library(im3e_devices STATIC
     devices.h
     src/device.cpp
     src/device.h
+    src/vulkan_extensions.cpp
+    src/vulkan_extensions.h
     src/vulkan_instance.cpp
     src/vulkan_instance.h
 )

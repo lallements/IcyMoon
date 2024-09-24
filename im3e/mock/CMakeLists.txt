@@ -2,7 +2,9 @@ im3e_add_mock_library(
   TARGET
     mock_im3e
   SOURCES
+    src/mock_logger.cpp
     src/mock_vulkan_loader.cpp
+    mock_logger.h
     mock_vulkan_loader.h
 )
 

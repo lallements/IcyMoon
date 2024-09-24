@@ -8,6 +8,7 @@ using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Eq;
 using ::testing::Invoke;
+using ::testing::InvokeWithoutArgs;
 using ::testing::IsEmpty;
 using ::testing::IsFalse;
 using ::testing::IsNull;

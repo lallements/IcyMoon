@@ -29,9 +29,11 @@ auto createVulkanInstanceCreateInfo(const VkApplicationInfo& rVkAppInfo)
 
 }  // namespace
 
-VulkanInstance::VulkanInstance(unique_ptr<IVulkanLoader> pLoader)
-  : m_pLoader(throwIfArgNull(move(pLoader), "Vulkan instance requires a Vulkan loader"))
+VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, unique_ptr<IVulkanLoader> pLoader)
+  : m_pLogger(rLogger.createChild("VulkanInstance"))
+  , m_pLoader(throwIfArgNull(move(pLoader), "Vulkan instance requires a Vulkan loader"))
   , m_globalFcts(m_pLoader->loadGlobalFcts())
+  , m_extensions(rLogger, m_globalFcts, isDebugEnabled)
 {
     const auto vkAppInfo = createVulkanAppInfo();
     const auto vkCreateInfo = createVulkanInstanceCreateInfo(vkAppInfo);

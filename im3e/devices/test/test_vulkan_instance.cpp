@@ -1,5 +1,6 @@
 #include "vulkan_instance.h"
 
+#include <im3e/mock/mock_logger.h>
 #include <im3e/mock/mock_vulkan_loader.h>
 #include <im3e/test_utils/test_utils.h>
 
@@ -8,8 +9,12 @@ using namespace std;
 
 struct VulkanInstanceTest : public Test
 {
-    auto createInstance() { return VulkanInstance(m_mockVkLoader.createMockProxy()); }
+    auto createInstance(bool isDebugEnabled = false)
+    {
+        return VulkanInstance(m_mockLogger, isDebugEnabled, m_mockVkLoader.createMockProxy());
+    }
 
+    NiceMock<MockLogger> m_mockLogger;
     NiceMock<MockVulkanLoader> m_mockVkLoader;
 };
 

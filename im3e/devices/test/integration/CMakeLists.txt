@@ -8,5 +8,6 @@ im3e_add_integration_tests_executable(
 target_link_libraries(integration_im3e_devices
   PRIVATE
     im3e_devices
+    im3e_loggers
     im3e_test_utils
 )
