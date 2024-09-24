@@ -1,5 +1,6 @@
 #include "mock_vulkan_loader.h"
 
+#include <im3e/test_utils/test_utils.h>
 #include <im3e/utils/throw_utils.h>
 
 using namespace im3e;
@@ -98,8 +99,8 @@ MockVulkanLoader::MockVulkanLoader()
     }
     g_pMock = this;
 
-    ON_CALL(*this, loadGlobalFcts()).WillByDefault(::testing::Return(m_gFcts));
-    ON_CALL(*this, loadInstanceFcts(::testing::_)).WillByDefault(::testing::Return(m_iFcts));
+    ON_CALL(*this, loadGlobalFcts()).WillByDefault(Return(m_gFcts));
+    ON_CALL(*this, loadInstanceFcts(_)).WillByDefault(Return(m_iFcts));
 }
 
 MockVulkanLoader::~MockVulkanLoader()

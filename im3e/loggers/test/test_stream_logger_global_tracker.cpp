@@ -1,27 +1,25 @@
 #include "loggers.h"
 #include "src/stream_logger.h"
 
+#include <im3e/test_utils/test_utils.h>
+
 #include <fmt/format.h>
-#include <gmock/gmock.h>
+
+#include <sstream>
 
 using namespace im3e;
 using namespace std;
-
-using ::testing::Eq;
-using ::testing::IsEmpty;
-using ::testing::NotNull;
-using ::testing::StrEq;
 
 namespace {
 
 auto createStreamLogger()
 {
-    return make_unique<StreamLogger>("Test", shared_ptr<ostream>(&cout, [](auto*) {}));
+    return make_unique<StreamLogger>("Test", make_shared<stringstream>());
 }
 
 }  // namespace
 
-class StreamLoggerGlobalTrackerTest : public ::testing::Test
+class StreamLoggerGlobalTrackerTest : public Test
 {
 public:
     StreamLoggerGlobalTrackerTest()

@@ -1,10 +1,9 @@
 #include "loggers.h"
 
-#include <gmock/gmock.h>
+#include <im3e/test_utils/test_utils.h>
 
 using namespace im3e;
 using namespace std;
-using namespace testing;
 
 TEST(TerminalLoggerTest, canCreateTerminalLogger)
 {

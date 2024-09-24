@@ -1,8 +1,7 @@
 #pragma once
 
 #include <im3e/api/vulkan_loader.h>
-
-#include <gmock/gmock.h>
+#include <im3e/test_utils/test_utils.h>
 
 namespace im3e {
 
@@ -53,8 +52,8 @@ private:
     VulkanGlobalFcts m_gFcts;
     VulkanInstanceFcts m_iFcts;
 
-    ::testing::NiceMock<MockGlobalFcts> m_mockGFcts;
-    ::testing::NiceMock<MockInstanceFcts> m_mockIFcts;
+    NiceMock<MockGlobalFcts> m_mockGFcts;
+    NiceMock<MockInstanceFcts> m_mockIFcts;
 };
 
 }  // namespace im3e

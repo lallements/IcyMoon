@@ -7,7 +7,6 @@ im3e_add_integration_tests_executable(
 
 target_link_libraries(integration_im3e_vulkan_loaders
   PRIVATE
-    GTest::gmock
-    GTest::gtest_main
+    im3e_test_utils
     im3e_vulkan_loaders
 )
