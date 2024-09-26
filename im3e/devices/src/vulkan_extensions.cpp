@@ -6,14 +6,13 @@
 
 #include <algorithm>
 #include <ranges>
-#include <string_view>
 
 using namespace im3e;
 using namespace std;
 
 namespace {
 
-void insertIfUnique(string_view item, vector<string_view>& rItems)
+void insertIfUnique(const char* item, vector<const char*>& rItems)
 {
     if (ranges::find(rItems, item) == rItems.end())
     {
@@ -23,7 +22,7 @@ void insertIfUnique(string_view item, vector<string_view>& rItems)
 
 auto generateDeviceExtensions()
 {
-    vector<string_view> deviceExtensions;
+    vector<const char*> deviceExtensions;
 
     // For ray tracing:
     insertIfUnique(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, deviceExtensions);
@@ -36,7 +35,7 @@ auto generateDeviceExtensions()
     return deviceExtensions;
 }
 
-void addLayers(bool isVkValidationEnabled, vector<string_view>& rLayers)
+void addLayers(bool isVkValidationEnabled, vector<const char*>& rLayers)
 {
     if (isVkValidationEnabled)
     {
@@ -44,7 +43,7 @@ void addLayers(bool isVkValidationEnabled, vector<string_view>& rLayers)
     }
 }
 
-void addInstanceExtensions(bool isVkValidationEnabled, vector<string_view>& rExtensions)
+void addInstanceExtensions(bool isVkValidationEnabled, vector<const char*>& rExtensions)
 {
     if (isVkValidationEnabled)
     {
@@ -53,9 +52,9 @@ void addInstanceExtensions(bool isVkValidationEnabled, vector<string_view>& rExt
 }
 
 auto generateInstanceExtensions(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool isVkValidationEnabled,
-                                const vector<string_view>& rRequiredExtensions)
+                                const vector<const char*>& rRequiredExtensions)
 {
-    vector<string_view> extensions;
+    vector<const char*> extensions;
     ranges::for_each(rRequiredExtensions, [&](auto& rExtension) { insertIfUnique(rExtension, extensions); });
     addInstanceExtensions(isVkValidationEnabled, extensions);
 
@@ -66,9 +65,8 @@ auto generateInstanceExtensions(const ILogger& logger, const VulkanGlobalFcts& r
     bool allSupported = true;
     for (auto& rExtension : extensions)
     {
-        auto itFind = ranges::find_if(supportedExtensions, [&](const auto& props) {
-            return strcmp(rExtension.data(), &props.extensionName[0]) == 0;
-        });
+        auto itFind = ranges::find_if(
+            supportedExtensions, [&](const auto& props) { return strcmp(rExtension, &props.extensionName[0]) == 0; });
 
         if (itFind != supportedExtensions.end())
         {
@@ -87,7 +85,7 @@ auto generateInstanceExtensions(const ILogger& logger, const VulkanGlobalFcts& r
 
 auto generateLayers(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool isVkValidationEnabled)
 {
-    vector<string_view> layers;
+    vector<const char*> layers;
     addLayers(isVkValidationEnabled, layers);
 
     logger.info("Checking support for required layers");
@@ -98,8 +96,8 @@ auto generateLayers(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool i
     auto itLayer = layers.begin();
     while (itLayer != layers.end())
     {
-        auto itFind = ranges::find_if(
-            supportedLayers, [&](const auto& props) { return strcmp(itLayer->data(), &props.layerName[0]) == 0; });
+        auto itFind = ranges::find_if(supportedLayers,
+                                      [&](const auto& props) { return strcmp(*itLayer, &props.layerName[0]) == 0; });
 
         if (itFind != supportedLayers.end())
         {
@@ -123,7 +121,7 @@ auto generateLayers(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool i
 }  // namespace
 
 VulkanExtensions::VulkanExtensions(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool isDebugEnabled,
-                                   const vector<string_view>& rRequiredInstanceExtensions)
+                                   const vector<const char*>& rRequiredInstanceExtensions)
   : m_debugUtilsEnabled(isDebugEnabled)
   , m_instanceExtensions(generateInstanceExtensions(logger, rFcts, m_debugUtilsEnabled, rRequiredInstanceExtensions))
   , m_deviceExtensions(generateDeviceExtensions())

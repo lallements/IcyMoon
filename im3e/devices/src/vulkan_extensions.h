@@ -11,7 +11,7 @@ class VulkanExtensions
 {
 public:
     VulkanExtensions(const ILogger& logger, const VulkanGlobalFcts& rFcts, bool isDebugEnabled,
-                     const std::vector<std::string_view>& rRequiredInstanceExtensions = {});
+                     const std::vector<const char*>& rRequiredInstanceExtensions = {});
 
     const auto& getInstanceExtensions() const { return m_instanceExtensions; }
     const auto& getDeviceExtensions() const { return m_deviceExtensions; }
@@ -21,9 +21,9 @@ public:
 
 private:
     const bool m_debugUtilsEnabled = false;
-    std::vector<std::string_view> m_instanceExtensions;
-    std::vector<std::string_view> m_deviceExtensions;
-    std::vector<std::string_view> m_layers;
+    std::vector<const char*> m_instanceExtensions;
+    std::vector<const char*> m_deviceExtensions;
+    std::vector<const char*> m_layers;
 };
 
 }  // namespace im3e

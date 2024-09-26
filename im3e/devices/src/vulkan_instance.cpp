@@ -19,11 +19,18 @@ auto createVulkanAppInfo()
     };
 }
 
-auto createVulkanInstanceCreateInfo(const VkApplicationInfo& rVkAppInfo)
+auto createVulkanInstanceCreateInfo(const VkApplicationInfo& rVkAppInfo, const VulkanExtensions& rExtensions)
 {
+    const auto& rInstanceExtensions = rExtensions.getInstanceExtensions();
+    const auto& rLayers = rExtensions.getLayers();
+
     return VkInstanceCreateInfo{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &rVkAppInfo,
+        .enabledLayerCount = static_cast<uint32_t>(rLayers.size()),
+        .ppEnabledLayerNames = rLayers.data(),
+        .enabledExtensionCount = static_cast<uint32_t>(rInstanceExtensions.size()),
+        .ppEnabledExtensionNames = rInstanceExtensions.data(),
     };
 }
 
@@ -36,7 +43,7 @@ VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, uniq
   , m_extensions(rLogger, m_globalFcts, isDebugEnabled)
 {
     const auto vkAppInfo = createVulkanAppInfo();
-    const auto vkCreateInfo = createVulkanInstanceCreateInfo(vkAppInfo);
+    const auto vkCreateInfo = createVulkanInstanceCreateInfo(vkAppInfo, m_extensions);
     VkInstance vkInstance{};
     throwIfVkFailed(m_globalFcts.vkCreateInstance(&vkCreateInfo, nullptr, &vkInstance),
                     "Failed to create Vulkan instance");

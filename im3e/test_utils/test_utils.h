@@ -12,6 +12,8 @@ using ::testing::InvokeWithoutArgs;
 using ::testing::IsEmpty;
 using ::testing::IsFalse;
 using ::testing::IsNull;
+using ::testing::IsSubsetOf;
+using ::testing::IsSupersetOf;
 using ::testing::IsTrue;
 using ::testing::MockFunction;
 using ::testing::NiceMock;
@@ -20,5 +22,7 @@ using ::testing::Return;
 using ::testing::StrEq;
 using ::testing::Test;
 using ::testing::Unused;
+using ::testing::Values;
+using ::testing::ValuesIn;
 
 }  // namespace im3e
