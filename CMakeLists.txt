@@ -42,6 +42,7 @@ else()
 endif()
 
 add_subdirectory(cmake)
+im3e_set_coverage_flags()
 
 find_package(fmt REQUIRED)
 find_package(GTest REQUIRED)
@@ -50,3 +51,5 @@ find_package(VulkanHeaders REQUIRED)
 
 add_subdirectory(applications)
 add_subdirectory(im3e)
+
+im3e_init_code_coverage()

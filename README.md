@@ -5,6 +5,7 @@
   - [Conan](#conan)
   - [Compiling](#compiling)
   - [Running tests](#running-tests)
+  - [Test Coverage with GCC](#test-coverage-with-gcc)
 
 
 ## How to Build
@@ -81,3 +82,19 @@ Each test is labelled as a `"unit_test"` or an `"integration_test"`. This allows
 ctest --preset gcc-debug -L "unit_test" # to run unit tests only
 ctest --preset gcc-debug -L "integration_test" # to run integration tests only
 ```
+
+### Test Coverage with GCC
+
+Test coverage is currently supported with lcov via the conan profile `gcc-coverage_on-debug`:
+```bash
+cd build
+conan install .. --pr ../profiles/gcc-coverage_on-debug --build=missing
+cd ..
+source build/gcc-coverage_on-debug/generators/conanbuild.sh
+cmake --preset gcc-coverage_on-debug
+cmake --build --preset gcc-coverage_on-debug --target im3e_test_coverage
+```
+
+There exists multiple cmake targets to generate different test coverage reports:
+- `im3e_test_coverage`: combines the coverage of all tests
+- `im3e_unit_test_coverage`: generate a report for unit tests only (excluding integration tests)

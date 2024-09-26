@@ -17,11 +17,11 @@ class IcyMoonEngineRecipe(ConanFile):
     }
 
     options = {
-
+        "coverage": [None, "on"],
     }
 
     default_options = {
-
+        "coverage": None,
     }
 
     tool_requires = {
@@ -35,6 +35,10 @@ class IcyMoonEngineRecipe(ConanFile):
     def generate(self):
         toolChain = CMakeToolchain(self, generator="Ninja")
         toolChain.presets_prefix = ""
+
+        if self.options.coverage == "on":
+            toolChain.cache_variables["TEST_COVERAGE"] = True
+
         toolChain.generate()
 
         cmake = CMakeDeps(self)
