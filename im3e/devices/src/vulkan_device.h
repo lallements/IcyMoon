@@ -12,10 +12,10 @@
 
 namespace im3e {
 
-class Device : public IDevice
+class VulkanDevice : public IDevice
 {
 public:
-    Device(const ILogger& rLogger, DeviceConfig config);
+    VulkanDevice(const ILogger& rLogger, DeviceConfig config);
 
 private:
     std::unique_ptr<ILogger> m_pLogger;

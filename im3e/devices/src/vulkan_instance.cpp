@@ -34,6 +34,23 @@ auto createVulkanInstanceCreateInfo(const VkApplicationInfo& rVkAppInfo, const V
     };
 }
 
+auto createVkInstance(ILogger& rLogger, const VulkanGlobalFcts& rFcts, const VulkanExtensions& rExtensions,
+                      bool isDebugEnabled)
+{
+    const auto vkAppInfo = createVulkanAppInfo();
+    auto vkCreateInfo = createVulkanInstanceCreateInfo(vkAppInfo, rExtensions);
+
+    const auto vkDebugCreateInfo = VulkanDebugMessageHandler::generateDebugUtilsCreateInfo(rLogger);
+    if (isDebugEnabled)
+    {
+        vkCreateInfo.pNext = &vkDebugCreateInfo;
+    }
+
+    VkInstance vkInstance{};
+    throwIfVkFailed(rFcts.vkCreateInstance(&vkCreateInfo, nullptr, &vkInstance), "Failed to create Vulkan instance");
+    return vkInstance;
+}
+
 }  // namespace
 
 VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, unique_ptr<IVulkanLoader> pLoader)
@@ -42,13 +59,13 @@ VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, uniq
   , m_globalFcts(m_pLoader->loadGlobalFcts())
   , m_extensions(rLogger, m_globalFcts, isDebugEnabled)
 {
-    const auto vkAppInfo = createVulkanAppInfo();
-    const auto vkCreateInfo = createVulkanInstanceCreateInfo(vkAppInfo, m_extensions);
-    VkInstance vkInstance{};
-    throwIfVkFailed(m_globalFcts.vkCreateInstance(&vkCreateInfo, nullptr, &vkInstance),
-                    "Failed to create Vulkan instance");
-
+    auto vkInstance = createVkInstance(*m_pLogger, m_globalFcts, m_extensions, isDebugEnabled);
     m_fcts = m_pLoader->loadInstanceFcts(vkInstance);
     m_pVkInstance = VkUniquePtr<VkInstance>(vkInstance,
                                             [this](auto vkInst) { m_fcts.vkDestroyInstance(vkInst, nullptr); });
+
+    if (isDebugEnabled)
+    {
+        m_pDebugMessageHandler = make_unique<VulkanDebugMessageHandler>(*m_pLogger, m_fcts, m_pVkInstance.get());
+    }
 }

@@ -30,7 +30,8 @@ struct VulkanLoaderTest : public Test
 
     auto createLoader()
     {
-        return make_unique<VulkanLoader>(createMockLibrary(), &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr);
+        return make_unique<VulkanLoader>(VulkanLoaderConfig{}, createMockLibrary(), &mockVkGetInstanceProcAddr,
+                                         &mockVkGetDeviceProcAddr);
     }
 
     MockFunction<PFN_vkVoidFunction(VkInstance, const char*)> m_mockVkGetInstanceProcAddr;
@@ -59,17 +60,21 @@ TEST_F(VulkanLoaderTest, constructor)
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutLibrary)
 {
-    EXPECT_THROW(VulkanLoader loader(nullptr, &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr), invalid_argument);
+    EXPECT_THROW(
+        VulkanLoader loader(VulkanLoaderConfig{}, nullptr, &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr),
+        invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutVkGetInstanceProcAddr)
 {
-    EXPECT_THROW(VulkanLoader loader(createMockLibrary(), nullptr, &mockVkGetDeviceProcAddr), invalid_argument);
+    EXPECT_THROW(VulkanLoader loader(VulkanLoaderConfig{}, createMockLibrary(), nullptr, &mockVkGetDeviceProcAddr),
+                 invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutVkGetDeviceProcAddr)
 {
-    EXPECT_THROW(VulkanLoader loader(createMockLibrary(), &mockVkGetInstanceProcAddr, nullptr), invalid_argument);
+    EXPECT_THROW(VulkanLoader loader(VulkanLoaderConfig{}, createMockLibrary(), &mockVkGetInstanceProcAddr, nullptr),
+                 invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, loadGlobalFcts)

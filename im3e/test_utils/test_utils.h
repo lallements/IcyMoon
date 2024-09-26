@@ -7,6 +7,7 @@ namespace im3e {
 using ::testing::_;
 using ::testing::ContainerEq;
 using ::testing::Eq;
+using ::testing::Ge;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::IsEmpty;

@@ -1,7 +1,5 @@
 #include "vulkan_loader.h"
 
-#include "vulkan_loaders.h"
-
 #if defined(__linux__)
 #include "vulkan_library_loader_linux.h"
 #else
@@ -15,9 +13,10 @@ using namespace std;
 #define LOAD_INST_FCT(fctName) .fctName = reinterpret_cast<PFN_##fctName>(m_vkGetInstanceProcAddr(vkInstance, #fctName))
 #define LOAD_DEVICE_FCT(fctName) .fctName = reinterpret_cast<PFN_##fctName>(m_vkGetDeviceProcAddr(vkDevice, #fctName))
 
-VulkanLoader::VulkanLoader(UniquePtrWithDeleter<void> pLibrary, PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr,
-                           PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr)
-  : m_pLibrary(throwIfArgNull(move(pLibrary), "Vulkan loader requires a library pointer"))
+VulkanLoader::VulkanLoader(VulkanLoaderConfig config, UniquePtrWithDeleter<void> pLibrary,
+                           PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr, PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr)
+  : m_config(move(config))
+  , m_pLibrary(throwIfArgNull(move(pLibrary), "Vulkan loader requires a library pointer"))
   , m_vkGetInstanceProcAddr(throwIfArgNull(vkGetInstanceProcAddr, "Vulkan loader requires vkGetInstanceProcAddr"))
   , m_vkGetDeviceProcAddr(throwIfArgNull(vkGetDeviceProcAddr, "Vulkan loader requires vkGetDeviceProcAddr"))
 {
@@ -36,10 +35,16 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts
 {
     throwIfArgNull(vkInstance, "Cannot load Vulkan instance functions without an instance");
 
-    return VulkanInstanceFcts{
+    VulkanInstanceFcts fcts{
         LOAD_INST_FCT(vkDestroyInstance),
         LOAD_INST_FCT(vkCreateDevice),
     };
+    if (m_config.isDebugEnabled)
+    {
+        fcts LOAD_INST_FCT(vkCreateDebugUtilsMessengerEXT);
+        fcts LOAD_INST_FCT(vkDestroyDebugUtilsMessengerEXT);
+    }
+    return fcts;
 }
 auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts
 {
@@ -50,9 +55,9 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts
     };
 }
 
-auto im3e::createVulkanLoader() -> unique_ptr<IVulkanLoader>
+auto im3e::createVulkanLoader(VulkanLoaderConfig config) -> unique_ptr<IVulkanLoader>
 {
     vulkan_loader::VulkanLibraryLoader libraryLoader;
-    return make_unique<VulkanLoader>(move(libraryLoader.pLibrary), libraryLoader.vkGetInstanceProcAddr,
+    return make_unique<VulkanLoader>(move(config), move(libraryLoader.pLibrary), libraryLoader.vkGetInstanceProcAddr,
                                      libraryLoader.vkGetDeviceProcAddr);
 }

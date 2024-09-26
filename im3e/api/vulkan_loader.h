@@ -9,21 +9,24 @@ namespace im3e {
 /// https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetInstanceProcAddr
 struct VulkanGlobalFcts
 {
-    PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
-    PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
-    PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-    PFN_vkCreateInstance vkCreateInstance;
+    PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion{};
+    PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties{};
+    PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties{};
+    PFN_vkCreateInstance vkCreateInstance{};
 };
 
 struct VulkanInstanceFcts
 {
-    PFN_vkDestroyInstance vkDestroyInstance;
-    PFN_vkCreateDevice vkCreateDevice;
+    PFN_vkDestroyInstance vkDestroyInstance{};
+    PFN_vkCreateDevice vkCreateDevice{};
+
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT{};
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT{};
 };
 
 struct VulkanDeviceFcts
 {
-    PFN_vkDestroyDevice vkDestroyDevice;
+    PFN_vkDestroyDevice vkDestroyDevice{};
 };
 
 class IVulkanLoader
