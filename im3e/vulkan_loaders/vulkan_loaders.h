@@ -6,6 +6,10 @@
 
 namespace im3e {
 
-auto createVulkanLoader() -> std::unique_ptr<IVulkanLoader>;
+struct VulkanLoaderConfig
+{
+    bool isDebugEnabled = false;
+};
+auto createVulkanLoader(VulkanLoaderConfig config) -> std::unique_ptr<IVulkanLoader>;
 
 }  // namespace im3e

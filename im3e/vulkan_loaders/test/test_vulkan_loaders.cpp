@@ -1,8 +1,7 @@
 #include "src/vulkan_loader.h"
 
+#include <im3e/test_utils/test_utils.h>
 #include <im3e/utils/throw_utils.h>
-
-#include <gmock/gmock.h>
 
 using namespace im3e;
 using namespace std;
@@ -15,7 +14,7 @@ VulkanLoaderTest* g_pTestFixture = nullptr;
 PFN_vkVoidFunction mockVkGetInstanceProcAddr(VkInstance vkInstance, const char* name);
 PFN_vkVoidFunction mockVkGetDeviceProcAddr(VkDevice vkDevice, const char* name);
 
-struct VulkanLoaderTest : public ::testing::Test
+struct VulkanLoaderTest : public Test
 {
     VulkanLoaderTest()
     {
@@ -31,11 +30,15 @@ struct VulkanLoaderTest : public ::testing::Test
 
     auto createLoader()
     {
-        return make_unique<VulkanLoader>(createMockLibrary(), &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr);
+        return make_unique<VulkanLoader>(
+            VulkanLoaderConfig{
+                .isDebugEnabled = true,
+            },
+            createMockLibrary(), &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr);
     }
 
-    ::testing::MockFunction<PFN_vkVoidFunction(VkInstance, const char*)> m_mockVkGetInstanceProcAddr;
-    ::testing::MockFunction<PFN_vkVoidFunction(VkDevice, const char*)> m_mockVkGetDeviceProcAddr;
+    MockFunction<PFN_vkVoidFunction(VkInstance, const char*)> m_mockVkGetInstanceProcAddr;
+    MockFunction<PFN_vkVoidFunction(VkDevice, const char*)> m_mockVkGetDeviceProcAddr;
 };
 
 PFN_vkVoidFunction mockVkGetInstanceProcAddr(VkInstance vkInstance, const char* name)
@@ -55,22 +58,26 @@ PFN_vkVoidFunction mockVkGetDeviceProcAddr(VkDevice vkDevice, const char* name)
 TEST_F(VulkanLoaderTest, constructor)
 {
     auto pLoader = createLoader();
-    ASSERT_THAT(pLoader, ::testing::NotNull());
+    ASSERT_THAT(pLoader, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutLibrary)
 {
-    EXPECT_THROW(VulkanLoader loader(nullptr, &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr), invalid_argument);
+    EXPECT_THROW(
+        VulkanLoader loader(VulkanLoaderConfig{}, nullptr, &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr),
+        invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutVkGetInstanceProcAddr)
 {
-    EXPECT_THROW(VulkanLoader loader(createMockLibrary(), nullptr, &mockVkGetDeviceProcAddr), invalid_argument);
+    EXPECT_THROW(VulkanLoader loader(VulkanLoaderConfig{}, createMockLibrary(), nullptr, &mockVkGetDeviceProcAddr),
+                 invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, constructorThrowsWithoutVkGetDeviceProcAddr)
 {
-    EXPECT_THROW(VulkanLoader loader(createMockLibrary(), &mockVkGetInstanceProcAddr, nullptr), invalid_argument);
+    EXPECT_THROW(VulkanLoader loader(VulkanLoaderConfig{}, createMockLibrary(), &mockVkGetInstanceProcAddr, nullptr),
+                 invalid_argument);
 }
 
 TEST_F(VulkanLoaderTest, loadGlobalFcts)
@@ -78,8 +85,8 @@ TEST_F(VulkanLoaderTest, loadGlobalFcts)
     auto pLoader = createLoader();
 
     auto expectGlobalFctLoaded = [&](string_view name) {
-        EXPECT_CALL(m_mockVkGetInstanceProcAddr, Call(::testing::IsNull(), ::testing::StrEq(name)))
-            .WillOnce(::testing::Return(reinterpret_cast<PFN_vkVoidFunction>(0x1234)));
+        EXPECT_CALL(m_mockVkGetInstanceProcAddr, Call(IsNull(), StrEq(name)))
+            .WillOnce(Return(reinterpret_cast<PFN_vkVoidFunction>(0x1234)));
     };
     expectGlobalFctLoaded("vkEnumerateInstanceVersion");
     expectGlobalFctLoaded("vkEnumerateInstanceExtensionProperties");
@@ -87,10 +94,10 @@ TEST_F(VulkanLoaderTest, loadGlobalFcts)
     expectGlobalFctLoaded("vkCreateInstance");
 
     auto globalFcts = pLoader->loadGlobalFcts();
-    EXPECT_THAT(globalFcts.vkEnumerateInstanceVersion, ::testing::NotNull());
-    EXPECT_THAT(globalFcts.vkEnumerateInstanceExtensionProperties, ::testing::NotNull());
-    EXPECT_THAT(globalFcts.vkEnumerateInstanceLayerProperties, ::testing::NotNull());
-    EXPECT_THAT(globalFcts.vkCreateInstance, ::testing::NotNull());
+    EXPECT_THAT(globalFcts.vkEnumerateInstanceVersion, NotNull());
+    EXPECT_THAT(globalFcts.vkEnumerateInstanceExtensionProperties, NotNull());
+    EXPECT_THAT(globalFcts.vkEnumerateInstanceLayerProperties, NotNull());
+    EXPECT_THAT(globalFcts.vkCreateInstance, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadInstanceFcts)
@@ -100,15 +107,23 @@ TEST_F(VulkanLoaderTest, loadInstanceFcts)
     auto mockVkInstance = reinterpret_cast<VkInstance>(0x34ef3a);
 
     auto expectInstFctLoaded = [&](string_view name) {
-        EXPECT_CALL(m_mockVkGetInstanceProcAddr, Call(mockVkInstance, ::testing::StrEq(name)))
-            .WillOnce(::testing::Return(reinterpret_cast<PFN_vkVoidFunction>(0x4567)));
+        EXPECT_CALL(m_mockVkGetInstanceProcAddr, Call(mockVkInstance, StrEq(name)))
+            .WillOnce(Return(reinterpret_cast<PFN_vkVoidFunction>(0x4567)));
     };
     expectInstFctLoaded("vkDestroyInstance");
     expectInstFctLoaded("vkCreateDevice");
+    expectInstFctLoaded("vkCreateDebugUtilsMessengerEXT");
+    expectInstFctLoaded("vkDestroyDebugUtilsMessengerEXT");
+    expectInstFctLoaded("vkEnumeratePhysicalDevices");
+    expectInstFctLoaded("vkGetPhysicalDeviceProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceFeatures");
+    expectInstFctLoaded("vkEnumerateDeviceExtensionProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceQueueFamilyProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceMemoryProperties");
 
     auto instanceFcts = pLoader->loadInstanceFcts(mockVkInstance);
-    EXPECT_THAT(instanceFcts.vkDestroyInstance, ::testing::NotNull());
-    EXPECT_THAT(instanceFcts.vkCreateDevice, ::testing::NotNull());
+    EXPECT_THAT(instanceFcts.vkDestroyInstance, NotNull());
+    EXPECT_THAT(instanceFcts.vkCreateDevice, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadInstanceFctsThrowsWithoutInstance)
@@ -124,13 +139,14 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     auto mockVkDevice = reinterpret_cast<VkDevice>(0xaf34d2ce8);
 
     auto expectDeviceFctLoaded = [&](string_view name) {
-        EXPECT_CALL(m_mockVkGetDeviceProcAddr, Call(mockVkDevice, ::testing::StrEq(name)))
-            .WillOnce(::testing::Return(reinterpret_cast<PFN_vkVoidFunction>(0xabcde)));
+        EXPECT_CALL(m_mockVkGetDeviceProcAddr, Call(mockVkDevice, StrEq(name)))
+            .WillOnce(Return(reinterpret_cast<PFN_vkVoidFunction>(0xabcde)));
     };
     expectDeviceFctLoaded("vkDestroyDevice");
+    expectDeviceFctLoaded("vkGetDeviceQueue");
 
     auto deviceFcts = pLoader->loadDeviceFcts(mockVkDevice);
-    EXPECT_THAT(deviceFcts.vkDestroyDevice, ::testing::NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadDeviceFctsThrowsWithoutDevice)

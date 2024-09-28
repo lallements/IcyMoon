@@ -9,21 +9,32 @@ namespace im3e {
 /// https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetInstanceProcAddr
 struct VulkanGlobalFcts
 {
-    PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
-    PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
-    PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-    PFN_vkCreateInstance vkCreateInstance;
+    PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion{};
+    PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties{};
+    PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties{};
+    PFN_vkCreateInstance vkCreateInstance{};
 };
 
 struct VulkanInstanceFcts
 {
-    PFN_vkDestroyInstance vkDestroyInstance;
-    PFN_vkCreateDevice vkCreateDevice;
+    PFN_vkDestroyInstance vkDestroyInstance{};
+    PFN_vkCreateDevice vkCreateDevice{};
+
+    PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT{};
+    PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT{};
+
+    PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices{};
+    PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties{};
+    PFN_vkGetPhysicalDeviceFeatures vkGetPhysicalDeviceFeatures{};
+    PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties{};
+    PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties{};
+    PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties{};
 };
 
 struct VulkanDeviceFcts
 {
-    PFN_vkDestroyDevice vkDestroyDevice;
+    PFN_vkDestroyDevice vkDestroyDevice{};
+    PFN_vkGetDeviceQueue vkGetDeviceQueue{};
 };
 
 class IVulkanLoader
@@ -31,9 +42,9 @@ class IVulkanLoader
 public:
     virtual ~IVulkanLoader() = default;
 
-    virtual auto loadGlobalFcts() -> VulkanGlobalFcts = 0;
-    virtual auto loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts = 0;
-    virtual auto loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts = 0;
+    virtual auto loadGlobalFcts() const -> VulkanGlobalFcts = 0;
+    virtual auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts = 0;
+    virtual auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts = 0;
 };
 
 }  // namespace im3e

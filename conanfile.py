@@ -11,16 +11,17 @@ class IcyMoonEngineRecipe(ConanFile):
     generators = "VirtualBuildEnv"
 
     requires = {
+        "fmt/11.0.2",
         "gtest/1.15.0",
         "vulkan-headers/1.3.290.0",
     }
 
     options = {
-
+        "coverage": [None, "on"],
     }
 
     default_options = {
-
+        "coverage": None,
     }
 
     tool_requires = {
@@ -34,6 +35,10 @@ class IcyMoonEngineRecipe(ConanFile):
     def generate(self):
         toolChain = CMakeToolchain(self, generator="Ninja")
         toolChain.presets_prefix = ""
+
+        if self.options.coverage == "on":
+            toolChain.cache_variables["TEST_COVERAGE"] = True
+
         toolChain.generate()
 
         cmake = CMakeDeps(self)

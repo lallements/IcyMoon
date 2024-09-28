@@ -1,3 +1,7 @@
 add_subdirectory(api)
+add_subdirectory(devices)
+add_subdirectory(loggers)
+add_subdirectory(mock)
+add_subdirectory(test_utils)
 add_subdirectory(utils)
 add_subdirectory(vulkan_loaders)

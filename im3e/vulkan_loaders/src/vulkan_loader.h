@@ -1,6 +1,7 @@
 #pragma once
 
-#include <im3e/api/vulkan_loader.h>
+#include "vulkan_loaders.h"
+
 #include <im3e/utils/types.h>
 
 namespace im3e {
@@ -8,14 +9,15 @@ namespace im3e {
 class VulkanLoader : public IVulkanLoader
 {
 public:
-    VulkanLoader(UniquePtrWithDeleter<void> pLibrary, PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr,
-                 PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr);
+    VulkanLoader(VulkanLoaderConfig config, UniquePtrWithDeleter<void> pLibrary,
+                 PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr, PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr);
 
-    auto loadGlobalFcts() -> VulkanGlobalFcts override;
-    auto loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts override;
-    auto loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts override;
+    auto loadGlobalFcts() const -> VulkanGlobalFcts override;
+    auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts override;
+    auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts override;
 
 private:
+    const VulkanLoaderConfig m_config;
     UniquePtrWithDeleter<void> m_pLibrary;
     PFN_vkGetInstanceProcAddr m_vkGetInstanceProcAddr;
     PFN_vkGetDeviceProcAddr m_vkGetDeviceProcAddr;
