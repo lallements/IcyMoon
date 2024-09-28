@@ -22,7 +22,7 @@ VulkanLoader::VulkanLoader(VulkanLoaderConfig config, UniquePtrWithDeleter<void>
 {
 }
 
-auto VulkanLoader::loadGlobalFcts() -> VulkanGlobalFcts
+auto VulkanLoader::loadGlobalFcts() const -> VulkanGlobalFcts
 {
     return VulkanGlobalFcts{
         LOAD_GLOBAL_FCT(vkEnumerateInstanceVersion),
@@ -31,7 +31,7 @@ auto VulkanLoader::loadGlobalFcts() -> VulkanGlobalFcts
         LOAD_GLOBAL_FCT(vkCreateInstance),
     };
 }
-auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts
+auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts
 {
     throwIfArgNull(vkInstance, "Cannot load Vulkan instance functions without an instance");
 
@@ -44,6 +44,7 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts
         LOAD_INST_FCT(vkGetPhysicalDeviceFeatures),
         LOAD_INST_FCT(vkEnumerateDeviceExtensionProperties),
         LOAD_INST_FCT(vkGetPhysicalDeviceQueueFamilyProperties),
+        LOAD_INST_FCT(vkGetPhysicalDeviceMemoryProperties),
     };
     if (m_config.isDebugEnabled)
     {
@@ -52,12 +53,13 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts
     }
     return fcts;
 }
-auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts
+auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
 {
     throwIfArgNull(vkDevice, "Cannot load Vulkan device functions without a device");
 
     return VulkanDeviceFcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
+        LOAD_DEVICE_FCT(vkGetDeviceQueue),
     };
 }
 

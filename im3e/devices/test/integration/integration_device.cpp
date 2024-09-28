@@ -8,6 +8,9 @@ using namespace std;
 struct DeviceIntegration : public Test
 {
     unique_ptr<ILogger> m_pLogger = createTerminalLogger();
+    UniquePtrWithDeleter<ILoggerTracker> m_pLoggerTracker = m_pLogger->createGlobalTracker();
+
+    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), ContainerEq(vector<string>{})); }
 };
 
 TEST_F(DeviceIntegration, constructor)

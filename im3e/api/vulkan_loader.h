@@ -28,11 +28,13 @@ struct VulkanInstanceFcts
     PFN_vkGetPhysicalDeviceFeatures vkGetPhysicalDeviceFeatures{};
     PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties{};
     PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties{};
+    PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties{};
 };
 
 struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
+    PFN_vkGetDeviceQueue vkGetDeviceQueue{};
 };
 
 class IVulkanLoader
@@ -40,9 +42,9 @@ class IVulkanLoader
 public:
     virtual ~IVulkanLoader() = default;
 
-    virtual auto loadGlobalFcts() -> VulkanGlobalFcts = 0;
-    virtual auto loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts = 0;
-    virtual auto loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts = 0;
+    virtual auto loadGlobalFcts() const -> VulkanGlobalFcts = 0;
+    virtual auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts = 0;
+    virtual auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts = 0;
 };
 
 }  // namespace im3e

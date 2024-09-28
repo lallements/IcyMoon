@@ -23,12 +23,15 @@ public:
     {
     }
 
-    auto loadGlobalFcts() -> VulkanGlobalFcts override { return m_rMock.loadGlobalFcts(); }
-    auto loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts override
+    auto loadGlobalFcts() const -> VulkanGlobalFcts override { return m_rMock.loadGlobalFcts(); }
+    auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts override
     {
         return m_rMock.loadInstanceFcts(vkInstance);
     }
-    auto loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts override { return m_rMock.loadDeviceFcts(vkDevice); }
+    auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts override
+    {
+        return m_rMock.loadDeviceFcts(vkDevice);
+    }
 
 private:
     MockVulkanLoader& m_rMock;
@@ -122,10 +125,23 @@ void vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, u
                                                                             pQueueFamilyProperties);
 }
 
+void vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice,
+                                         VkPhysicalDeviceMemoryProperties* pMemoryProperties)
+{
+    assertMockExists();
+    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
+}
+
 void vkDestroyDevice(VkDevice device, const VkAllocationCallbacks* pAllocator)
 {
     assertMockExists();
     g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
+}
+
+void vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue)
+{
+    assertMockExists();
+    g_pMock->getMockDeviceFcts().vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
 }
 
 }  // namespace
@@ -158,9 +174,11 @@ MockVulkanLoader::MockVulkanLoader()
         .vkGetPhysicalDeviceFeatures = vkGetPhysicalDeviceFeatures,
         .vkEnumerateDeviceExtensionProperties = vkEnumerateDeviceExtensionProperties,
         .vkGetPhysicalDeviceQueueFamilyProperties = vkGetPhysicalDeviceQueueFamilyProperties,
+        .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
     })
   , m_dFcts(VulkanDeviceFcts{
         .vkDestroyDevice = vkDestroyDevice,
+        .vkGetDeviceQueue = vkGetDeviceQueue,
     })
 {
     if (g_pMock)

@@ -119,6 +119,7 @@ TEST_F(VulkanLoaderTest, loadInstanceFcts)
     expectInstFctLoaded("vkGetPhysicalDeviceFeatures");
     expectInstFctLoaded("vkEnumerateDeviceExtensionProperties");
     expectInstFctLoaded("vkGetPhysicalDeviceQueueFamilyProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceMemoryProperties");
 
     auto instanceFcts = pLoader->loadInstanceFcts(mockVkInstance);
     EXPECT_THAT(instanceFcts.vkDestroyInstance, NotNull());
@@ -142,6 +143,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
             .WillOnce(Return(reinterpret_cast<PFN_vkVoidFunction>(0xabcde)));
     };
     expectDeviceFctLoaded("vkDestroyDevice");
+    expectDeviceFctLoaded("vkGetDeviceQueue");
 
     auto deviceFcts = pLoader->loadDeviceFcts(mockVkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());

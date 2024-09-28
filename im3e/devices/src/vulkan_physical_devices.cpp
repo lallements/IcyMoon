@@ -154,6 +154,7 @@ auto enumerateAndRankDevices(const ILogger& rLogger, const VulkanInstanceFcts& r
             .vkPhysicalDevice = vkPhysicalDevice,
         };
         rFcts.vkGetPhysicalDeviceProperties(vkPhysicalDevice, &device.vkDeviceProperties);
+        rFcts.vkGetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &device.vkDeviceMemoryProperties);
         rFcts.vkGetPhysicalDeviceFeatures(vkPhysicalDevice, &device.vkDeviceFeatures);
         device.queueFamilies = getQueueFamilyProperties(rFcts, vkInstance, vkPhysicalDevice, rIsPresentationSupported);
 

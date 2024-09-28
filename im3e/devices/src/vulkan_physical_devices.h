@@ -16,6 +16,7 @@ struct VulkanPhysicalDevice
 {
     VkPhysicalDevice vkPhysicalDevice{};
     VkPhysicalDeviceProperties vkDeviceProperties{};
+    VkPhysicalDeviceMemoryProperties vkDeviceMemoryProperties{};
     VkPhysicalDeviceFeatures vkDeviceFeatures{};
 
     struct QueueFamilies

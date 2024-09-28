@@ -70,7 +70,12 @@ VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, uniq
     }
 }
 
-auto VulkanInstance::choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported)
+auto VulkanInstance::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
+{
+    return m_pLoader->loadDeviceFcts(vkDevice);
+}
+
+auto VulkanInstance::choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported) const
     -> VulkanPhysicalDevice
 {
     VulkanPhysicalDevices physicalDevices(*m_pLogger, m_fcts, m_extensions, m_pVkInstance.get(),

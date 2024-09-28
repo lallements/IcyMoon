@@ -50,6 +50,8 @@ public:
     MOCK_METHOD(void, vkGetPhysicalDeviceQueueFamilyProperties,
                 (VkPhysicalDevice physicalDevice, uint32_t* pQueueFamilyPropertyCount,
                  VkQueueFamilyProperties* pQueueFamilyProperties));
+    MOCK_METHOD(void, vkGetPhysicalDeviceMemoryProperties,
+                (VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties));
 };
 
 class MockDeviceFcts
@@ -59,6 +61,8 @@ public:
     virtual ~MockDeviceFcts();
 
     MOCK_METHOD(void, vkDestroyDevice, (VkDevice device, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(void, vkGetDeviceQueue,
+                (VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue));
 };
 
 class MockVulkanLoader : public IVulkanLoader
@@ -67,9 +71,9 @@ public:
     MockVulkanLoader();
     ~MockVulkanLoader() override;
 
-    MOCK_METHOD(VulkanGlobalFcts, loadGlobalFcts, (), (override));
-    MOCK_METHOD(VulkanInstanceFcts, loadInstanceFcts, (VkInstance vkInstance), (override));
-    MOCK_METHOD(VulkanDeviceFcts, loadDeviceFcts, (VkDevice vkDevice), (override));
+    MOCK_METHOD(VulkanGlobalFcts, loadGlobalFcts, (), (const, override));
+    MOCK_METHOD(VulkanInstanceFcts, loadInstanceFcts, (VkInstance vkInstance), (const, override));
+    MOCK_METHOD(VulkanDeviceFcts, loadDeviceFcts, (VkDevice vkDevice), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
 

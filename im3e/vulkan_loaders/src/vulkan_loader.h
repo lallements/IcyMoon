@@ -12,9 +12,9 @@ public:
     VulkanLoader(VulkanLoaderConfig config, UniquePtrWithDeleter<void> pLibrary,
                  PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr, PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr);
 
-    auto loadGlobalFcts() -> VulkanGlobalFcts override;
-    auto loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts override;
-    auto loadDeviceFcts(VkDevice vkDevice) -> VulkanDeviceFcts override;
+    auto loadGlobalFcts() const -> VulkanGlobalFcts override;
+    auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts override;
+    auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts override;
 
 private:
     const VulkanLoaderConfig m_config;
