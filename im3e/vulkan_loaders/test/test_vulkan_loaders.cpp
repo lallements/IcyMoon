@@ -30,8 +30,11 @@ struct VulkanLoaderTest : public Test
 
     auto createLoader()
     {
-        return make_unique<VulkanLoader>(VulkanLoaderConfig{}, createMockLibrary(), &mockVkGetInstanceProcAddr,
-                                         &mockVkGetDeviceProcAddr);
+        return make_unique<VulkanLoader>(
+            VulkanLoaderConfig{
+                .isDebugEnabled = true,
+            },
+            createMockLibrary(), &mockVkGetInstanceProcAddr, &mockVkGetDeviceProcAddr);
     }
 
     MockFunction<PFN_vkVoidFunction(VkInstance, const char*)> m_mockVkGetInstanceProcAddr;
@@ -109,6 +112,13 @@ TEST_F(VulkanLoaderTest, loadInstanceFcts)
     };
     expectInstFctLoaded("vkDestroyInstance");
     expectInstFctLoaded("vkCreateDevice");
+    expectInstFctLoaded("vkCreateDebugUtilsMessengerEXT");
+    expectInstFctLoaded("vkDestroyDebugUtilsMessengerEXT");
+    expectInstFctLoaded("vkEnumeratePhysicalDevices");
+    expectInstFctLoaded("vkGetPhysicalDeviceProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceFeatures");
+    expectInstFctLoaded("vkEnumerateDeviceExtensionProperties");
+    expectInstFctLoaded("vkGetPhysicalDeviceQueueFamilyProperties");
 
     auto instanceFcts = pLoader->loadInstanceFcts(mockVkInstance);
     EXPECT_THAT(instanceFcts.vkDestroyInstance, NotNull());

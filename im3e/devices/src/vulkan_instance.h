@@ -2,6 +2,7 @@
 
 #include "vulkan_debug_message_handler.h"
 #include "vulkan_extensions.h"
+#include "vulkan_physical_devices.h"
 
 #include <im3e/api/logger.h>
 #include <im3e/api/vulkan_loader.h>
@@ -14,6 +15,8 @@ class VulkanInstance
 {
 public:
     VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, std::unique_ptr<IVulkanLoader> pLoader);
+
+    auto choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported) -> VulkanPhysicalDevice;
 
     auto getFcts() -> VulkanInstanceFcts& { return m_fcts; }
 

@@ -69,3 +69,11 @@ VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, uniq
         m_pDebugMessageHandler = make_unique<VulkanDebugMessageHandler>(*m_pLogger, m_fcts, m_pVkInstance.get());
     }
 }
+
+auto VulkanInstance::choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported)
+    -> VulkanPhysicalDevice
+{
+    VulkanPhysicalDevices physicalDevices(*m_pLogger, m_fcts, m_extensions, m_pVkInstance.get(),
+                                          rIsPresentationSupported);
+    return physicalDevices.choosePhysicalDevice();
+}

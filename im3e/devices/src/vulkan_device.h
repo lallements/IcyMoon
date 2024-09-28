@@ -21,6 +21,7 @@ private:
     std::unique_ptr<ILogger> m_pLogger;
     const DeviceConfig m_config;
     VulkanInstance m_instance;
+    VulkanPhysicalDevice m_physicalDevice;
 };
 
 }  // namespace im3e

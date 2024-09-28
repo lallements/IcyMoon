@@ -12,6 +12,7 @@ VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
                createVulkanLoader(VulkanLoaderConfig{
                    .isDebugEnabled = config.isDebugEnabled,
                }))
+  , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
 {
 }
 

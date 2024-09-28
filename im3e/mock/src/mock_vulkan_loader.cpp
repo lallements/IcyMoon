@@ -73,6 +73,61 @@ VkResult vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInf
     return g_pMock->getMockInstanceFcts().vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
 }
 
+VkResult vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+                                        const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger)
+{
+    assertMockExists();
+    return g_pMock->getMockInstanceFcts().vkCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
+}
+
+void vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger,
+                                     const VkAllocationCallbacks* pAllocator)
+{
+    assertMockExists();
+    g_pMock->getMockInstanceFcts().vkDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+}
+
+VkResult vkEnumeratePhysicalDevices(VkInstance instance, uint32_t* pPhysicalDeviceCount,
+                                    VkPhysicalDevice* pPhysicalDevices)
+{
+    assertMockExists();
+    return g_pMock->getMockInstanceFcts().vkEnumeratePhysicalDevices(instance, pPhysicalDeviceCount, pPhysicalDevices);
+}
+
+void vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties)
+{
+    assertMockExists();
+    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceProperties(physicalDevice, pProperties);
+}
+
+void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures)
+{
+    assertMockExists();
+    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceFeatures(physicalDevice, pFeatures);
+}
+
+VkResult vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName,
+                                              uint32_t* pPropertyCount, VkExtensionProperties* pProperties)
+{
+    assertMockExists();
+    return g_pMock->getMockInstanceFcts().vkEnumerateDeviceExtensionProperties(physicalDevice, pLayerName,
+                                                                               pPropertyCount, pProperties);
+}
+
+void vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint32_t* pQueueFamilyPropertyCount,
+                                              VkQueueFamilyProperties* pQueueFamilyProperties)
+{
+    assertMockExists();
+    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount,
+                                                                            pQueueFamilyProperties);
+}
+
+void vkDestroyDevice(VkDevice device, const VkAllocationCallbacks* pAllocator)
+{
+    assertMockExists();
+    g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
+}
+
 }  // namespace
 
 MockGlobalFcts::MockGlobalFcts() = default;
@@ -80,6 +135,9 @@ MockGlobalFcts::~MockGlobalFcts() = default;
 
 MockInstanceFcts::MockInstanceFcts() = default;
 MockInstanceFcts::~MockInstanceFcts() = default;
+
+MockDeviceFcts::MockDeviceFcts() = default;
+MockDeviceFcts::~MockDeviceFcts() = default;
 
 MockVulkanLoader::MockVulkanLoader()
   : m_gFcts(VulkanGlobalFcts{
@@ -91,6 +149,18 @@ MockVulkanLoader::MockVulkanLoader()
   , m_iFcts(VulkanInstanceFcts{
         .vkDestroyInstance = vkDestroyInstance,
         .vkCreateDevice = vkCreateDevice,
+
+        .vkCreateDebugUtilsMessengerEXT = vkCreateDebugUtilsMessengerEXT,
+        .vkDestroyDebugUtilsMessengerEXT = vkDestroyDebugUtilsMessengerEXT,
+
+        .vkEnumeratePhysicalDevices = vkEnumeratePhysicalDevices,
+        .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
+        .vkGetPhysicalDeviceFeatures = vkGetPhysicalDeviceFeatures,
+        .vkEnumerateDeviceExtensionProperties = vkEnumerateDeviceExtensionProperties,
+        .vkGetPhysicalDeviceQueueFamilyProperties = vkGetPhysicalDeviceQueueFamilyProperties,
+    })
+  , m_dFcts(VulkanDeviceFcts{
+        .vkDestroyDevice = vkDestroyDevice,
     })
 {
     if (g_pMock)
@@ -101,6 +171,7 @@ MockVulkanLoader::MockVulkanLoader()
 
     ON_CALL(*this, loadGlobalFcts()).WillByDefault(Return(m_gFcts));
     ON_CALL(*this, loadInstanceFcts(_)).WillByDefault(Return(m_iFcts));
+    ON_CALL(*this, loadDeviceFcts(_)).WillByDefault(Return(m_dFcts));
 }
 
 MockVulkanLoader::~MockVulkanLoader()

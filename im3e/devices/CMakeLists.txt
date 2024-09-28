@@ -8,6 +8,8 @@ add_library(im3e_devices STATIC
     src/vulkan_extensions.h
     src/vulkan_instance.cpp
     src/vulkan_instance.h
+    src/vulkan_physical_devices.cpp
+    src/vulkan_physical_devices.h
 )
 
 target_include_directories(im3e_devices

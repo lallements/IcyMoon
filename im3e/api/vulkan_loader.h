@@ -22,6 +22,12 @@ struct VulkanInstanceFcts
 
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT{};
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT{};
+
+    PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices{};
+    PFN_vkGetPhysicalDeviceProperties vkGetPhysicalDeviceProperties{};
+    PFN_vkGetPhysicalDeviceFeatures vkGetPhysicalDeviceFeatures{};
+    PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties{};
+    PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties{};
 };
 
 struct VulkanDeviceFcts

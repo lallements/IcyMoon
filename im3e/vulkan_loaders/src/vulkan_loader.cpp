@@ -38,6 +38,12 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) -> VulkanInstanceFcts
     VulkanInstanceFcts fcts{
         LOAD_INST_FCT(vkDestroyInstance),
         LOAD_INST_FCT(vkCreateDevice),
+
+        LOAD_INST_FCT(vkEnumeratePhysicalDevices),
+        LOAD_INST_FCT(vkGetPhysicalDeviceProperties),
+        LOAD_INST_FCT(vkGetPhysicalDeviceFeatures),
+        LOAD_INST_FCT(vkEnumerateDeviceExtensionProperties),
+        LOAD_INST_FCT(vkGetPhysicalDeviceQueueFamilyProperties),
     };
     if (m_config.isDebugEnabled)
     {
