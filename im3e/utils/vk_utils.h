@@ -4,6 +4,7 @@
 #include <im3e/utils/types.h>
 
 #include <fmt/format.h>
+#include <vk_mem_alloc.h>
 
 #include <string_view>
 #include <vector>

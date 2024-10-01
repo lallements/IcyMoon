@@ -24,6 +24,10 @@ endif()
 
 add_definitions(
     -DVK_NO_PROTOTYPES # for vulkan headers: we link dynamically and do not want vk function definitions
+
+    # Vulkan Memory Allocator
+    -DVMA_STATIC_VULKAN_FUNCTIONS=0
+    -DVMA_DYNAMIC_VULKAN_FUNCTIONS=0
 )
 
 if (MSVC)
