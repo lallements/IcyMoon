@@ -1,5 +1,7 @@
 add_library(im3e_api INTERFACE
+    command_buffer.h
     device.h
+    frame_pipeline.h
     logger.h
     vulkan_loader.h
 )
