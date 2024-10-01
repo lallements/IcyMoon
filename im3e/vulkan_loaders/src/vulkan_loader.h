@@ -15,6 +15,7 @@ public:
     auto loadGlobalFcts() const -> VulkanGlobalFcts override;
     auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts override;
     auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts override;
+    auto loadVmaFcts(VkInstance VkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions override;
 
 private:
     const VulkanLoaderConfig m_config;

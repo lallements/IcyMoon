@@ -74,6 +74,7 @@ public:
     MOCK_METHOD(VulkanGlobalFcts, loadGlobalFcts, (), (const, override));
     MOCK_METHOD(VulkanInstanceFcts, loadInstanceFcts, (VkInstance vkInstance), (const, override));
     MOCK_METHOD(VulkanDeviceFcts, loadDeviceFcts, (VkDevice vkDevice), (const, override));
+    MOCK_METHOD(VmaVulkanFunctions, loadVmaFcts, (VkInstance vkInstance, VkDevice vkDevice), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
 
@@ -85,6 +86,7 @@ private:
     VulkanGlobalFcts m_gFcts;
     VulkanInstanceFcts m_iFcts;
     VulkanDeviceFcts m_dFcts;
+    VmaVulkanFunctions m_vmaFcts;
 
     NiceMock<MockGlobalFcts> m_mockGFcts;
     NiceMock<MockInstanceFcts> m_mockIFcts;

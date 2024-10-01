@@ -1,5 +1,7 @@
 #include "mock_device.h"
 
+#include <im3e/test_utils/test_utils.h>
+
 using namespace im3e;
 using namespace std;
 
@@ -13,13 +15,19 @@ public:
     {
     }
 
+    auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_rMock.getImageFactory(); }
+
 private:
     MockDevice& m_rMock;
 };
 
 }  // namespace
 
-MockDevice::MockDevice() = default;
+MockDevice::MockDevice()
+{
+    ON_CALL(*this, getImageFactory()).WillByDefault(Invoke([&] { return m_mockImageFactory.createMockProxy(); }));
+}
+
 MockDevice::~MockDevice() = default;
 
 auto MockDevice::createMockProxy() -> unique_ptr<IDevice>

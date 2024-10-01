@@ -1,5 +1,7 @@
 #include "vulkan_device.h"
 
+#include "vulkan_images.h"
+
 #include <im3e/utils/throw_utils.h>
 
 #include <algorithm>
@@ -141,6 +143,24 @@ auto createDeviceAndLoadFcts(const VulkanInstance& rInstance, const VulkanPhysic
     return VkUniquePtr<VkDevice>(vkDevice, [&rFcts](VkDevice vkDevice) { rFcts.vkDestroyDevice(vkDevice, nullptr); });
 }
 
+auto createVmaAllocator(VkInstance vkInstance, VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice,
+                        const VmaVulkanFunctions& rVmaVkFcts)
+{
+    VmaAllocatorCreateInfo vmaCreateInfo{
+        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT,
+        .physicalDevice = vkPhysicalDevice,
+        .device = vkDevice,
+        .pVulkanFunctions = &rVmaVkFcts,
+        .instance = vkInstance,
+        .vulkanApiVersion = VulkanInstance::getVulkanApiVersion(),
+    };
+
+    VmaAllocator vmaAllocator{};
+    throwIfVkFailed(vmaCreateAllocator(&vmaCreateInfo, &vmaAllocator), "Could not create VMA allocator");
+
+    return VkUniquePtr<VmaAllocator>(vmaAllocator, [](auto* pVmaAllocator) { vmaDestroyAllocator(pVmaAllocator); });
+}
+
 auto getVkQueues(const VulkanDeviceFcts& rFcts, VkDevice vkDevice, const vector<uint32_t>& rFamilyIndices)
 {
     vector<VkQueue> vkQueues;
@@ -164,6 +184,8 @@ VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
                }))
   , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
   , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
+  , m_pVmaAllocator(createVmaAllocator(m_instance.getVkInstance(), m_physicalDevice.vkPhysicalDevice, m_pVkDevice.get(),
+                                       m_instance.loadVmaFcts(m_pVkDevice.get())))
 
   , m_vkComputeQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.computeFamilyIndices))
   , m_vkGraphicsQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.graphicsFamilyIndices))
@@ -172,6 +194,15 @@ VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
         getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.presentationFamilyIndices))
 {
     m_pLogger->info("Successfully initialized");
+}
+
+auto VulkanDevice::getImageFactory() const -> shared_ptr<const IImageFactory>
+{
+    if (!m_pImageFactory)
+    {
+        m_pImageFactory = createVulkanImageFactory(shared_from_this());
+    }
+    return m_pImageFactory;
 }
 
 auto im3e::createDevice(const ILogger& rLogger, DeviceConfig config) -> shared_ptr<IDevice>

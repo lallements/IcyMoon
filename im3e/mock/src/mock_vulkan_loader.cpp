@@ -32,6 +32,10 @@ public:
     {
         return m_rMock.loadDeviceFcts(vkDevice);
     }
+    auto loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions override
+    {
+        return m_rMock.loadVmaFcts(vkInstance, vkDevice);
+    }
 
 private:
     MockVulkanLoader& m_rMock;
@@ -180,6 +184,9 @@ MockVulkanLoader::MockVulkanLoader()
         .vkDestroyDevice = vkDestroyDevice,
         .vkGetDeviceQueue = vkGetDeviceQueue,
     })
+  , m_vmaFcts(VmaVulkanFunctions{
+
+    })
 {
     if (g_pMock)
     {
@@ -190,6 +197,7 @@ MockVulkanLoader::MockVulkanLoader()
     ON_CALL(*this, loadGlobalFcts()).WillByDefault(Return(m_gFcts));
     ON_CALL(*this, loadInstanceFcts(_)).WillByDefault(Return(m_iFcts));
     ON_CALL(*this, loadDeviceFcts(_)).WillByDefault(Return(m_dFcts));
+    ON_CALL(*this, loadVmaFcts(_, _)).WillByDefault(Return(m_vmaFcts));
 }
 
 MockVulkanLoader::~MockVulkanLoader()

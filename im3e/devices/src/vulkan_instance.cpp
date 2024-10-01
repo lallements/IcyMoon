@@ -14,8 +14,8 @@ auto createVulkanAppInfo()
         .pApplicationName = "IcyMoonEngine",
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),  // NOLINT warning due to Vulkan macro
         .pEngineName = "IcyMoonEngine",
-        .engineVersion = VK_MAKE_VERSION(0, 1, 0),  // NOLINT warning due to Vulkan macro
-        .apiVersion = VK_API_VERSION_1_3,           // NOLINT warning due to Vulkan macro
+        .engineVersion = VK_MAKE_VERSION(0, 1, 0),            // NOLINT warning due to Vulkan macro
+        .apiVersion = VulkanInstance::getVulkanApiVersion(),  // NOLINT warning due to Vulkan macro
     };
 }
 
@@ -73,6 +73,11 @@ VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, uniq
 auto VulkanInstance::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
 {
     return m_pLoader->loadDeviceFcts(vkDevice);
+}
+
+auto VulkanInstance::loadVmaFcts(VkDevice vkDevice) const -> VmaVulkanFunctions
+{
+    return m_pLoader->loadVmaFcts(m_pVkInstance.get(), vkDevice);
 }
 
 auto VulkanInstance::choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported) const

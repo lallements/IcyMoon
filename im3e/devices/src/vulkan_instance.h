@@ -17,10 +17,13 @@ public:
     VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, std::unique_ptr<IVulkanLoader> pLoader);
 
     auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts;
+    auto loadVmaFcts(VkDevice vkDevice) const -> VmaVulkanFunctions;
     auto choosePhysicalDevice(const IsPresentationSupportedFct& rIsPresentationSupported) const -> VulkanPhysicalDevice;
 
+    static auto getVulkanApiVersion() -> uint32_t { return VK_API_VERSION_1_3; }
     auto getFcts() const -> const VulkanInstanceFcts& { return m_fcts; }
     auto getExtensions() const -> const VulkanExtensions& { return m_extensions; }
+    auto getVkInstance() const -> VkInstance { return m_pVkInstance.get(); }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
