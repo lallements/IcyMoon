@@ -17,6 +17,7 @@ using ::testing::IsSubsetOf;
 using ::testing::IsSupersetOf;
 using ::testing::IsTrue;
 using ::testing::MockFunction;
+using ::testing::Ne;
 using ::testing::NiceMock;
 using ::testing::NotNull;
 using ::testing::Return;

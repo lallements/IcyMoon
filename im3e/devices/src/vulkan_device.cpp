@@ -1,11 +1,19 @@
-#include "vulkan_device.h"
-
+#include "devices.h"
 #include "vulkan_images.h"
+#include "vulkan_instance.h"
 
+#include <im3e/api/device.h>
+#include <im3e/api/image.h>
+#include <im3e/api/logger.h>
+#include <im3e/api/vulkan_loader.h>
 #include <im3e/utils/throw_utils.h>
+#include <im3e/utils/types.h>
+#include <im3e/utils/vk_utils.h>
 
 #include <algorithm>
+#include <memory>
 #include <set>
+#include <vector>
 
 using namespace im3e;
 using namespace std;
@@ -173,37 +181,61 @@ auto getVkQueues(const VulkanDeviceFcts& rFcts, VkDevice vkDevice, const vector<
     return vkQueues;
 }
 
-}  // namespace
-
-VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
-  : m_pLogger(rLogger.createChild("VulkanDevice"))
-  , m_config(move(config))
-  , m_instance(*m_pLogger, m_config.isDebugEnabled,
-               createVulkanLoader(VulkanLoaderConfig{
-                   .isDebugEnabled = config.isDebugEnabled,
-               }))
-  , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
-  , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
-  , m_pVmaAllocator(createVmaAllocator(m_instance.getVkInstance(), m_physicalDevice.vkPhysicalDevice, m_pVkDevice.get(),
-                                       m_instance.loadVmaFcts(m_pVkDevice.get())))
-
-  , m_vkComputeQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.computeFamilyIndices))
-  , m_vkGraphicsQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.graphicsFamilyIndices))
-  , m_vkTransferQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.transferFamilyIndices))
-  , m_vkPresentationQueues(
-        getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.presentationFamilyIndices))
+class VulkanDevice : public IDevice, public enable_shared_from_this<VulkanDevice>
 {
-    m_pLogger->info("Successfully initialized");
-}
+public:
+    VulkanDevice(const ILogger& rLogger, DeviceConfig config)
+      : m_pLogger(rLogger.createChild("VulkanDevice"))
+      , m_config(move(config))
+      , m_instance(*m_pLogger, m_config.isDebugEnabled,
+                   createVulkanLoader(VulkanLoaderConfig{
+                       .isDebugEnabled = config.isDebugEnabled,
+                   }))
+      , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
+      , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
+      , m_pVmaAllocator(createVmaAllocator(m_instance.getVkInstance(), m_physicalDevice.vkPhysicalDevice,
+                                           m_pVkDevice.get(), m_instance.loadVmaFcts(m_pVkDevice.get())))
 
-auto VulkanDevice::getImageFactory() const -> shared_ptr<const IImageFactory>
-{
-    if (!m_pImageFactory)
+      , m_vkComputeQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.computeFamilyIndices))
+      , m_vkGraphicsQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.graphicsFamilyIndices))
+      , m_vkTransferQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.transferFamilyIndices))
+      , m_vkPresentationQueues(
+            getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.presentationFamilyIndices))
     {
-        m_pImageFactory = createVulkanImageFactory(shared_from_this());
+        m_pLogger->info("Successfully initialized");
     }
-    return m_pImageFactory;
-}
+
+    auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
+    auto getVmaAllocator() const -> VmaAllocator override { return m_pVmaAllocator.get(); }
+    auto getFcts() const -> const VulkanDeviceFcts& override { return m_fcts; }
+    auto getImageFactory() const -> shared_ptr<const IImageFactory> override
+    {
+        if (!m_pImageFactory)
+        {
+            m_pImageFactory = createVulkanImageFactory(shared_from_this());
+        }
+        return m_pImageFactory;
+    }
+
+private:
+    unique_ptr<ILogger> m_pLogger;
+    const DeviceConfig m_config;
+    const VulkanInstance m_instance;
+    const VulkanPhysicalDevice m_physicalDevice;
+    VulkanDeviceFcts m_fcts;
+
+    VkUniquePtr<VkDevice> m_pVkDevice;
+    VkUniquePtr<VmaAllocator> m_pVmaAllocator;
+
+    vector<VkQueue> m_vkComputeQueues;
+    vector<VkQueue> m_vkGraphicsQueues;
+    vector<VkQueue> m_vkTransferQueues;
+    vector<VkQueue> m_vkPresentationQueues;
+
+    mutable shared_ptr<IImageFactory> m_pImageFactory;
+};
+
+}  // namespace
 
 auto im3e::createDevice(const ILogger& rLogger, DeviceConfig config) -> shared_ptr<IDevice>
 {

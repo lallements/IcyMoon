@@ -5,11 +5,11 @@
 
 namespace im3e {
 
-class MockGlobalFcts
+class MockVulkanGlobalFcts
 {
 public:
-    MockGlobalFcts();
-    virtual ~MockGlobalFcts();
+    MockVulkanGlobalFcts();
+    virtual ~MockVulkanGlobalFcts();
 
     MOCK_METHOD(VkResult, vkEnumerateInstanceVersion, (uint32_t * pApiVersion));
     MOCK_METHOD(VkResult, vkEnumerateInstanceExtensionProperties,
@@ -21,11 +21,11 @@ public:
                  VkInstance* pInstance));
 };
 
-class MockInstanceFcts
+class MockVulkanInstanceFcts
 {
 public:
-    MockInstanceFcts();
-    virtual ~MockInstanceFcts();
+    MockVulkanInstanceFcts();
+    virtual ~MockVulkanInstanceFcts();
 
     MOCK_METHOD(void, vkDestroyInstance, (VkInstance instance, const VkAllocationCallbacks* pAllocator));
     MOCK_METHOD(VkResult, vkCreateDevice,
@@ -54,15 +54,21 @@ public:
                 (VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties));
 };
 
-class MockDeviceFcts
+class MockVulkanDeviceFcts
 {
 public:
-    MockDeviceFcts();
-    virtual ~MockDeviceFcts();
+    MockVulkanDeviceFcts();
+    virtual ~MockVulkanDeviceFcts();
 
     MOCK_METHOD(void, vkDestroyDevice, (VkDevice device, const VkAllocationCallbacks* pAllocator));
     MOCK_METHOD(void, vkGetDeviceQueue,
                 (VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue));
+    MOCK_METHOD(void, vkGetImageSubresourceLayout,
+                (VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout));
+    MOCK_METHOD(VkResult, vkMapMemory,
+                (VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
+                 void** ppData));
+    MOCK_METHOD(void, vkUnmapMemory, (VkDevice device, VkDeviceMemory memory));
 };
 
 class MockVulkanLoader : public IVulkanLoader
@@ -78,9 +84,11 @@ public:
 
     auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
 
-    auto getMockGlobalFcts() -> MockGlobalFcts& { return m_mockGFcts; }
-    auto getMockInstanceFcts() -> MockInstanceFcts& { return m_mockIFcts; }
-    auto getMockDeviceFcts() -> MockDeviceFcts& { return m_mockDFcts; }
+    auto getDeviceFcts() const -> const VulkanDeviceFcts { return m_dFcts; }
+
+    auto getMockGlobalFcts() -> MockVulkanGlobalFcts& { return m_mockGFcts; }
+    auto getMockInstanceFcts() -> MockVulkanInstanceFcts& { return m_mockIFcts; }
+    auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockDFcts; }
 
 private:
     VulkanGlobalFcts m_gFcts;
@@ -88,9 +96,9 @@ private:
     VulkanDeviceFcts m_dFcts;
     VmaVulkanFunctions m_vmaFcts;
 
-    NiceMock<MockGlobalFcts> m_mockGFcts;
-    NiceMock<MockInstanceFcts> m_mockIFcts;
-    NiceMock<MockDeviceFcts> m_mockDFcts;
+    NiceMock<MockVulkanGlobalFcts> m_mockGFcts;
+    NiceMock<MockVulkanInstanceFcts> m_mockIFcts;
+    NiceMock<MockVulkanDeviceFcts> m_mockDFcts;
 };
 
 }  // namespace im3e

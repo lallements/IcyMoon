@@ -15,6 +15,9 @@ public:
     {
     }
 
+    auto getVkDevice() const -> VkDevice override { return m_rMock.getVkDevice(); }
+    auto getVmaAllocator() const -> VmaAllocator override { return m_rMock.getVmaAllocator(); }
+    auto getFcts() const -> const VulkanDeviceFcts& override { return m_rMock.getFcts(); }
     auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_rMock.getImageFactory(); }
 
 private:
@@ -25,7 +28,10 @@ private:
 
 MockDevice::MockDevice()
 {
+    ON_CALL(*this, getVkDevice()).WillByDefault(Return(m_vkDevice));
     ON_CALL(*this, getImageFactory()).WillByDefault(Invoke([&] { return m_mockImageFactory.createMockProxy(); }));
+    ON_CALL(*this, getFcts()).WillByDefault(Invoke([&] { return m_mockVulkanLoader.getDeviceFcts(); }));
+    ON_CALL(*this, getVmaAllocator()).WillByDefault(Invoke(Return(m_vmaAllocator)));
 }
 
 MockDevice::~MockDevice() = default;

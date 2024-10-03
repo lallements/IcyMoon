@@ -67,6 +67,9 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
     return VulkanDeviceFcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
+        LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
+        LOAD_DEVICE_FCT(vkMapMemory),
+        LOAD_DEVICE_FCT(vkUnmapMemory),
     };
 }
 

@@ -9,6 +9,16 @@
 #include <string_view>
 #include <vector>
 
+constexpr bool operator==(const VkExtent2D& rVkExtent1, const VkExtent2D& rVkExtent2)
+{
+    return rVkExtent1.width == rVkExtent2.width && rVkExtent1.height == rVkExtent2.height;
+}
+
+constexpr bool operator!=(const VkExtent2D& rVkExtent1, const VkExtent2D& rVkExtent2)
+{
+    return rVkExtent1.width != rVkExtent2.width || rVkExtent1.height != rVkExtent2.height;
+}
+
 namespace im3e {
 
 template <typename T, typename F, typename... Args>

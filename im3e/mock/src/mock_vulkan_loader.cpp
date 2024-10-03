@@ -148,16 +148,36 @@ void vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queue
     g_pMock->getMockDeviceFcts().vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
 }
 
+void vkGetImageSubresourceLayout(VkDevice device, VkImage image, const VkImageSubresource* pSubresource,
+                                 VkSubresourceLayout* pLayout)
+{
+    assertMockExists();
+    g_pMock->getMockDeviceFcts().vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
+}
+
+VkResult vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size,
+                     VkMemoryMapFlags flags, void** ppData)
+{
+    assertMockExists();
+    return g_pMock->getMockDeviceFcts().vkMapMemory(device, memory, offset, size, flags, ppData);
+}
+
+void vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
+{
+    assertMockExists();
+    g_pMock->getMockDeviceFcts().vkUnmapMemory(device, memory);
+}
+
 }  // namespace
 
-MockGlobalFcts::MockGlobalFcts() = default;
-MockGlobalFcts::~MockGlobalFcts() = default;
+MockVulkanGlobalFcts::MockVulkanGlobalFcts() = default;
+MockVulkanGlobalFcts::~MockVulkanGlobalFcts() = default;
 
-MockInstanceFcts::MockInstanceFcts() = default;
-MockInstanceFcts::~MockInstanceFcts() = default;
+MockVulkanInstanceFcts::MockVulkanInstanceFcts() = default;
+MockVulkanInstanceFcts::~MockVulkanInstanceFcts() = default;
 
-MockDeviceFcts::MockDeviceFcts() = default;
-MockDeviceFcts::~MockDeviceFcts() = default;
+MockVulkanDeviceFcts::MockVulkanDeviceFcts() = default;
+MockVulkanDeviceFcts::~MockVulkanDeviceFcts() = default;
 
 MockVulkanLoader::MockVulkanLoader()
   : m_gFcts(VulkanGlobalFcts{
@@ -183,6 +203,9 @@ MockVulkanLoader::MockVulkanLoader()
   , m_dFcts(VulkanDeviceFcts{
         .vkDestroyDevice = vkDestroyDevice,
         .vkGetDeviceQueue = vkGetDeviceQueue,
+        .vkGetImageSubresourceLayout = vkGetImageSubresourceLayout,
+        .vkMapMemory = vkMapMemory,
+        .vkUnmapMemory = vkUnmapMemory,
     })
   , m_vmaFcts(VmaVulkanFunctions{
 

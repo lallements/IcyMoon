@@ -18,6 +18,7 @@ target_link_libraries(im3e_test_utils
     GTest::gmock
     GTest::gtest_main
     im3e_api
+    im3e_utils
 )
 
 im3e_exclude_from_coverage()

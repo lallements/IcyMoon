@@ -35,6 +35,9 @@ struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
+    PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
+    PFN_vkMapMemory vkMapMemory{};
+    PFN_vkUnmapMemory vkUnmapMemory{};
 };
 
 class IVulkanLoader

@@ -3,6 +3,7 @@ im3e_add_integration_tests_executable(
     integration_im3e_devices
   SOURCES
     integration_device.cpp
+    integration_vulkan_images.cpp
 )
 
 target_link_libraries(integration_im3e_devices

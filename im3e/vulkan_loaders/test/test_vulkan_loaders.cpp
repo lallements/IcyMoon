@@ -144,6 +144,9 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     };
     expectDeviceFctLoaded("vkDestroyDevice");
     expectDeviceFctLoaded("vkGetDeviceQueue");
+    expectDeviceFctLoaded("vkGetImageSubresourceLayout");
+    expectDeviceFctLoaded("vkMapMemory");
+    expectDeviceFctLoaded("vkUnmapMemory");
 
     auto deviceFcts = pLoader->loadDeviceFcts(mockVkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
