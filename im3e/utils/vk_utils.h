@@ -33,18 +33,6 @@ std::vector<T> getVkList(F fct, std::string_view name, Args... args)
 }
 
 template <class T>
-constexpr VkFlags toVkFlags(T vkFlag)
-{
-    return static_cast<VkFlags>(vkFlag);
-}
-
-template <class T, class... Args>
-constexpr VkFlags toVkFlags(T vkFlag, Args... args)
-{
-    return static_cast<VkFlags>(vkFlag) | toVkFlags(args...);
-}
-
-template <class T>
 constexpr bool vkFlagsContain(VkFlags vkFlags, T vkFlag)
 {
     return (vkFlags & static_cast<VkFlags>(vkFlag)) != 0U;

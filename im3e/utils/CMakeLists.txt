@@ -18,3 +18,5 @@ target_link_libraries(im3e_utils
     fmt::fmt
     Vulkan::Headers 
 )
+
+add_subdirectory(test)

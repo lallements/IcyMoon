@@ -84,7 +84,8 @@ public:
 
     auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
 
-    auto getDeviceFcts() const -> const VulkanDeviceFcts { return m_dFcts; }
+    auto getInstanceFcts() const -> const VulkanInstanceFcts& { return m_iFcts; }
+    auto getDeviceFcts() const -> const VulkanDeviceFcts& { return m_dFcts; }
 
     auto getMockGlobalFcts() -> MockVulkanGlobalFcts& { return m_mockGFcts; }
     auto getMockInstanceFcts() -> MockVulkanInstanceFcts& { return m_mockIFcts; }

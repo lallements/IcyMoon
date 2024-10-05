@@ -75,6 +75,9 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
 
 auto VulkanLoader::loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions
 {
+    throwIfArgNull(vkInstance, "Cannot load VMA functions without an instance");
+    throwIfArgNull(vkDevice, "Cannot load VMA functions without a device");
+
     return VmaVulkanFunctions{
         LOAD_INST_FCT(vkGetPhysicalDeviceProperties),
         LOAD_INST_FCT(vkGetPhysicalDeviceMemoryProperties),
