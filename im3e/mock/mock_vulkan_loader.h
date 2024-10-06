@@ -71,6 +71,67 @@ public:
     MOCK_METHOD(void, vkUnmapMemory, (VkDevice device, VkDeviceMemory memory));
 };
 
+class MockVmaVulkanFunctions
+{
+public:
+    MockVmaVulkanFunctions();
+    virtual ~MockVmaVulkanFunctions();
+
+    MOCK_METHOD(void, vkGetPhysicalDeviceProperties,
+                (VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties));
+    MOCK_METHOD(void, vkGetPhysicalDeviceMemoryProperties,
+                (VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties));
+    MOCK_METHOD(VkResult, vkAllocateMemory,
+                (VkDevice device, const VkMemoryAllocateInfo* pAllocateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkDeviceMemory* pMemory));
+    MOCK_METHOD(void, vkFreeMemory, (VkDevice device, VkDeviceMemory memory, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkMapMemory,
+                (VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
+                 void** ppData));
+    MOCK_METHOD(void, vkUnmapMemory, (VkDevice device, VkDeviceMemory memory));
+    MOCK_METHOD(VkResult, vkFlushMappedMemoryRanges,
+                (VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges));
+    MOCK_METHOD(VkResult, vkInvalidateMappedMemoryRanges,
+                (VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges));
+    MOCK_METHOD(VkResult, vkBindBufferMemory,
+                (VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset));
+    MOCK_METHOD(VkResult, vkBindImageMemory,
+                (VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset));
+    MOCK_METHOD(void, vkGetBufferMemoryRequirements,
+                (VkDevice device, VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements));
+    MOCK_METHOD(void, vkGetImageMemoryRequirements,
+                (VkDevice device, VkImage image, VkMemoryRequirements* pMemoryRequirements));
+    MOCK_METHOD(VkResult, vkCreateBuffer,
+                (VkDevice device, const VkBufferCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkBuffer* pBuffer));
+    MOCK_METHOD(void, vkDestroyBuffer, (VkDevice device, VkBuffer buffer, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkCreateImage,
+                (VkDevice device, const VkImageCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkImage* pImage));
+    MOCK_METHOD(void, vkDestroyImage, (VkDevice device, VkImage image, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(void, vkCmdCopyBuffer,
+                (VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t regionCount,
+                 const VkBufferCopy* pRegions));
+    MOCK_METHOD(void, vkGetBufferMemoryRequirements2KHR,
+                (VkDevice device, const VkBufferMemoryRequirementsInfo2* pInfo,
+                 VkMemoryRequirements2* pMemoryRequirements));
+    MOCK_METHOD(void, vkGetImageMemoryRequirements2KHR,
+                (VkDevice device, const VkImageMemoryRequirementsInfo2* pInfo,
+                 VkMemoryRequirements2* pMemoryRequirements));
+    MOCK_METHOD(VkResult, vkBindBufferMemory2KHR,
+                (VkDevice device, uint32_t bindInfoCount, const VkBindBufferMemoryInfo* pBindInfos));
+    MOCK_METHOD(VkResult, vkBindImageMemory2KHR,
+                (VkDevice device, uint32_t bindInfoCount, const VkBindImageMemoryInfo* pBindInfos));
+    MOCK_METHOD(void, vkGetPhysicalDeviceMemoryProperties2KHR,
+                (VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties2* pMemoryProperties));
+    MOCK_METHOD(void, vkGetDeviceBufferMemoryRequirements,
+                (VkDevice device, const VkDeviceBufferMemoryRequirements* pInfo,
+                 VkMemoryRequirements2* pMemoryRequirements));
+    MOCK_METHOD(void, vkGetDeviceImageMemoryRequirements,
+                (VkDevice device, const VkDeviceImageMemoryRequirements* pInfo,
+                 VkMemoryRequirements2* pMemoryRequirements));
+};
+
 class MockVulkanLoader : public IVulkanLoader
 {
 public:
@@ -84,12 +145,15 @@ public:
 
     auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
 
+    auto getGlobalFcts() const -> const VulkanGlobalFcts& { return m_gFcts; }
     auto getInstanceFcts() const -> const VulkanInstanceFcts& { return m_iFcts; }
     auto getDeviceFcts() const -> const VulkanDeviceFcts& { return m_dFcts; }
+    auto getVmaFcts() const -> const VmaVulkanFunctions& { return m_vmaFcts; }
 
     auto getMockGlobalFcts() -> MockVulkanGlobalFcts& { return m_mockGFcts; }
     auto getMockInstanceFcts() -> MockVulkanInstanceFcts& { return m_mockIFcts; }
     auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockDFcts; }
+    auto getMockVmaFcts() -> MockVmaVulkanFunctions& { return m_mockVmaFcts; }
 
 private:
     VulkanGlobalFcts m_gFcts;
@@ -100,6 +164,7 @@ private:
     NiceMock<MockVulkanGlobalFcts> m_mockGFcts;
     NiceMock<MockVulkanInstanceFcts> m_mockIFcts;
     NiceMock<MockVulkanDeviceFcts> m_mockDFcts;
+    NiceMock<MockVmaVulkanFunctions> m_mockVmaFcts;
 };
 
 }  // namespace im3e

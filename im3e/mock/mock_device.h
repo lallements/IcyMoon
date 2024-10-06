@@ -25,14 +25,18 @@ public:
     auto createMockProxy() -> std::unique_ptr<IDevice>;
 
     auto getMockVkDevice() const -> VkDevice { return m_vkDevice; }
-    auto getMockVmaAllocator() const -> VmaAllocator { return m_vmaAllocator; }
+    auto getMockVmaAllocator() const -> VmaAllocator { return m_pVmaAllocator.get(); }
     auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockVulkanLoader.getMockDeviceFcts(); }
     auto getMockImageFactory() -> MockImageFactory& { return m_mockImageFactory; }
 
 private:
-    VkDevice m_vkDevice = reinterpret_cast<VkDevice>(0xbaef532f3e4a);
-    VmaAllocator m_vmaAllocator = reinterpret_cast<VmaAllocator>(0xfe364b2ae3fc);
+    const VkInstance m_vkInstance = reinterpret_cast<VkInstance>(0x35e2ca18b3e);
+    const VkPhysicalDevice m_vkPhysicalDevice = reinterpret_cast<VkPhysicalDevice>(0xef45a3c4);
+    const VkDevice m_vkDevice = reinterpret_cast<VkDevice>(0xbaef532f3e4a);
+
     ::testing::NiceMock<MockVulkanLoader> m_mockVulkanLoader;
+
+    VkUniquePtr<VmaAllocator> m_pVmaAllocator;
     ::testing::NiceMock<MockImageFactory> m_mockImageFactory;
 };
 

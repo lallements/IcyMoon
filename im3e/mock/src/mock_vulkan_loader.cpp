@@ -41,133 +41,6 @@ private:
     MockVulkanLoader& m_rMock;
 };
 
-VkResult vkEnumerateInstanceVersion(uint32_t* pApiVersion)
-{
-    assertMockExists();
-    return g_pMock->getMockGlobalFcts().vkEnumerateInstanceVersion(pApiVersion);
-}
-
-VkResult vkEnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t* pPropertyCount,
-                                                VkExtensionProperties* pProperties)
-{
-    assertMockExists();
-    return g_pMock->getMockGlobalFcts().vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
-}
-
-VkResult vkEnumerateInstanceLayerProperties(uint32_t* pPropertyCount, VkLayerProperties* pProperties)
-{
-    assertMockExists();
-    return g_pMock->getMockGlobalFcts().vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties);
-}
-
-VkResult vkCreateInstance(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
-                          VkInstance* pInstance)
-{
-    assertMockExists();
-    return g_pMock->getMockGlobalFcts().vkCreateInstance(pCreateInfo, pAllocator, pInstance);
-}
-
-void vkDestroyInstance(VkInstance instance, const VkAllocationCallbacks* pAllocator)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkDestroyInstance(instance, pAllocator);
-}
-
-VkResult vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo,
-                        const VkAllocationCallbacks* pAllocator, VkDevice* pDevice)
-{
-    assertMockExists();
-    return g_pMock->getMockInstanceFcts().vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
-}
-
-VkResult vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-                                        const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger)
-{
-    assertMockExists();
-    return g_pMock->getMockInstanceFcts().vkCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
-}
-
-void vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger,
-                                     const VkAllocationCallbacks* pAllocator)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
-}
-
-VkResult vkEnumeratePhysicalDevices(VkInstance instance, uint32_t* pPhysicalDeviceCount,
-                                    VkPhysicalDevice* pPhysicalDevices)
-{
-    assertMockExists();
-    return g_pMock->getMockInstanceFcts().vkEnumeratePhysicalDevices(instance, pPhysicalDeviceCount, pPhysicalDevices);
-}
-
-void vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceProperties(physicalDevice, pProperties);
-}
-
-void vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceFeatures(physicalDevice, pFeatures);
-}
-
-VkResult vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName,
-                                              uint32_t* pPropertyCount, VkExtensionProperties* pProperties)
-{
-    assertMockExists();
-    return g_pMock->getMockInstanceFcts().vkEnumerateDeviceExtensionProperties(physicalDevice, pLayerName,
-                                                                               pPropertyCount, pProperties);
-}
-
-void vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice, uint32_t* pQueueFamilyPropertyCount,
-                                              VkQueueFamilyProperties* pQueueFamilyProperties)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, pQueueFamilyPropertyCount,
-                                                                            pQueueFamilyProperties);
-}
-
-void vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice,
-                                         VkPhysicalDeviceMemoryProperties* pMemoryProperties)
-{
-    assertMockExists();
-    g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
-}
-
-void vkDestroyDevice(VkDevice device, const VkAllocationCallbacks* pAllocator)
-{
-    assertMockExists();
-    g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
-}
-
-void vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue)
-{
-    assertMockExists();
-    g_pMock->getMockDeviceFcts().vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
-}
-
-void vkGetImageSubresourceLayout(VkDevice device, VkImage image, const VkImageSubresource* pSubresource,
-                                 VkSubresourceLayout* pLayout)
-{
-    assertMockExists();
-    g_pMock->getMockDeviceFcts().vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
-}
-
-VkResult vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size,
-                     VkMemoryMapFlags flags, void** ppData)
-{
-    assertMockExists();
-    return g_pMock->getMockDeviceFcts().vkMapMemory(device, memory, offset, size, flags, ppData);
-}
-
-void vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
-{
-    assertMockExists();
-    g_pMock->getMockDeviceFcts().vkUnmapMemory(device, memory);
-}
-
 }  // namespace
 
 MockVulkanGlobalFcts::MockVulkanGlobalFcts() = default;
@@ -179,36 +52,255 @@ MockVulkanInstanceFcts::~MockVulkanInstanceFcts() = default;
 MockVulkanDeviceFcts::MockVulkanDeviceFcts() = default;
 MockVulkanDeviceFcts::~MockVulkanDeviceFcts() = default;
 
+MockVmaVulkanFunctions::MockVmaVulkanFunctions() = default;
+MockVmaVulkanFunctions::~MockVmaVulkanFunctions() = default;
+
 MockVulkanLoader::MockVulkanLoader()
   : m_gFcts(VulkanGlobalFcts{
-        .vkEnumerateInstanceVersion = &vkEnumerateInstanceVersion,
-        .vkEnumerateInstanceExtensionProperties = &vkEnumerateInstanceExtensionProperties,
-        .vkEnumerateInstanceLayerProperties = &vkEnumerateInstanceLayerProperties,
-        .vkCreateInstance = vkCreateInstance,
+        .vkEnumerateInstanceVersion =
+            [](uint32_t* pApiVersion) {
+                assertMockExists();
+                return g_pMock->getMockGlobalFcts().vkEnumerateInstanceVersion(pApiVersion);
+            },
+        .vkEnumerateInstanceExtensionProperties =
+            [](const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties) {
+                assertMockExists();
+                return g_pMock->getMockGlobalFcts().vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount,
+                                                                                           pProperties);
+            },
+        .vkEnumerateInstanceLayerProperties =
+            [](uint32_t* pPropertyCount, VkLayerProperties* pProperties) {
+                assertMockExists();
+                return g_pMock->getMockGlobalFcts().vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties);
+            },
+        .vkCreateInstance =
+            [](const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+               VkInstance* pInstance) {
+                assertMockExists();
+                return g_pMock->getMockGlobalFcts().vkCreateInstance(pCreateInfo, pAllocator, pInstance);
+            },
     })
   , m_iFcts(VulkanInstanceFcts{
-        .vkDestroyInstance = vkDestroyInstance,
-        .vkCreateDevice = vkCreateDevice,
+        .vkDestroyInstance =
+            [](VkInstance instance, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkDestroyInstance(instance, pAllocator);
+            },
+        .vkCreateDevice =
+            [](VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo,
+               const VkAllocationCallbacks* pAllocator, VkDevice* pDevice) {
+                assertMockExists();
+                return g_pMock->getMockInstanceFcts().vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
+            },
 
-        .vkCreateDebugUtilsMessengerEXT = vkCreateDebugUtilsMessengerEXT,
-        .vkDestroyDebugUtilsMessengerEXT = vkDestroyDebugUtilsMessengerEXT,
+        .vkCreateDebugUtilsMessengerEXT =
+            [](VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+               const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pMessenger) {
+                assertMockExists();
+                return g_pMock->getMockInstanceFcts().vkCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator,
+                                                                                     pMessenger);
+            },
+        .vkDestroyDebugUtilsMessengerEXT =
+            [](VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+            },
 
-        .vkEnumeratePhysicalDevices = vkEnumeratePhysicalDevices,
-        .vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties,
-        .vkGetPhysicalDeviceFeatures = vkGetPhysicalDeviceFeatures,
-        .vkEnumerateDeviceExtensionProperties = vkEnumerateDeviceExtensionProperties,
-        .vkGetPhysicalDeviceQueueFamilyProperties = vkGetPhysicalDeviceQueueFamilyProperties,
-        .vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties,
+        .vkEnumeratePhysicalDevices =
+            [](VkInstance instance, uint32_t* pPhysicalDeviceCount, VkPhysicalDevice* pPhysicalDevices) {
+                assertMockExists();
+                return g_pMock->getMockInstanceFcts().vkEnumeratePhysicalDevices(instance, pPhysicalDeviceCount,
+                                                                                 pPhysicalDevices);
+            },
+        .vkGetPhysicalDeviceProperties =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceProperties(physicalDevice, pProperties);
+            },
+        .vkGetPhysicalDeviceFeatures =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures* pFeatures) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceFeatures(physicalDevice, pFeatures);
+            },
+        .vkEnumerateDeviceExtensionProperties =
+            [](VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount,
+               VkExtensionProperties* pProperties) {
+                assertMockExists();
+                return g_pMock->getMockInstanceFcts().vkEnumerateDeviceExtensionProperties(physicalDevice, pLayerName,
+                                                                                           pPropertyCount, pProperties);
+            },
+        .vkGetPhysicalDeviceQueueFamilyProperties =
+            [](VkPhysicalDevice physicalDevice, uint32_t* pQueueFamilyPropertyCount,
+               VkQueueFamilyProperties* pQueueFamilyProperties) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceQueueFamilyProperties(
+                    physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+            },
+        .vkGetPhysicalDeviceMemoryProperties =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
+            },
     })
   , m_dFcts(VulkanDeviceFcts{
-        .vkDestroyDevice = vkDestroyDevice,
-        .vkGetDeviceQueue = vkGetDeviceQueue,
-        .vkGetImageSubresourceLayout = vkGetImageSubresourceLayout,
-        .vkMapMemory = vkMapMemory,
-        .vkUnmapMemory = vkUnmapMemory,
+        .vkDestroyDevice =
+            [](VkDevice device, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
+            },
+        .vkGetDeviceQueue =
+            [](VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
+            },
+        .vkGetImageSubresourceLayout =
+            [](VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
+            },
+        .vkMapMemory =
+            [](VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
+               void** ppData) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkMapMemory(device, memory, offset, size, flags, ppData);
+            },
+        .vkUnmapMemory =
+            [](VkDevice device, VkDeviceMemory memory) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkUnmapMemory(device, memory);
+            },
     })
   , m_vmaFcts(VmaVulkanFunctions{
-
+        .vkGetPhysicalDeviceProperties =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceProperties* pProperties) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetPhysicalDeviceProperties(physicalDevice, pProperties);
+            },
+        .vkGetPhysicalDeviceMemoryProperties =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
+            },
+        .vkAllocateMemory =
+            [](VkDevice device, const VkMemoryAllocateInfo* pAllocateInfo, const VkAllocationCallbacks* pAllocator,
+               VkDeviceMemory* pMemory) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkAllocateMemory(device, pAllocateInfo, pAllocator, pMemory);
+            },
+        .vkFreeMemory =
+            [](VkDevice device, VkDeviceMemory memory, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkFreeMemory(device, memory, pAllocator);
+            },
+        .vkMapMemory =
+            [](VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
+               void** ppData) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkMapMemory(device, memory, offset, size, flags, ppData);
+            },
+        .vkUnmapMemory =
+            [](VkDevice device, VkDeviceMemory memory) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkUnmapMemory(device, memory);
+            },
+        .vkFlushMappedMemoryRanges =
+            [](VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkFlushMappedMemoryRanges(device, memoryRangeCount, pMemoryRanges);
+            },
+        .vkInvalidateMappedMemoryRanges =
+            [](VkDevice device, uint32_t memoryRangeCount, const VkMappedMemoryRange* pMemoryRanges) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkInvalidateMappedMemoryRanges(device, memoryRangeCount,
+                                                                                pMemoryRanges);
+            },
+        .vkBindBufferMemory =
+            [](VkDevice device, VkBuffer buffer, VkDeviceMemory memory, VkDeviceSize memoryOffset) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkBindBufferMemory(device, buffer, memory, memoryOffset);
+            },
+        .vkBindImageMemory =
+            [](VkDevice device, VkImage image, VkDeviceMemory memory, VkDeviceSize memoryOffset) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkBindImageMemory(device, image, memory, memoryOffset);
+            },
+        .vkGetBufferMemoryRequirements =
+            [](VkDevice device, VkBuffer buffer, VkMemoryRequirements* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetBufferMemoryRequirements(device, buffer, pMemoryRequirements);
+            },
+        .vkGetImageMemoryRequirements =
+            [](VkDevice device, VkImage image, VkMemoryRequirements* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetImageMemoryRequirements(device, image, pMemoryRequirements);
+            },
+        .vkCreateBuffer =
+            [](VkDevice device, const VkBufferCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+               VkBuffer* pBuffer) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkCreateBuffer(device, pCreateInfo, pAllocator, pBuffer);
+            },
+        .vkDestroyBuffer =
+            [](VkDevice device, VkBuffer buffer, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkDestroyBuffer(device, buffer, pAllocator);
+            },
+        .vkCreateImage =
+            [](VkDevice device, const VkImageCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+               VkImage* pImage) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkCreateImage(device, pCreateInfo, pAllocator, pImage);
+            },
+        .vkDestroyImage =
+            [](VkDevice device, VkImage image, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkDestroyImage(device, image, pAllocator);
+            },
+        .vkCmdCopyBuffer =
+            [](VkCommandBuffer commandBuffer, VkBuffer srcBuffer, VkBuffer dstBuffer, uint32_t regionCount,
+               const VkBufferCopy* pRegions) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, regionCount, pRegions);
+            },
+        .vkGetBufferMemoryRequirements2KHR =
+            [](VkDevice device, const VkBufferMemoryRequirementsInfo2* pInfo,
+               VkMemoryRequirements2* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetBufferMemoryRequirements2KHR(device, pInfo, pMemoryRequirements);
+            },
+        .vkGetImageMemoryRequirements2KHR =
+            [](VkDevice device, const VkImageMemoryRequirementsInfo2* pInfo,
+               VkMemoryRequirements2* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetImageMemoryRequirements2KHR(device, pInfo, pMemoryRequirements);
+            },
+        .vkBindBufferMemory2KHR =
+            [](VkDevice device, uint32_t bindInfoCount, const VkBindBufferMemoryInfo* pBindInfos) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkBindBufferMemory2KHR(device, bindInfoCount, pBindInfos);
+            },
+        .vkBindImageMemory2KHR =
+            [](VkDevice device, uint32_t bindInfoCount, const VkBindImageMemoryInfo* pBindInfos) {
+                assertMockExists();
+                return g_pMock->getMockVmaFcts().vkBindImageMemory2KHR(device, bindInfoCount, pBindInfos);
+            },
+        .vkGetPhysicalDeviceMemoryProperties2KHR =
+            [](VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties2* pMemoryProperties) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetPhysicalDeviceMemoryProperties2KHR(physicalDevice, pMemoryProperties);
+            },
+        .vkGetDeviceBufferMemoryRequirements =
+            [](VkDevice device, const VkDeviceBufferMemoryRequirements* pInfo,
+               VkMemoryRequirements2* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetDeviceBufferMemoryRequirements(device, pInfo, pMemoryRequirements);
+            },
+        .vkGetDeviceImageMemoryRequirements =
+            [](VkDevice device, const VkDeviceImageMemoryRequirements* pInfo,
+               VkMemoryRequirements2* pMemoryRequirements) {
+                assertMockExists();
+                g_pMock->getMockVmaFcts().vkGetDeviceImageMemoryRequirements(device, pInfo, pMemoryRequirements);
+            },
     })
 {
     if (g_pMock)
