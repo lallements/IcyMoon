@@ -14,6 +14,7 @@ struct VulkanImageBuffer
     VulkanImageBuffer(shared_ptr<const IDevice> pDevice, ImageConfig config, VkImageTiling vkTiling,
                       VmaMemoryUsage vmaMemoryUsage)
       : m_pDevice(throwIfArgNull(move(pDevice), "Cannot create Vulkan image without a device"))
+      , m_pMemoryAllocator(m_pDevice->getMemoryAllocator())
       , m_config(move(config))
     {
         VkImageCreateInfo vkCreateInfo{
@@ -37,14 +38,15 @@ struct VulkanImageBuffer
             .usage = vmaMemoryUsage,
             .pUserData = const_cast<char*>(m_config.name.c_str()),
         };
-        throwIfVkFailed(vmaCreateImage(m_pDevice->getVmaAllocator(), &vkCreateInfo, &vmaCreateInfo, &m_vkImage,
-                                       &m_vmaAllocation, &m_vmaAllocationInfo),
+        throwIfVkFailed(m_pMemoryAllocator->createImage(&vkCreateInfo, &vmaCreateInfo, &m_vkImage, &m_vmaAllocation,
+                                                        &m_vmaAllocationInfo),
                         fmt::format("Failed to create image \"{}\" with VMA", m_config.name));
     }
 
-    ~VulkanImageBuffer() { vmaDestroyImage(m_pDevice->getVmaAllocator(), m_vkImage, m_vmaAllocation); }
+    ~VulkanImageBuffer() { m_pMemoryAllocator->destroyImage(m_vkImage, m_vmaAllocation); }
 
     shared_ptr<const IDevice> m_pDevice;
+    shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
     const ImageConfig m_config;
 
     VkImage m_vkImage{};
@@ -154,7 +156,10 @@ public:
         return make_unique<VulkanImage>(m_pDevice, move(config));
     }
 
-    auto createHostVisibleImage(ImageConfig) const -> unique_ptr<IHostVisibleImage> override { return nullptr; }
+    auto createHostVisibleImage(ImageConfig config) const -> unique_ptr<IHostVisibleImage> override
+    {
+        return make_unique<VulkanHostVisibleImage>(m_pDevice, move(config));
+    }
 
 private:
     shared_ptr<const IDevice> m_pDevice;

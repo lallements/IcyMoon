@@ -7,6 +7,42 @@ using namespace std;
 
 namespace {
 
+class MockProxyMemoryAllocator : public IMemoryAllocator
+{
+public:
+    MockProxyMemoryAllocator(MockMemoryAllocator& rMock)
+      : m_rMock(rMock)
+    {
+    }
+
+    auto createImage(const VkImageCreateInfo* pVkCreateInfo, const VmaAllocationCreateInfo* pVmaCreateInfo,
+                     VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo* pVmaAllocationInfo)
+        -> VkResult override
+    {
+        return m_rMock.createImage(pVkCreateInfo, pVmaCreateInfo, pVkImage, pVmaAllocation, pVmaAllocationInfo);
+    }
+
+    void destroyImage(VkImage vkImage, VmaAllocation vmaAllocation) override
+    {
+        m_rMock.destroyImage(vkImage, vmaAllocation);
+    }
+
+private:
+    MockMemoryAllocator& m_rMock;
+};
+
+}  // namespace
+
+MockMemoryAllocator::MockMemoryAllocator() = default;
+MockMemoryAllocator::~MockMemoryAllocator() = default;
+
+auto MockMemoryAllocator::createMockProxy() -> unique_ptr<IMemoryAllocator>
+{
+    return make_unique<MockProxyMemoryAllocator>(*this);
+}
+
+namespace {
+
 class MockProxyDevice : public IDevice
 {
 public:
@@ -15,42 +51,29 @@ public:
     {
     }
 
+    auto getVkInstance() const -> VkInstance override { return m_rMock.getVkInstance(); }
+    auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_rMock.getVkPhysicalDevice(); }
     auto getVkDevice() const -> VkDevice override { return m_rMock.getVkDevice(); }
-    auto getVmaAllocator() const -> VmaAllocator override { return m_rMock.getVmaAllocator(); }
     auto getFcts() const -> const VulkanDeviceFcts& override { return m_rMock.getFcts(); }
+    auto getMemoryAllocator() const -> shared_ptr<IMemoryAllocator> override { return m_rMock.getMemoryAllocator(); }
     auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_rMock.getImageFactory(); }
 
 private:
     MockDevice& m_rMock;
 };
 
-auto createVmaAllocator(VkInstance vkInstance, VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice,
-                        const VmaVulkanFunctions& rVmaVkFcts)
-{
-    VmaAllocatorCreateInfo vmaCreateInfo{
-        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT,
-        .physicalDevice = vkPhysicalDevice,
-        .device = vkDevice,
-        .pVulkanFunctions = &rVmaVkFcts,
-        .instance = vkInstance,
-        .vulkanApiVersion = VK_API_VERSION_1_3,
-    };
-
-    VmaAllocator vmaAllocator{};
-    throwIfVkFailed(vmaCreateAllocator(&vmaCreateInfo, &vmaAllocator), "Could not create VMA allocator");
-
-    return VkUniquePtr<VmaAllocator>(vmaAllocator, [](auto* pVmaAllocator) { vmaDestroyAllocator(pVmaAllocator); });
-}
-
 }  // namespace
 
 MockDevice::MockDevice()
-  : m_pVmaAllocator(createVmaAllocator(m_vkInstance, m_vkPhysicalDevice, m_vkDevice, m_mockVulkanLoader.getVmaFcts()))
 {
+    ON_CALL(*this, getVkInstance()).WillByDefault(Return(m_vkInstance));
+    ON_CALL(*this, getVkPhysicalDevice()).WillByDefault(Return(m_vkPhysicalDevice));
     ON_CALL(*this, getVkDevice()).WillByDefault(Return(m_vkDevice));
-    ON_CALL(*this, getImageFactory()).WillByDefault(Invoke([&] { return m_mockImageFactory.createMockProxy(); }));
-    ON_CALL(*this, getFcts()).WillByDefault(Invoke([&] { return m_mockVulkanLoader.getDeviceFcts(); }));
-    ON_CALL(*this, getVmaAllocator()).WillByDefault(Invoke(Return(m_pVmaAllocator.get())));
+    ON_CALL(*this, getFcts()).WillByDefault(ReturnRef(m_mockVulkanLoader.getDeviceFcts()));
+    ON_CALL(*this, getMemoryAllocator()).WillByDefault(Invoke([this] {
+        return m_mockMemoryAllocator.createMockProxy();
+    }));
+    ON_CALL(*this, getImageFactory()).WillByDefault(Invoke([this] { return m_mockImageFactory.createMockProxy(); }));
 }
 
 MockDevice::~MockDevice() = default;

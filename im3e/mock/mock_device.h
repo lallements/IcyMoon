@@ -11,22 +11,42 @@
 
 namespace im3e {
 
+class MockMemoryAllocator : public IMemoryAllocator
+{
+public:
+    MockMemoryAllocator();
+    ~MockMemoryAllocator() override;
+
+    MOCK_METHOD(VkResult, createImage,
+                (const VkImageCreateInfo* pVkCreateInfo, const VmaAllocationCreateInfo* pVmaCreateInfo,
+                 VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo* pVmaAllocationInfo),
+                (override));
+    MOCK_METHOD(void, destroyImage, (VkImage vkImage, VmaAllocation vmaAllocation), (override));
+
+    auto createMockProxy() -> std::unique_ptr<IMemoryAllocator>;
+};
+
 class MockDevice : public IDevice
 {
 public:
     MockDevice();
     ~MockDevice() override;
 
+    MOCK_METHOD(VkInstance, getVkInstance, (), (const, override));
+    MOCK_METHOD(VkPhysicalDevice, getVkPhysicalDevice, (), (const, override));
     MOCK_METHOD(VkDevice, getVkDevice, (), (const, override));
-    MOCK_METHOD(VmaAllocator, getVmaAllocator, (), (const, override));
     MOCK_METHOD(const VulkanDeviceFcts&, getFcts, (), (const, override));
+    MOCK_METHOD(std::shared_ptr<IMemoryAllocator>, getMemoryAllocator, (), (const, override));
     MOCK_METHOD(std::shared_ptr<const IImageFactory>, getImageFactory, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<IDevice>;
 
+    auto getMockVkInstance() const -> VkInstance { return m_vkInstance; }
+    auto getMockVkPhysicalDevice() const -> VkPhysicalDevice { return m_vkPhysicalDevice; }
     auto getMockVkDevice() const -> VkDevice { return m_vkDevice; }
-    auto getMockVmaAllocator() const -> VmaAllocator { return m_pVmaAllocator.get(); }
+    auto getMockVulkanLoader() -> MockVulkanLoader& { return m_mockVulkanLoader; }
     auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockVulkanLoader.getMockDeviceFcts(); }
+    auto getMockMemoryAllocator() -> MockMemoryAllocator& { return m_mockMemoryAllocator; }
     auto getMockImageFactory() -> MockImageFactory& { return m_mockImageFactory; }
 
 private:
@@ -35,8 +55,7 @@ private:
     const VkDevice m_vkDevice = reinterpret_cast<VkDevice>(0xbaef532f3e4a);
 
     ::testing::NiceMock<MockVulkanLoader> m_mockVulkanLoader;
-
-    VkUniquePtr<VmaAllocator> m_pVmaAllocator;
+    ::testing::NiceMock<MockMemoryAllocator> m_mockMemoryAllocator;
     ::testing::NiceMock<MockImageFactory> m_mockImageFactory;
 };
 

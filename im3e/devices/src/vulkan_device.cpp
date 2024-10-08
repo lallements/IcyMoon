@@ -1,6 +1,7 @@
 #include "devices.h"
 #include "vulkan_images.h"
 #include "vulkan_instance.h"
+#include "vulkan_memory_allocator.h"
 
 #include <im3e/api/device.h>
 #include <im3e/api/image.h>
@@ -151,24 +152,6 @@ auto createDeviceAndLoadFcts(const VulkanInstance& rInstance, const VulkanPhysic
     return VkUniquePtr<VkDevice>(vkDevice, [&rFcts](VkDevice vkDevice) { rFcts.vkDestroyDevice(vkDevice, nullptr); });
 }
 
-auto createVmaAllocator(VkInstance vkInstance, VkPhysicalDevice vkPhysicalDevice, VkDevice vkDevice,
-                        const VmaVulkanFunctions& rVmaVkFcts)
-{
-    VmaAllocatorCreateInfo vmaCreateInfo{
-        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT,
-        .physicalDevice = vkPhysicalDevice,
-        .device = vkDevice,
-        .pVulkanFunctions = &rVmaVkFcts,
-        .instance = vkInstance,
-        .vulkanApiVersion = VulkanInstance::getVulkanApiVersion(),
-    };
-
-    VmaAllocator vmaAllocator{};
-    throwIfVkFailed(vmaCreateAllocator(&vmaCreateInfo, &vmaAllocator), "Could not create VMA allocator");
-
-    return VkUniquePtr<VmaAllocator>(vmaAllocator, [](auto* pVmaAllocator) { vmaDestroyAllocator(pVmaAllocator); });
-}
-
 auto getVkQueues(const VulkanDeviceFcts& rFcts, VkDevice vkDevice, const vector<uint32_t>& rFamilyIndices)
 {
     vector<VkQueue> vkQueues;
@@ -193,8 +176,6 @@ public:
                    }))
       , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
       , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
-      , m_pVmaAllocator(createVmaAllocator(m_instance.getVkInstance(), m_physicalDevice.vkPhysicalDevice,
-                                           m_pVkDevice.get(), m_instance.loadVmaFcts(m_pVkDevice.get())))
 
       , m_vkComputeQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.computeFamilyIndices))
       , m_vkGraphicsQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.graphicsFamilyIndices))
@@ -205,9 +186,19 @@ public:
         m_pLogger->info("Successfully initialized");
     }
 
+    auto getVkInstance() const -> VkInstance override { return m_instance.getVkInstance(); }
+    auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_physicalDevice.vkPhysicalDevice; }
     auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
-    auto getVmaAllocator() const -> VmaAllocator override { return m_pVmaAllocator.get(); }
     auto getFcts() const -> const VulkanDeviceFcts& override { return m_fcts; }
+    auto getMemoryAllocator() const -> shared_ptr<IMemoryAllocator> override
+    {
+        if (!m_pMemoryAllocator)
+        {
+            m_pMemoryAllocator = createVulkanMemoryAllocator(shared_from_this(),
+                                                             m_instance.loadVmaFcts(m_pVkDevice.get()));
+        }
+        return m_pMemoryAllocator;
+    }
     auto getImageFactory() const -> shared_ptr<const IImageFactory> override
     {
         if (!m_pImageFactory)
@@ -225,13 +216,13 @@ private:
     VulkanDeviceFcts m_fcts;
 
     VkUniquePtr<VkDevice> m_pVkDevice;
-    VkUniquePtr<VmaAllocator> m_pVmaAllocator;
 
     vector<VkQueue> m_vkComputeQueues;
     vector<VkQueue> m_vkGraphicsQueues;
     vector<VkQueue> m_vkTransferQueues;
     vector<VkQueue> m_vkPresentationQueues;
 
+    mutable shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
     mutable shared_ptr<IImageFactory> m_pImageFactory;
 };
 

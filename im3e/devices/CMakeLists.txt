@@ -9,6 +9,8 @@ add_library(im3e_devices STATIC
     src/vulkan_images.h
     src/vulkan_instance.cpp
     src/vulkan_instance.h
+    src/vulkan_memory_allocator.cpp
+    src/vulkan_memory_allocator.h
     src/vulkan_physical_devices.cpp
     src/vulkan_physical_devices.h
 )
