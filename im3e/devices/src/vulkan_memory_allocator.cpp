@@ -11,7 +11,7 @@ auto createVmaAllocator(VkInstance vkInstance, VkPhysicalDevice vkPhysicalDevice
                         const VmaVulkanFunctions& rVmaVkFcts)
 {
     VmaAllocatorCreateInfo vmaCreateInfo{
-        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE4_BIT,
+        .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT | VMA_ALLOCATOR_CREATE_KHR_BIND_MEMORY2_BIT,
         .physicalDevice = vkPhysicalDevice,
         .device = vkDevice,
         .pVulkanFunctions = &rVmaVkFcts,

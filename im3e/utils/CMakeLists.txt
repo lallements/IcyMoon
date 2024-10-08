@@ -16,7 +16,8 @@ target_include_directories(im3e_utils
 target_link_libraries(im3e_utils
   PUBLIC
     fmt::fmt
-    Vulkan::Headers 
+    vulkan-memory-allocator::vulkan-memory-allocator
+    Vulkan::Headers
 )
 
 add_subdirectory(test)

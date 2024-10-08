@@ -1,4 +1,4 @@
-if (NOT(WIN32) OR NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
+if (NOT(WIN32) AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR GENERATOR_IS_MULTI_CONFIG))
     include(code_coverage/src/code_coverage.cmake)
 endif()
 

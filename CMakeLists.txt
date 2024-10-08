@@ -50,6 +50,7 @@ im3e_set_coverage_flags()
 
 find_package(fmt REQUIRED)
 find_package(GTest REQUIRED)
+find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
 
 
