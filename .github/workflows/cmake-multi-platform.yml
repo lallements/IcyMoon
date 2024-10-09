@@ -43,10 +43,11 @@ jobs:
 
       - name: Conan Install
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: |
-          cd ${{ steps.strings.outputs.build-output-dir }}
-          conan install .. -pr:a ../profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
-          source ./${{ steps.strings.outputs.cmake-preset }}/generators/conanbuild.sh
+        run: conan install .. -pr:a ../profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
+      - name: Conan Virtual Environment
+        working-directory: ${{ github.workspace }}
+        run: source ${{ steps.strings.outputs.build-output-dir }}/${{ steps.strings.outputs.cmake-preset }}/generators/conanbuild.sh
 
       - name: Configure CMake
         working-directory: ${{ github.workspace }}

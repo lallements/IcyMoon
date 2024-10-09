@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan/vulkan.h>
+#include <im3e/utils/vk_utils.h>
 
 namespace im3e {
 
@@ -35,6 +35,9 @@ struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
+    PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
+    PFN_vkMapMemory vkMapMemory{};
+    PFN_vkUnmapMemory vkUnmapMemory{};
 };
 
 class IVulkanLoader
@@ -45,6 +48,7 @@ public:
     virtual auto loadGlobalFcts() const -> VulkanGlobalFcts = 0;
     virtual auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts = 0;
     virtual auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts = 0;
+    virtual auto loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions = 0;
 };
 
 }  // namespace im3e

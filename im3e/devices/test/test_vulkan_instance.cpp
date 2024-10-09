@@ -7,6 +7,12 @@
 using namespace im3e;
 using namespace std;
 
+namespace {
+
+constexpr bool DebugIsEnabled = true;
+
+}  // namespace
+
 struct VulkanInstanceTest : public Test
 {
     auto createInstance(bool isDebugEnabled = false)
@@ -37,4 +43,75 @@ TEST_F(VulkanInstanceTest, constructor)
         }));
     EXPECT_CALL(m_mockVkLoader, loadInstanceFcts(mockVkInstance));
     auto instance = createInstance();
+}
+
+TEST_F(VulkanInstanceTest, constructorWithDebugEnabled)
+{
+    auto mockVkInstance = reinterpret_cast<VkInstance>(0xb45ef76a);
+
+    EXPECT_CALL(m_mockVkLoader, loadGlobalFcts());
+    EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkEnumerateInstanceExtensionProperties(IsNull(), NotNull(), _))
+        .WillOnce(Invoke([&](Unused, auto* pCount, auto* pProperties) {
+            *pCount = 1U;
+            EXPECT_THAT(pProperties, IsNull());
+            return VK_SUCCESS;
+        }))
+        .WillOnce(Invoke([&](Unused, Unused, VkExtensionProperties* pProperties) {
+            *pProperties = VkExtensionProperties{.extensionName = VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
+            return VK_SUCCESS;
+        }));
+    EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkCreateInstance(NotNull(), nullptr, NotNull()))
+        .WillOnce(Invoke([&](auto* pCreateInfo, Unused, auto* pVkInstance) {
+            EXPECT_THAT(pCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO));
+            EXPECT_THAT(pCreateInfo->pApplicationInfo, NotNull());
+            EXPECT_THAT(pCreateInfo->pNext, NotNull());
+
+            auto* pDebugCreateInfo = reinterpret_cast<const VkDebugUtilsMessengerCreateInfoEXT*>(pCreateInfo->pNext);
+            EXPECT_THAT(pDebugCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT));
+
+            auto pAppInfo = pCreateInfo->pApplicationInfo;
+            EXPECT_THAT(pAppInfo->sType, Eq(VK_STRUCTURE_TYPE_APPLICATION_INFO));
+            EXPECT_THAT(pAppInfo->apiVersion, Eq(VK_API_VERSION_1_3));
+
+            *pVkInstance = mockVkInstance;
+            return VK_SUCCESS;
+        }));
+    EXPECT_CALL(m_mockVkLoader, loadInstanceFcts(mockVkInstance));
+    auto instance = createInstance(DebugIsEnabled);
+}
+
+TEST_F(VulkanInstanceTest, constructorWithDebugEnabledButNotSupportedThrows)
+{
+    EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkEnumerateInstanceExtensionProperties(IsNull(), NotNull(), _))
+        .WillOnce(Invoke([&](Unused, auto* pCount, Unused) {
+            *pCount = 0U;
+            return VK_SUCCESS;
+        }))
+        .WillOnce(Invoke([&](Unused, Unused, Unused) { return VK_SUCCESS; }));
+    EXPECT_THROW(createInstance(DebugIsEnabled), runtime_error);
+}
+
+TEST_F(VulkanInstanceTest, loadDeviceFcts)
+{
+    const auto vkDevice = reinterpret_cast<VkDevice>(0xba54fe32);
+    auto instance = createInstance();
+
+    EXPECT_CALL(m_mockVkLoader, loadDeviceFcts(vkDevice));
+    instance.loadDeviceFcts(vkDevice);
+}
+
+TEST_F(VulkanInstanceTest, loadVmaFcts)
+{
+    const auto vkInstance = reinterpret_cast<VkInstance>(0x456fe32);
+    const auto vkDevice = reinterpret_cast<VkDevice>(0x42f5ea5fe);
+
+    EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkCreateInstance(NotNull(), nullptr, NotNull()))
+        .WillOnce(Invoke([&](Unused, Unused, auto* pVkInstance) {
+            *pVkInstance = vkInstance;
+            return VK_SUCCESS;
+        }));
+    auto instance = createInstance();
+
+    EXPECT_CALL(m_mockVkLoader, loadVmaFcts(vkInstance, vkDevice));
+    instance.loadVmaFcts(vkDevice);
 }

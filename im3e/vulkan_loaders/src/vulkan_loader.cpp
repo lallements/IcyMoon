@@ -13,6 +13,13 @@ using namespace std;
 #define LOAD_INST_FCT(fctName) .fctName = reinterpret_cast<PFN_##fctName>(m_vkGetInstanceProcAddr(vkInstance, #fctName))
 #define LOAD_DEVICE_FCT(fctName) .fctName = reinterpret_cast<PFN_##fctName>(m_vkGetDeviceProcAddr(vkDevice, #fctName))
 
+/// Alternative functions specific to VMA function loading where VmaVulkanFunctions's function names are suffixed with
+/// KHR but we load their core version (i.e. without the KHR suffix)
+#define LOAD_INST_FCT_KHR(fctNameKHR, fctName) \
+    .fctNameKHR = reinterpret_cast<PFN_##fctName>(m_vkGetInstanceProcAddr(vkInstance, #fctName))
+#define LOAD_DEVICE_FCT_KHR(fctNameKHR, fctName) \
+    .fctNameKHR = reinterpret_cast<PFN_##fctName>(m_vkGetDeviceProcAddr(vkDevice, #fctName))
+
 VulkanLoader::VulkanLoader(VulkanLoaderConfig config, UniquePtrWithDeleter<void> pLibrary,
                            PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr, PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr)
   : m_config(move(config))
@@ -60,6 +67,42 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
     return VulkanDeviceFcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
+        LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
+        LOAD_DEVICE_FCT(vkMapMemory),
+        LOAD_DEVICE_FCT(vkUnmapMemory),
+    };
+}
+
+auto VulkanLoader::loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions
+{
+    throwIfArgNull(vkInstance, "Cannot load VMA functions without an instance");
+    throwIfArgNull(vkDevice, "Cannot load VMA functions without a device");
+
+    return VmaVulkanFunctions{
+        LOAD_INST_FCT(vkGetPhysicalDeviceProperties),
+        LOAD_INST_FCT(vkGetPhysicalDeviceMemoryProperties),
+        LOAD_DEVICE_FCT(vkAllocateMemory),
+        LOAD_DEVICE_FCT(vkFreeMemory),
+        LOAD_DEVICE_FCT(vkMapMemory),
+        LOAD_DEVICE_FCT(vkUnmapMemory),
+        LOAD_DEVICE_FCT(vkFlushMappedMemoryRanges),
+        LOAD_DEVICE_FCT(vkInvalidateMappedMemoryRanges),
+        LOAD_DEVICE_FCT(vkBindBufferMemory),
+        LOAD_DEVICE_FCT(vkBindImageMemory),
+        LOAD_DEVICE_FCT(vkGetBufferMemoryRequirements),
+        LOAD_DEVICE_FCT(vkGetImageMemoryRequirements),
+        LOAD_DEVICE_FCT(vkCreateBuffer),
+        LOAD_DEVICE_FCT(vkDestroyBuffer),
+        LOAD_DEVICE_FCT(vkCreateImage),
+        LOAD_DEVICE_FCT(vkDestroyImage),
+        LOAD_DEVICE_FCT(vkCmdCopyBuffer),
+        LOAD_DEVICE_FCT_KHR(vkGetBufferMemoryRequirements2KHR, vkGetBufferMemoryRequirements2),
+        LOAD_DEVICE_FCT_KHR(vkGetImageMemoryRequirements2KHR, vkGetImageMemoryRequirements2),
+        LOAD_DEVICE_FCT_KHR(vkBindBufferMemory2KHR, vkBindBufferMemory2),
+        LOAD_DEVICE_FCT_KHR(vkBindImageMemory2KHR, vkBindImageMemory2),
+        LOAD_INST_FCT_KHR(vkGetPhysicalDeviceMemoryProperties2KHR, vkGetPhysicalDeviceMemoryProperties2),
+        LOAD_DEVICE_FCT(vkGetDeviceBufferMemoryRequirements),
+        LOAD_DEVICE_FCT(vkGetDeviceImageMemoryRequirements),
     };
 }
 

@@ -1,16 +1,23 @@
-add_library(im3e_utils INTERFACE
+add_library(im3e_utils STATIC
     throw_utils.h
     types.h
     vk_utils.h
+    src/vk_utils.cpp
 )
 
 target_include_directories(im3e_utils
-  INTERFACE
+  PUBLIC
     ${IM3E_INCLUDE_DIR}
+  PRIVATE
+    .
+    src
 )
 
 target_link_libraries(im3e_utils
-  INTERFACE
+  PUBLIC
     fmt::fmt
-    Vulkan::Headers 
+    vulkan-memory-allocator::vulkan-memory-allocator
+    Vulkan::Headers
 )
+
+add_subdirectory(test)

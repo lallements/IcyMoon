@@ -24,6 +24,10 @@ endif()
 
 add_definitions(
     -DVK_NO_PROTOTYPES # for vulkan headers: we link dynamically and do not want vk function definitions
+
+    # Vulkan Memory Allocator
+    -DVMA_STATIC_VULKAN_FUNCTIONS=0
+    -DVMA_DYNAMIC_VULKAN_FUNCTIONS=0
 )
 
 if (MSVC)
@@ -46,6 +50,7 @@ im3e_set_coverage_flags()
 
 find_package(fmt REQUIRED)
 find_package(GTest REQUIRED)
+find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
 
 

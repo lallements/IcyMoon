@@ -5,9 +5,11 @@
 namespace im3e {
 
 using ::testing::_;
+using ::testing::ByRef;
 using ::testing::ContainerEq;
 using ::testing::Eq;
 using ::testing::Ge;
+using ::testing::InSequence;
 using ::testing::Invoke;
 using ::testing::InvokeWithoutArgs;
 using ::testing::IsEmpty;
@@ -17,9 +19,11 @@ using ::testing::IsSubsetOf;
 using ::testing::IsSupersetOf;
 using ::testing::IsTrue;
 using ::testing::MockFunction;
+using ::testing::Ne;
 using ::testing::NiceMock;
 using ::testing::NotNull;
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::StrEq;
 using ::testing::Test;
 using ::testing::Unused;
