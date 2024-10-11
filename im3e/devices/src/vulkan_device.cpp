@@ -1,4 +1,6 @@
 #include "devices.h"
+
+#include "vulkan_command_buffers.h"
 #include "vulkan_images.h"
 #include "vulkan_instance.h"
 #include "vulkan_memory_allocator.h"
@@ -152,16 +154,33 @@ auto createDeviceAndLoadFcts(const VulkanInstance& rInstance, const VulkanPhysic
     return VkUniquePtr<VkDevice>(vkDevice, [&rFcts](VkDevice vkDevice) { rFcts.vkDestroyDevice(vkDevice, nullptr); });
 }
 
-auto getVkQueues(const VulkanDeviceFcts& rFcts, VkDevice vkDevice, const vector<uint32_t>& rFamilyIndices)
+auto findQueue(const VulkanDeviceFcts& rFcts, VkDevice vkDevice, const vector<uint32_t>& rFamilyIndices)
+    -> VulkanCommandQueueInfo
 {
-    vector<VkQueue> vkQueues;
     for (auto familyIndex : rFamilyIndices)
     {
-        VkQueue queue{};
-        rFcts.vkGetDeviceQueue(vkDevice, familyIndex, 0U, &queue);
-        vkQueues.push_back(queue);
+        VkQueue vkQueue{};
+        rFcts.vkGetDeviceQueue(vkDevice, familyIndex, 0U, &vkQueue);
+        return VulkanCommandQueueInfo{
+            .vkQueue = vkQueue,
+            .queueFamilyIndex = familyIndex,
+        };
     }
-    return vkQueues;
+    return VulkanCommandQueueInfo{};
+}
+
+auto findCommandQueueInfo(const VulkanDeviceFcts& rFcts, VkDevice vkDevice,
+                          const VulkanPhysicalDevice::QueueFamilies& rQueueFamilies)
+{
+    if (auto queueInfo = findQueue(rFcts, vkDevice, rQueueFamilies.presentationFamilyIndices); queueInfo.vkQueue)
+    {
+        return queueInfo;
+    }
+    if (auto queueInfo = findQueue(rFcts, vkDevice, rQueueFamilies.graphicsFamilyIndices); queueInfo.vkQueue)
+    {
+        return queueInfo;
+    }
+    throw runtime_error("Could not find Vulkan command queue with either presentation or graphics capabilities");
 }
 
 class VulkanDevice : public IDevice, public enable_shared_from_this<VulkanDevice>
@@ -170,20 +189,21 @@ public:
     VulkanDevice(const ILogger& rLogger, DeviceConfig config)
       : m_pLogger(rLogger.createChild("VulkanDevice"))
       , m_config(move(config))
+
       , m_instance(*m_pLogger, m_config.isDebugEnabled,
                    createVulkanLoader(VulkanLoaderConfig{
                        .isDebugEnabled = config.isDebugEnabled,
                    }))
       , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
       , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
-
-      , m_vkComputeQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.computeFamilyIndices))
-      , m_vkGraphicsQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.graphicsFamilyIndices))
-      , m_vkTransferQueues(getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.transferFamilyIndices))
-      , m_vkPresentationQueues(
-            getVkQueues(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies.presentationFamilyIndices))
+      , m_commandQueueInfo(findCommandQueueInfo(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies))
     {
         m_pLogger->info("Successfully initialized");
+    }
+
+    auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> override
+    {
+        return m_pLogger->createChild(name);
     }
 
     auto getVkInstance() const -> VkInstance override { return m_instance.getVkInstance(); }
@@ -207,23 +227,28 @@ public:
         }
         return m_pImageFactory;
     }
+    auto getCommandQueue() -> shared_ptr<ICommandQueue> override
+    {
+        if (!m_pCommandQueue)
+        {
+            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo);
+        }
+        return m_pCommandQueue;
+    }
 
 private:
     unique_ptr<ILogger> m_pLogger;
     const DeviceConfig m_config;
+
     const VulkanInstance m_instance;
     const VulkanPhysicalDevice m_physicalDevice;
     VulkanDeviceFcts m_fcts;
-
     VkUniquePtr<VkDevice> m_pVkDevice;
-
-    vector<VkQueue> m_vkComputeQueues;
-    vector<VkQueue> m_vkGraphicsQueues;
-    vector<VkQueue> m_vkTransferQueues;
-    vector<VkQueue> m_vkPresentationQueues;
+    const VulkanCommandQueueInfo m_commandQueueInfo;
 
     mutable shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
     mutable shared_ptr<IImageFactory> m_pImageFactory;
+    mutable shared_ptr<ICommandQueue> m_pCommandQueue;
 };
 
 }  // namespace
