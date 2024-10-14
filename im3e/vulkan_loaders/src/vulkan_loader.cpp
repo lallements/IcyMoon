@@ -67,9 +67,22 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
     return VulkanDeviceFcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
+        LOAD_DEVICE_FCT(vkQueueSubmit),
         LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
-        LOAD_DEVICE_FCT(vkMapMemory),
-        LOAD_DEVICE_FCT(vkUnmapMemory),
+
+        LOAD_DEVICE_FCT(vkCreateCommandPool),
+        LOAD_DEVICE_FCT(vkDestroyCommandPool),
+        LOAD_DEVICE_FCT(vkAllocateCommandBuffers),
+        LOAD_DEVICE_FCT(vkFreeCommandBuffers),
+        LOAD_DEVICE_FCT(vkResetCommandBuffer),
+        LOAD_DEVICE_FCT(vkBeginCommandBuffer),
+        LOAD_DEVICE_FCT(vkEndCommandBuffer),
+        LOAD_DEVICE_FCT(vkCmdClearColorImage),
+
+        LOAD_DEVICE_FCT(vkCreateFence),
+        LOAD_DEVICE_FCT(vkDestroyFence),
+        LOAD_DEVICE_FCT(vkWaitForFences),
+        LOAD_DEVICE_FCT(vkResetFences),
     };
 }
 

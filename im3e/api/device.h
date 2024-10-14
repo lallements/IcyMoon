@@ -16,6 +16,9 @@ public:
                              VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo* pVmaAllocationInfo)
         -> VkResult = 0;
     virtual void destroyImage(VkImage vkImage, VmaAllocation vmaAllocation) = 0;
+
+    virtual auto mapMemory(VmaAllocation vmaAllocation, void** ppData) -> VkResult = 0;
+    virtual void unmapMemory(VmaAllocation vmaAllocation) = 0;
 };
 
 class IDevice

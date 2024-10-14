@@ -8,7 +8,7 @@ using namespace std;
 
 struct VulkanImageIntegration : public Test
 {
-    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), ContainerEq(vector<string>{})); }
+    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), IsEmpty()); }
 
     unique_ptr<ILogger> m_pLogger = createTerminalLogger();
     UniquePtrWithDeleter<ILoggerTracker> m_pLoggerTracker = m_pLogger->createGlobalTracker();
@@ -58,7 +58,7 @@ TEST_F(VulkanImageIntegration, createHostVisibleImageRgbaUnorm)
     constexpr VkExtent2D ExpectedExtent{.width = 24U, .height = 10U};
     constexpr VkFormat ExpectedFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
-    auto pImage = m_pImageFactory->createImage(ImageConfig{
+    auto pImage = m_pImageFactory->createHostVisibleImage(ImageConfig{
         .name = "testHostVisibleImage",
         .vkExtent = ExpectedExtent,
         .vkFormat = ExpectedFormat,
@@ -68,4 +68,10 @@ TEST_F(VulkanImageIntegration, createHostVisibleImageRgbaUnorm)
     EXPECT_THAT(pImage->getVkImage(), Ne(VK_NULL_HANDLE));
     EXPECT_THAT(pImage->getVkExtent(), Eq(ExpectedExtent));
     EXPECT_THAT(pImage->getFormat(), Eq(ExpectedFormat));
+
+    auto pImageMapping = pImage->map();
+    EXPECT_THAT(pImageMapping->getData(), NotNull());
+    EXPECT_THAT(pImageMapping->getConstData(), NotNull());
+    EXPECT_THAT(pImageMapping->getRowPitch(), Eq(ExpectedExtent.width * sizeof(uint32_t)));
+    EXPECT_THAT(pImageMapping->getSizeInBytes(), Eq(ExpectedExtent.width * ExpectedExtent.height * sizeof(uint32_t)));
 }

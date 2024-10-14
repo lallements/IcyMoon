@@ -27,14 +27,19 @@ public:
     MockCommandQueue();
     ~MockCommandQueue() override;
 
-    MOCK_METHOD(std::unique_ptr<ICommandBuffer>, startCommandRecording, (CommandExecutionType executionType),
-                (override));
+    MOCK_METHOD(UniquePtrWithDeleter<ICommandBuffer>, startScopedCommand,
+                (std::string_view name, CommandExecutionType executionType), (override));
+
+    MOCK_METHOD(VkQueue, getVkQueue, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandQueue>;
 
+    auto getMockVkQueue() const -> VkQueue { return m_vkQueue; }
     auto getMockCommandBuffer() -> MockCommandBuffer& { return m_mockCommandBuffer; }
 
 private:
+    const VkQueue m_vkQueue = reinterpret_cast<VkQueue>(0xfe34a2d3e);
+
     NiceMock<MockCommandBuffer> m_mockCommandBuffer;
 };
 

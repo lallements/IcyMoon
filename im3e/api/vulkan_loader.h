@@ -35,9 +35,22 @@ struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
+    PFN_vkQueueSubmit vkQueueSubmit{};
     PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
-    PFN_vkMapMemory vkMapMemory{};
-    PFN_vkUnmapMemory vkUnmapMemory{};
+
+    PFN_vkCreateCommandPool vkCreateCommandPool{};
+    PFN_vkDestroyCommandPool vkDestroyCommandPool{};
+    PFN_vkAllocateCommandBuffers vkAllocateCommandBuffers{};
+    PFN_vkFreeCommandBuffers vkFreeCommandBuffers{};
+    PFN_vkResetCommandBuffer vkResetCommandBuffer{};
+    PFN_vkBeginCommandBuffer vkBeginCommandBuffer{};
+    PFN_vkEndCommandBuffer vkEndCommandBuffer{};
+    PFN_vkCmdClearColorImage vkCmdClearColorImage{};
+
+    PFN_vkCreateFence vkCreateFence{};
+    PFN_vkDestroyFence vkDestroyFence{};
+    PFN_vkWaitForFences vkWaitForFences{};
+    PFN_vkResetFences vkResetFences{};
 };
 
 class IVulkanLoader

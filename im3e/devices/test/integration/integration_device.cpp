@@ -7,7 +7,7 @@ using namespace std;
 
 struct DeviceIntegration : public Test
 {
-    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), ContainerEq(vector<string>{})); }
+    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), IsEmpty()); }
 
     unique_ptr<ILogger> m_pLogger = createTerminalLogger();
     UniquePtrWithDeleter<ILoggerTracker> m_pLoggerTracker = m_pLogger->createGlobalTracker();

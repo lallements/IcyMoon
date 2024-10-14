@@ -27,6 +27,12 @@ public:
         m_rMock.destroyImage(vkImage, vmaAllocation);
     }
 
+    auto mapMemory(VmaAllocation vmaAllocation, void** ppData) -> VkResult override
+    {
+        return m_rMock.mapMemory(vmaAllocation, ppData);
+    }
+    void unmapMemory(VmaAllocation vmaAllocation) override { m_rMock.unmapMemory(vmaAllocation); }
+
 private:
     MockMemoryAllocator& m_rMock;
 };

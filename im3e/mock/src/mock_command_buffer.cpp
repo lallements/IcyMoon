@@ -43,10 +43,13 @@ public:
     {
     }
 
-    auto startCommandRecording(CommandExecutionType executionType) -> unique_ptr<ICommandBuffer> override
+    auto startScopedCommand(string_view name, CommandExecutionType executionType)
+        -> UniquePtrWithDeleter<ICommandBuffer> override
     {
-        return m_rMock.startCommandRecording(executionType);
+        return m_rMock.startScopedCommand(name, executionType);
     }
+
+    auto getVkQueue() const -> VkQueue override { return m_rMock.getVkQueue(); }
 
 private:
     MockCommandQueue& m_rMock;
@@ -56,9 +59,10 @@ private:
 
 MockCommandQueue::MockCommandQueue()
 {
-    ON_CALL(*this, startCommandRecording(_)).WillByDefault(Invoke([this](Unused) {
+    ON_CALL(*this, startScopedCommand(_, _)).WillByDefault(Invoke([this](Unused, Unused) {
         return m_mockCommandBuffer.createMockProxy();
     }));
+    ON_CALL(*this, getVkQueue()).WillByDefault(Return(m_vkQueue));
 }
 
 MockCommandQueue::~MockCommandQueue() = default;

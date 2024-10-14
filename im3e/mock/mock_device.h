@@ -25,6 +25,9 @@ public:
                 (override));
     MOCK_METHOD(void, destroyImage, (VkImage vkImage, VmaAllocation vmaAllocation), (override));
 
+    MOCK_METHOD(VkResult, mapMemory, (VmaAllocation vmaAllocation, void** ppData), (override));
+    MOCK_METHOD(void, unmapMemory, (VmaAllocation vmaAllocation), (override));
+
     auto createMockProxy() -> std::unique_ptr<IMemoryAllocator>;
 };
 

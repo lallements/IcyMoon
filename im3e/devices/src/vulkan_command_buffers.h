@@ -10,7 +10,7 @@ struct VulkanCommandQueueInfo
     VkQueue vkQueue{};
     uint32_t queueFamilyIndex = ~0U;
 };
-auto createVulkanCommandQueue(std::shared_ptr<const IDevice> pDevice, VulkanCommandQueueInfo queueInfo)
-    -> std::shared_ptr<ICommandQueue>;
+auto createVulkanCommandQueue(std::shared_ptr<const IDevice> pDevice, VulkanCommandQueueInfo queueInfo,
+                              std::string_view name) -> std::shared_ptr<ICommandQueue>;
 
 }  // namespace im3e

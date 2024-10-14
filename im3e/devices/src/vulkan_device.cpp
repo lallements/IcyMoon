@@ -231,7 +231,7 @@ public:
     {
         if (!m_pCommandQueue)
         {
-            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo);
+            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo, "MainQueue");
         }
         return m_pCommandQueue;
     }

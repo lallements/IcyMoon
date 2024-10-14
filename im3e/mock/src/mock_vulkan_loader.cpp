@@ -153,21 +153,82 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkGetDeviceQueue(device, queueFamilyIndex, queueIndex, pQueue);
             },
+        .vkQueueSubmit =
+            [](VkQueue queue, uint32_t submitCount, const VkSubmitInfo* pSubmits, VkFence fence) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkQueueSubmit(queue, submitCount, pSubmits, fence);
+            },
         .vkGetImageSubresourceLayout =
             [](VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout) {
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
             },
-        .vkMapMemory =
-            [](VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
-               void** ppData) {
+        .vkCreateCommandPool =
+            [](VkDevice device, const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+               VkCommandPool* pCommandPool) {
                 assertMockExists();
-                return g_pMock->getMockDeviceFcts().vkMapMemory(device, memory, offset, size, flags, ppData);
+                return g_pMock->getMockDeviceFcts().vkCreateCommandPool(device, pCreateInfo, pAllocator, pCommandPool);
             },
-        .vkUnmapMemory =
-            [](VkDevice device, VkDeviceMemory memory) {
+        .vkDestroyCommandPool =
+            [](VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks* pAllocator) {
                 assertMockExists();
-                g_pMock->getMockDeviceFcts().vkUnmapMemory(device, memory);
+                g_pMock->getMockDeviceFcts().vkDestroyCommandPool(device, commandPool, pAllocator);
+            },
+        .vkAllocateCommandBuffers =
+            [](VkDevice device, const VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkAllocateCommandBuffers(device, pAllocateInfo, pCommandBuffers);
+            },
+        .vkFreeCommandBuffers =
+            [](VkDevice device, VkCommandPool commandPool, uint32_t commandBufferCount,
+               const VkCommandBuffer* pCommandBuffers) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkFreeCommandBuffers(device, commandPool, commandBufferCount,
+                                                                  pCommandBuffers);
+            },
+        .vkResetCommandBuffer =
+            [](VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkResetCommandBuffer(commandBuffer, flags);
+            },
+        .vkBeginCommandBuffer =
+            [](VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo* pBeginInfo) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkBeginCommandBuffer(commandBuffer, pBeginInfo);
+            },
+        .vkEndCommandBuffer =
+            [](VkCommandBuffer commandBuffer) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkEndCommandBuffer(commandBuffer);
+            },
+        .vkCmdClearColorImage =
+            [](VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, const VkClearColorValue* pColor,
+               uint32_t rangeCount, const VkImageSubresourceRange* pRanges) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdClearColorImage(commandBuffer, image, imageLayout, pColor, rangeCount,
+                                                                  pRanges);
+            },
+
+        .vkCreateFence =
+            [](VkDevice device, const VkFenceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+               VkFence* pFence) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkCreateFence(device, pCreateInfo, pAllocator, pFence);
+            },
+        .vkDestroyFence =
+            [](VkDevice device, VkFence fence, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyFence(device, fence, pAllocator);
+            },
+        .vkWaitForFences =
+            [](VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkWaitForFences(device, fenceCount, pFences, waitAll, timeout);
+            },
+        .vkResetFences =
+            [](VkDevice device, uint32_t fenceCount, const VkFence* pFences) {
+                assertMockExists();
+                return g_pMock->getMockDeviceFcts().vkResetFences(device, fenceCount, pFences);
             },
     })
   , m_vmaFcts(VmaVulkanFunctions{

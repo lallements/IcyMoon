@@ -49,6 +49,13 @@ public:
         vmaDestroyImage(m_pVmaAllocator.get(), vkImage, vmaAllocation);
     }
 
+    auto mapMemory(VmaAllocation vmaAllocation, void** ppData) -> VkResult override
+    {
+        return vmaMapMemory(m_pVmaAllocator.get(), vmaAllocation, ppData);
+    }
+
+    void unmapMemory(VmaAllocation vmaAllocation) override { vmaUnmapMemory(m_pVmaAllocator.get(), vmaAllocation); }
+
 private:
     shared_ptr<const IDevice> m_pDevice;
     VmaVulkanFunctions m_vmaFcts;

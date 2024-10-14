@@ -33,8 +33,15 @@ struct VulkanImageBuffer
             .tiling = vkTiling,
             .usage = m_config.vkUsage,
         };
+
+        VmaAllocationCreateFlags vmaFlags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+        if (vmaMemoryUsage == VMA_MEMORY_USAGE_AUTO_PREFER_HOST)
+        {
+            vmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+        }
+
         VmaAllocationCreateInfo vmaCreateInfo{
-            .flags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT,
+            .flags = vmaFlags,
             .usage = vmaMemoryUsage,
             .pUserData = const_cast<char*>(m_config.name.c_str()),
         };
@@ -71,19 +78,14 @@ private:
     unique_ptr<VulkanImageBuffer> m_pImageBuffer;
 };
 
-auto mapHostVisibleMemory(const IDevice& rDevice, const VmaAllocationInfo& rVmaAllocInfo)
+auto mapHostVisibleMemory(shared_ptr<IMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
 {
-    const auto vkDevice = rDevice.getVkDevice();
-    const auto vkDeviceMemory = rVmaAllocInfo.deviceMemory;
-    const auto& rFcts = rDevice.getFcts();
-
     void* pData{};
-    throwIfVkFailed(rFcts.vkMapMemory(vkDevice, vkDeviceMemory, rVmaAllocInfo.offset, rVmaAllocInfo.size, 0U, &pData),
-                    "Failed to map host-visible image memory");
+    throwIfVkFailed(pAllocator->mapMemory(vmaAllocation, &pData), "Failed to map host-visible image memory");
 
-    return UniquePtrWithDeleter<uint8_t>(
-        reinterpret_cast<uint8_t*>(pData),
-        [vkDevice, vkDeviceMemory, &rFcts](uint8_t*) { rFcts.vkUnmapMemory(vkDevice, vkDeviceMemory); });
+    return UniquePtrWithDeleter<uint8_t>(reinterpret_cast<uint8_t*>(pData), [pAllocator, vmaAllocation](uint8_t*) {
+        pAllocator->unmapMemory(vmaAllocation);
+    });
 }
 
 auto queryImageRowPitch(const IDevice& rDevice, VkImage vkImage)
@@ -104,7 +106,7 @@ class VulkanHostVisibleImageMapping : public IHostVisibleImage::IMapping
 public:
     VulkanHostVisibleImageMapping(shared_ptr<VulkanImageBuffer> pImageBuffer)
       : m_pImageBuffer(throwIfArgNull(move(pImageBuffer), "Host-visible image mapping requires a buffer"))
-      , m_pData(mapHostVisibleMemory(*m_pImageBuffer->m_pDevice, m_pImageBuffer->m_vmaAllocationInfo))
+      , m_pData(mapHostVisibleMemory(m_pImageBuffer->m_pMemoryAllocator, m_pImageBuffer->m_vmaAllocation))
       , m_rowPitch(queryImageRowPitch(*m_pImageBuffer->m_pDevice, m_pImageBuffer->m_vkImage))
     {
     }

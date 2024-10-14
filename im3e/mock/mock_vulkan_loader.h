@@ -63,12 +63,36 @@ public:
     MOCK_METHOD(void, vkDestroyDevice, (VkDevice device, const VkAllocationCallbacks* pAllocator));
     MOCK_METHOD(void, vkGetDeviceQueue,
                 (VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue));
+    MOCK_METHOD(VkResult, vkQueueSubmit,
+                (VkQueue queue, uint32_t submitCount, const VkSubmitInfo* pSubmits, VkFence fence));
     MOCK_METHOD(void, vkGetImageSubresourceLayout,
                 (VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout));
-    MOCK_METHOD(VkResult, vkMapMemory,
-                (VkDevice device, VkDeviceMemory memory, VkDeviceSize offset, VkDeviceSize size, VkMemoryMapFlags flags,
-                 void** ppData));
-    MOCK_METHOD(void, vkUnmapMemory, (VkDevice device, VkDeviceMemory memory));
+
+    MOCK_METHOD(VkResult, vkCreateCommandPool,
+                (VkDevice device, const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkCommandPool* pCommandPool));
+    MOCK_METHOD(void, vkDestroyCommandPool,
+                (VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkAllocateCommandBuffers,
+                (VkDevice device, const VkCommandBufferAllocateInfo* pAllocateInfo, VkCommandBuffer* pCommandBuffers));
+    MOCK_METHOD(void, vkFreeCommandBuffers,
+                (VkDevice device, VkCommandPool commandPool, uint32_t commandBufferCount,
+                 const VkCommandBuffer* pCommandBuffers));
+    MOCK_METHOD(VkResult, vkResetCommandBuffer, (VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags));
+    MOCK_METHOD(VkResult, vkBeginCommandBuffer,
+                (VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo* pBeginInfo));
+    MOCK_METHOD(VkResult, vkEndCommandBuffer, (VkCommandBuffer commandBuffer));
+    MOCK_METHOD(void, vkCmdClearColorImage,
+                (VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout,
+                 const VkClearColorValue* pColor, uint32_t rangeCount, const VkImageSubresourceRange* pRanges));
+
+    MOCK_METHOD(VkResult, vkCreateFence,
+                (VkDevice device, const VkFenceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkFence* pFence));
+    MOCK_METHOD(void, vkDestroyFence, (VkDevice device, VkFence fence, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkWaitForFences,
+                (VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout));
+    MOCK_METHOD(VkResult, vkResetFences, (VkDevice device, uint32_t fenceCount, const VkFence* pFences));
 };
 
 class MockVmaVulkanFunctions
