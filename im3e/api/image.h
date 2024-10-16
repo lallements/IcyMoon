@@ -13,6 +13,21 @@ struct ImageConfig
     VkImageCreateFlags vkCreateFlags{};
 };
 
+class IImageMetadata
+{
+public:
+    virtual ~IImageMetadata() = default;
+
+    virtual void setLayout(VkImageLayout vkLayout) = 0;
+    virtual void setLastStageMask(VkPipelineStageFlags2 vkStageMask) = 0;
+    virtual void setLastAccessMask(VkAccessFlags2 vkAccessMask) = 0;
+
+    virtual auto getLayout() const -> VkImageLayout = 0;
+    virtual auto getQueueFamilyIndex() const -> uint32_t = 0;
+    virtual auto getLastStageMask() const -> VkPipelineStageFlags2 = 0;
+    virtual auto getLastAccessMask() const -> VkAccessFlags2 = 0;
+};
+
 class IImage
 {
 public:
@@ -21,6 +36,8 @@ public:
     virtual auto getVkImage() const -> VkImage = 0;
     virtual auto getVkExtent() const -> VkExtent2D = 0;
     virtual auto getFormat() const -> VkFormat = 0;
+    virtual auto getMetadata() -> std::shared_ptr<IImageMetadata> = 0;
+    virtual auto getMetadata() const -> std::shared_ptr<const IImageMetadata> = 0;
 };
 
 class IHostVisibleImage : public IImage

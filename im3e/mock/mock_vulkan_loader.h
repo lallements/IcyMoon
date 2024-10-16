@@ -82,6 +82,7 @@ public:
     MOCK_METHOD(VkResult, vkBeginCommandBuffer,
                 (VkCommandBuffer commandBuffer, const VkCommandBufferBeginInfo* pBeginInfo));
     MOCK_METHOD(VkResult, vkEndCommandBuffer, (VkCommandBuffer commandBuffer));
+    MOCK_METHOD(void, vkCmdPipelineBarrier2, (VkCommandBuffer commandBuffer, const VkDependencyInfo* pDependencyInfo));
     MOCK_METHOD(void, vkCmdClearColorImage,
                 (VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout,
                  const VkClearColorValue* pColor, uint32_t rangeCount, const VkImageSubresourceRange* pRanges));

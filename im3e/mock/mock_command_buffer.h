@@ -5,20 +5,36 @@
 
 namespace im3e {
 
+class MockCommandBarrierRecorder : public ICommandBarrierRecorder
+{
+public:
+    MockCommandBarrierRecorder();
+    ~MockCommandBarrierRecorder() override;
+
+    MOCK_METHOD(void, addImageBarrier, (IImage & rImage, ImageBarrierConfig config), (override));
+
+    auto createMockProxy() -> std::unique_ptr<ICommandBarrierRecorder>;
+};
+
 class MockCommandBuffer : public ICommandBuffer
 {
 public:
     MockCommandBuffer();
     ~MockCommandBuffer() override;
 
+    MOCK_METHOD(std::unique_ptr<ICommandBarrierRecorder>, startScopedBarrier, (std::string_view name),
+                (const, override));
+
     MOCK_METHOD(VkCommandBuffer, getVkCommandBuffer, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandBuffer>;
 
     auto getMockVkCommandBuffer() const -> VkCommandBuffer { return m_vkCommandBuffer; }
+    auto getMockBarrierRecorder() -> MockCommandBarrierRecorder& { return m_mockBarrierRecorder; }
 
 private:
     VkCommandBuffer m_vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0x4f3eda3eb29);
+    NiceMock<MockCommandBarrierRecorder> m_mockBarrierRecorder;
 };
 
 class MockCommandQueue : public ICommandQueue

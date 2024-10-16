@@ -35,6 +35,7 @@ struct VulkanImageBuffer
         };
 
         VmaAllocationCreateFlags vmaFlags = VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT;
+        VkMemoryPropertyFlags vkRequiredFlags{};
         if (vmaMemoryUsage == VMA_MEMORY_USAGE_AUTO_PREFER_HOST)
         {
             vmaFlags |= VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
@@ -43,6 +44,7 @@ struct VulkanImageBuffer
         VmaAllocationCreateInfo vmaCreateInfo{
             .flags = vmaFlags,
             .usage = vmaMemoryUsage,
+            .requiredFlags = vkRequiredFlags,
             .pUserData = const_cast<char*>(m_config.name.c_str()),
         };
         throwIfVkFailed(m_pMemoryAllocator->createImage(&vkCreateInfo, &vmaCreateInfo, &m_vkImage, &m_vmaAllocation,
@@ -61,21 +63,43 @@ struct VulkanImageBuffer
     VmaAllocationInfo m_vmaAllocationInfo{};
 };
 
+class VulkanImageMetadata : public IImageMetadata
+{
+public:
+    void setLayout(VkImageLayout vkLayout) override { m_vkLayout = vkLayout; }
+    void setLastStageMask(VkPipelineStageFlags2 vkLastStageMask) override { m_vkLastStageMask = vkLastStageMask; }
+    void setLastAccessMask(VkAccessFlags2 vkLastAccessMask) override { m_vkLastAccessMask = vkLastAccessMask; }
+
+    auto getLayout() const -> VkImageLayout override { return m_vkLayout; }
+    auto getQueueFamilyIndex() const -> uint32_t override { return VK_QUEUE_FAMILY_IGNORED; }
+    auto getLastStageMask() const -> VkPipelineStageFlags2 override { return m_vkLastStageMask; }
+    auto getLastAccessMask() const -> VkAccessFlags2 override { return m_vkLastAccessMask; }
+
+private:
+    VkImageLayout m_vkLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    VkPipelineStageFlags2 m_vkLastStageMask = VK_PIPELINE_STAGE_2_NONE;
+    VkAccessFlags2 m_vkLastAccessMask = VK_ACCESS_2_NONE;
+};
+
 class VulkanImage : public IImage
 {
 public:
     VulkanImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
       : m_pImageBuffer(make_unique<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_OPTIMAL,
                                                       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
+      , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
 
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
     auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
+    auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
 private:
     unique_ptr<VulkanImageBuffer> m_pImageBuffer;
+    shared_ptr<IImageMetadata> m_pMetadata;
 };
 
 auto mapHostVisibleMemory(shared_ptr<IMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
@@ -128,6 +152,7 @@ public:
     VulkanHostVisibleImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
       : m_pImageBuffer(make_shared<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_LINEAR,
                                                       VMA_MEMORY_USAGE_AUTO_PREFER_HOST))
+      , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
 
@@ -140,9 +165,12 @@ public:
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
     auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
+    auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
 private:
     shared_ptr<VulkanImageBuffer> m_pImageBuffer;
+    shared_ptr<VulkanImageMetadata> m_pMetadata;
 };
 
 class VulkanImageFactory : public IImageFactory

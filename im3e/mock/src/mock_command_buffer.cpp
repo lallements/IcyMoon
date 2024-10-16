@@ -5,12 +5,46 @@ using namespace std;
 
 namespace {
 
+class MockProxyCommandBarrierRecorder : public ICommandBarrierRecorder
+{
+public:
+    MockProxyCommandBarrierRecorder(MockCommandBarrierRecorder& rMock)
+      : m_rMock(rMock)
+    {
+    }
+
+    void addImageBarrier(IImage& rImage, ImageBarrierConfig config) override
+    {
+        return m_rMock.addImageBarrier(rImage, move(config));
+    }
+
+private:
+    MockCommandBarrierRecorder& m_rMock;
+};
+
+}  // namespace
+
+MockCommandBarrierRecorder::MockCommandBarrierRecorder() = default;
+MockCommandBarrierRecorder::~MockCommandBarrierRecorder() = default;
+
+auto MockCommandBarrierRecorder::createMockProxy() -> unique_ptr<ICommandBarrierRecorder>
+{
+    return make_unique<MockProxyCommandBarrierRecorder>(*this);
+}
+
+namespace {
+
 class MockProxyCommandBuffer : public ICommandBuffer
 {
 public:
     MockProxyCommandBuffer(MockCommandBuffer& rMock)
       : m_rMock(rMock)
     {
+    }
+
+    auto startScopedBarrier(string_view name) const -> unique_ptr<ICommandBarrierRecorder> override
+    {
+        return m_rMock.startScopedBarrier(name);
     }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_rMock.getVkCommandBuffer(); }
@@ -23,6 +57,9 @@ private:
 
 MockCommandBuffer::MockCommandBuffer()
 {
+    ON_CALL(*this, startScopedBarrier(_)).WillByDefault(Invoke([this](Unused) {
+        return m_mockBarrierRecorder.createMockProxy();
+    }));
     ON_CALL(*this, getVkCommandBuffer()).WillByDefault(Return(m_vkCommandBuffer));
 }
 

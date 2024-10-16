@@ -5,6 +5,64 @@
 using namespace im3e;
 using namespace std;
 
+class VulkanCommandBarrierRecorder : public ICommandBarrierRecorder
+{
+public:
+    VulkanCommandBarrierRecorder(string_view name, const VulkanDeviceFcts& rFcts, const ICommandBuffer& rCommandBuffer)
+      : m_name(name)
+      , m_rFcts(rFcts)
+      , m_rCommandBuffer(rCommandBuffer)
+    {
+    }
+
+    ~VulkanCommandBarrierRecorder() override
+    {
+        VkDependencyInfo vkInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+            .imageMemoryBarrierCount = static_cast<uint32_t>(m_vkImageBarriers.size()),
+            .pImageMemoryBarriers = m_vkImageBarriers.data(),
+        };
+        m_rFcts.vkCmdPipelineBarrier2(m_rCommandBuffer.getVkCommandBuffer(), &vkInfo);
+    }
+
+    void addImageBarrier(IImage& rImage, ImageBarrierConfig config) override
+    {
+        auto pMetadata = rImage.getMetadata();
+
+        m_vkImageBarriers.emplace_back(VkImageMemoryBarrier2{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = pMetadata->getLastStageMask(),
+            .srcAccessMask = pMetadata->getLastAccessMask(),
+            .dstStageMask = config.vkDstStageMask,
+            .dstAccessMask = config.vkDstAccessMask,
+            .oldLayout = pMetadata->getLayout(),
+            .newLayout = config.vkLayout.has_value() ? config.vkLayout.value() : pMetadata->getLayout(),
+            .srcQueueFamilyIndex = pMetadata->getQueueFamilyIndex(),
+            .dstQueueFamilyIndex = pMetadata->getQueueFamilyIndex(),
+            .image = rImage.getVkImage(),
+            .subresourceRange{
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .levelCount = 1U,
+                .layerCount = 1U,
+            },
+        });
+
+        if (config.vkLayout.has_value())
+        {
+            pMetadata->setLayout(config.vkLayout.value());
+        }
+        pMetadata->setLastStageMask(config.vkDstStageMask);
+        pMetadata->setLastAccessMask(config.vkDstAccessMask);
+    }
+
+private:
+    const string m_name;
+    const VulkanDeviceFcts& m_rFcts;
+    const ICommandBuffer& m_rCommandBuffer;
+    vector<VkImageMemoryBarrier2> m_vkImageBarriers;
+};
+
 namespace {
 
 auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkCommandPool vkCommandPool)
@@ -52,6 +110,11 @@ public:
     {
     }
 
+    auto startScopedBarrier(string_view name) const -> unique_ptr<ICommandBarrierRecorder> override
+    {
+        return make_unique<VulkanCommandBarrierRecorder>(name, m_pDevice->getFcts(), *this);
+    }
+
     void reset()
     {
         throwIfVkFailed(m_pDevice->getFcts().vkResetCommandBuffer(m_pVkCommandBuffer.get(), 0U),
@@ -65,7 +128,6 @@ public:
     {
         VkCommandBufferBeginInfo vkBeginInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         };
         throwIfVkFailed(m_pDevice->getFcts().vkBeginCommandBuffer(m_pVkCommandBuffer.get(), &vkBeginInfo),
                         "Could not begin command buffer recording");

@@ -51,10 +51,16 @@ public:
 
     auto mapMemory(VmaAllocation vmaAllocation, void** ppData) -> VkResult override
     {
-        return vmaMapMemory(m_pVmaAllocator.get(), vmaAllocation, ppData);
+        const auto vkResult = vmaMapMemory(m_pVmaAllocator.get(), vmaAllocation, ppData);
+        vmaInvalidateAllocation(m_pVmaAllocator.get(), vmaAllocation, 0U, VK_WHOLE_SIZE);
+        return vkResult;
     }
 
-    void unmapMemory(VmaAllocation vmaAllocation) override { vmaUnmapMemory(m_pVmaAllocator.get(), vmaAllocation); }
+    void unmapMemory(VmaAllocation vmaAllocation) override
+    {
+        vmaFlushAllocation(m_pVmaAllocator.get(), vmaAllocation, 0U, VK_WHOLE_SIZE);
+        vmaUnmapMemory(m_pVmaAllocator.get(), vmaAllocation);
+    }
 
 private:
     shared_ptr<const IDevice> m_pDevice;

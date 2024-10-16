@@ -164,6 +164,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkResetCommandBuffer");
     expectDeviceFctLoaded(vkDevice, "vkBeginCommandBuffer");
     expectDeviceFctLoaded(vkDevice, "vkEndCommandBuffer");
+    expectDeviceFctLoaded(vkDevice, "vkCmdPipelineBarrier2");
     expectDeviceFctLoaded(vkDevice, "vkCmdClearColorImage");
 
     expectDeviceFctLoaded(vkDevice, "vkCreateFence");
@@ -184,6 +185,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkResetCommandBuffer, NotNull());
     EXPECT_THAT(deviceFcts.vkBeginCommandBuffer, NotNull());
     EXPECT_THAT(deviceFcts.vkEndCommandBuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdPipelineBarrier2, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdClearColorImage, NotNull());
 
     EXPECT_THAT(deviceFcts.vkCreateFence, NotNull());

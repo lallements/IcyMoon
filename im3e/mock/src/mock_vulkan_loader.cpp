@@ -201,6 +201,11 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 return g_pMock->getMockDeviceFcts().vkEndCommandBuffer(commandBuffer);
             },
+        .vkCmdPipelineBarrier2 =
+            [](VkCommandBuffer commandBuffer, const VkDependencyInfo* pDependencyInfo) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdPipelineBarrier2(commandBuffer, pDependencyInfo);
+            },
         .vkCmdClearColorImage =
             [](VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout, const VkClearColorValue* pColor,
                uint32_t rangeCount, const VkImageSubresourceRange* pRanges) {
