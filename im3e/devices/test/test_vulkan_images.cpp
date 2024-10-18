@@ -108,7 +108,8 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
             EXPECT_THAT(pVkCreateInfo->tiling, Eq(VK_IMAGE_TILING_LINEAR));
             EXPECT_THAT(pVkCreateInfo->usage, Eq(imageConfig.vkUsage));
 
-            EXPECT_THAT(pVmaCreateInfo->flags, Eq(VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT));
+            EXPECT_THAT(pVmaCreateInfo->flags, Eq(VMA_ALLOCATION_CREATE_USER_DATA_COPY_STRING_BIT |
+                                                  VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT));
             EXPECT_THAT(pVmaCreateInfo->usage, Eq(VMA_MEMORY_USAGE_AUTO_PREFER_HOST));
             EXPECT_THAT(reinterpret_cast<const char*>(pVmaCreateInfo->pUserData), StrEq(imageConfig.name));
 
@@ -133,9 +134,8 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     EXPECT_THAT(pImage->getFormat(), Eq(imageConfig.vkFormat));
 
     auto* pData = reinterpret_cast<uint8_t*>(0xb43e2a67cf);
-    EXPECT_CALL(m_mockDevice.getMockDeviceFcts(),
-                vkMapMemory(m_mockDevice.getMockVkDevice(), vkDeviceMemory, memOffset, memSize, 0U, NotNull()))
-        .WillOnce(Invoke([&](Unused, Unused, Unused, Unused, Unused, void** ppData) {
+    EXPECT_CALL(m_mockDevice.getMockMemoryAllocator(), mapMemory(vmaAllocation, NotNull()))
+        .WillOnce(Invoke([&](Unused, void** ppData) {
             *ppData = pData;
             return VK_SUCCESS;
         }));
@@ -147,7 +147,7 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     EXPECT_THAT(pMapping->getSizeInBytes(), Eq(memSize));
     EXPECT_THAT(pMapping->getRowPitch(), Eq(rowPitch));
 
-    EXPECT_CALL(m_mockDevice.getMockDeviceFcts(), vkUnmapMemory(m_mockDevice.getMockVkDevice(), vkDeviceMemory));
+    EXPECT_CALL(m_mockDevice.getMockMemoryAllocator(), unmapMemory(vmaAllocation));
     pMapping.reset();
 
     EXPECT_CALL(m_rMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));

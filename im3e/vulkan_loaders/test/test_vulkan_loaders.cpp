@@ -154,11 +154,44 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
 
     expectDeviceFctLoaded(vkDevice, "vkDestroyDevice");
     expectDeviceFctLoaded(vkDevice, "vkGetDeviceQueue");
+    expectDeviceFctLoaded(vkDevice, "vkQueueSubmit");
     expectDeviceFctLoaded(vkDevice, "vkGetImageSubresourceLayout");
-    expectDeviceFctLoaded(vkDevice, "vkMapMemory");
-    expectDeviceFctLoaded(vkDevice, "vkUnmapMemory");
+
+    expectDeviceFctLoaded(vkDevice, "vkCreateCommandPool");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyCommandPool");
+    expectDeviceFctLoaded(vkDevice, "vkAllocateCommandBuffers");
+    expectDeviceFctLoaded(vkDevice, "vkFreeCommandBuffers");
+    expectDeviceFctLoaded(vkDevice, "vkResetCommandBuffer");
+    expectDeviceFctLoaded(vkDevice, "vkBeginCommandBuffer");
+    expectDeviceFctLoaded(vkDevice, "vkEndCommandBuffer");
+    expectDeviceFctLoaded(vkDevice, "vkCmdPipelineBarrier2");
+    expectDeviceFctLoaded(vkDevice, "vkCmdClearColorImage");
+
+    expectDeviceFctLoaded(vkDevice, "vkCreateFence");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyFence");
+    expectDeviceFctLoaded(vkDevice, "vkWaitForFences");
+    expectDeviceFctLoaded(vkDevice, "vkResetFences");
+
     auto deviceFcts = pLoader->loadDeviceFcts(vkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
+    EXPECT_THAT(deviceFcts.vkGetDeviceQueue, NotNull());
+    EXPECT_THAT(deviceFcts.vkQueueSubmit, NotNull());
+    EXPECT_THAT(deviceFcts.vkGetImageSubresourceLayout, NotNull());
+
+    EXPECT_THAT(deviceFcts.vkCreateCommandPool, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyCommandPool, NotNull());
+    EXPECT_THAT(deviceFcts.vkAllocateCommandBuffers, NotNull());
+    EXPECT_THAT(deviceFcts.vkFreeCommandBuffers, NotNull());
+    EXPECT_THAT(deviceFcts.vkResetCommandBuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkBeginCommandBuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkEndCommandBuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdPipelineBarrier2, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdClearColorImage, NotNull());
+
+    EXPECT_THAT(deviceFcts.vkCreateFence, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyFence, NotNull());
+    EXPECT_THAT(deviceFcts.vkWaitForFences, NotNull());
+    EXPECT_THAT(deviceFcts.vkResetFences, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadDeviceFctsThrowsWithoutDevice)

@@ -6,6 +6,7 @@ namespace im3e {
 
 using ::testing::_;
 using ::testing::ByRef;
+using ::testing::Const;
 using ::testing::ContainerEq;
 using ::testing::Eq;
 using ::testing::Ge;
@@ -22,6 +23,7 @@ using ::testing::MockFunction;
 using ::testing::Ne;
 using ::testing::NiceMock;
 using ::testing::NotNull;
+using ::testing::Pointee;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::StrEq;

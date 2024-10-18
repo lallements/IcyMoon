@@ -49,6 +49,19 @@ public:
         vmaDestroyImage(m_pVmaAllocator.get(), vkImage, vmaAllocation);
     }
 
+    auto mapMemory(VmaAllocation vmaAllocation, void** ppData) -> VkResult override
+    {
+        const auto vkResult = vmaMapMemory(m_pVmaAllocator.get(), vmaAllocation, ppData);
+        vmaInvalidateAllocation(m_pVmaAllocator.get(), vmaAllocation, 0U, VK_WHOLE_SIZE);
+        return vkResult;
+    }
+
+    void unmapMemory(VmaAllocation vmaAllocation) override
+    {
+        vmaFlushAllocation(m_pVmaAllocator.get(), vmaAllocation, 0U, VK_WHOLE_SIZE);
+        vmaUnmapMemory(m_pVmaAllocator.get(), vmaAllocation);
+    }
+
 private:
     shared_ptr<const IDevice> m_pDevice;
     VmaVulkanFunctions m_vmaFcts;

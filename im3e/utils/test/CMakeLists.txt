@@ -3,6 +3,7 @@ im3e_add_unit_tests_executable(
     test_im3e_utils
   SOURCES
     test_throw_utils.cpp
+    test_types.cpp
     test_vk_utils.cpp
 )
 

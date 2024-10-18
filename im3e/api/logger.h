@@ -2,6 +2,8 @@
 
 #include <im3e/utils/types.h>
 
+#include <fmt/format.h>
+
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -45,5 +47,13 @@ public:
     // Tracks all log messages from current logger as well as all ancestors and descendants (see createChild()).
     virtual auto createGlobalTracker() -> UniquePtrWithDeleter<ILoggerTracker> = 0;
 };
+
+inline void logIfVkFailed(VkResult vkResult, const ILogger& rLogger, std::string_view errorMessage)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        rLogger.error(fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
+    }
+}
 
 }  // namespace im3e
