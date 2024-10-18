@@ -5,6 +5,8 @@
 using namespace im3e;
 using namespace std;
 
+namespace {
+
 class VulkanCommandBarrierRecorder : public ICommandBarrierRecorder
 {
 public:
@@ -17,6 +19,11 @@ public:
 
     ~VulkanCommandBarrierRecorder() override
     {
+        if (m_vkImageBarriers.empty())
+        {
+            return;
+        }
+
         VkDependencyInfo vkInfo{
             .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
             .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
@@ -63,8 +70,6 @@ private:
     vector<VkImageMemoryBarrier2> m_vkImageBarriers;
 };
 
-namespace {
-
 auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkCommandPool vkCommandPool)
 {
     VkCommandBufferAllocateInfo vkAllocateInfo{
@@ -99,11 +104,11 @@ auto createVkFence(VkDevice vkDevice, const VulkanDeviceFcts& rFcts)
 class VulkanCommandBuffer : public ICommandBuffer
 {
 public:
-    VulkanCommandBuffer(std::shared_ptr<const ICommandQueue> pQueue, std::shared_ptr<const IDevice> pDevice,
-                        VkCommandPool vkCommandPool, std::string_view name)
-      : m_pQueue(throwIfArgNull(move(pQueue), "Cannot create Vulkan command buffer without a queue"))
+    VulkanCommandBuffer(const ICommandQueue& rQueue, shared_ptr<const IDevice> pDevice, VkCommandPool vkCommandPool,
+                        string_view name)
+      : m_rQueue(rQueue)
       , m_pDevice(throwIfArgNull(move(pDevice), "Cannot create Vulkan command buffer without a device"))
-      , m_pLogger(m_pDevice->createLogger(m_name))
+      , m_pLogger(m_pDevice->createLogger(name))
       , m_name(name)
       , m_pVkCommandBuffer(createVkCommandBuffer(m_pDevice->getVkDevice(), m_pDevice->getFcts(), vkCommandPool))
       , m_pVkFence(createVkFence(m_pDevice->getVkDevice(), m_pDevice->getFcts()))
@@ -146,18 +151,22 @@ public:
             .commandBufferCount = 1U,
             .pCommandBuffers = &vkCommandBuffer,
         };
-        throwIfVkFailed(m_pDevice->getFcts().vkQueueSubmit(m_pQueue->getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
+        throwIfVkFailed(m_pDevice->getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                         "Failed to execute command buffer");
 
         if (executionType == CommandExecutionType::Sync)
         {
-            const auto vkFence = m_pVkFence.get();
-            throwIfVkFailed(m_pDevice->getFcts().vkWaitForFences(m_pDevice->getVkDevice(), 1U, &vkFence, VK_TRUE,
-                                                                 numeric_limits<uint64_t>::max()),
-                            "Failed to wait for end of command buffer execution");
-
+            this->waitForCompletion();
             this->reset();
         }
+    }
+
+    void waitForCompletion() const
+    {
+        const auto vkFence = m_pVkFence.get();
+        logIfVkFailed(m_pDevice->getFcts().vkWaitForFences(m_pDevice->getVkDevice(), 1U, &vkFence, VK_TRUE,
+                                                           numeric_limits<uint64_t>::max()),
+                      *m_pLogger, "Failed to wait for fence while destroying command buffer");
     }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
@@ -179,7 +188,7 @@ public:
     }
 
 private:
-    shared_ptr<const ICommandQueue> m_pQueue;
+    const ICommandQueue& m_rQueue;
     shared_ptr<const IDevice> m_pDevice;
     unique_ptr<ILogger> m_pLogger;
     const string m_name;
@@ -215,6 +224,14 @@ public:
     {
     }
 
+    ~VulkanCommandQueue()
+    {
+        for (auto* pInFlight : m_pInFlight)
+        {
+            pInFlight->waitForCompletion();
+        }
+    }
+
     auto startScopedCommand(string_view name, CommandExecutionType executionType)
         -> UniquePtrWithDeleter<ICommandBuffer> override
     {
@@ -236,9 +253,8 @@ public:
         VulkanCommandBuffer* pCommandBuffer{};
         if (m_pAvailable.empty())
         {
-            m_pVkCommandBuffers.emplace_back(
-                make_unique<VulkanCommandBuffer>(this->shared_from_this(), m_pDevice, m_pVkCommandPool.get(),
-                                                 fmt::format("{}_{}", m_name, m_pVkCommandBuffers.size())));
+            m_pVkCommandBuffers.emplace_back(make_unique<VulkanCommandBuffer>(
+                *this, m_pDevice, m_pVkCommandPool.get(), fmt::format("{}_{}", m_name, m_pVkCommandBuffers.size())));
             pCommandBuffer = m_pVkCommandBuffers.back().get();
         }
         else
