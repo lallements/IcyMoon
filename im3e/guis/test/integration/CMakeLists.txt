@@ -1,0 +1,21 @@
+im3e_add_integration_tests_executable(
+  TARGET
+    integration_im3e_guis
+  SOURCES
+    integration_imgui_vulkan_backend.cpp
+)
+
+target_include_directories(integration_im3e_guis
+  PRIVATE
+    ../..
+)
+
+target_link_libraries(integration_im3e_guis
+  PRIVATE
+    glfw
+    imgui
+    im3e_devices
+    im3e_guis
+    im3e_loggers
+    im3e_test_utils
+)

@@ -210,6 +210,7 @@ public:
     auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_physicalDevice.vkPhysicalDevice; }
     auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
     auto getFcts() const -> const VulkanDeviceFcts& override { return m_fcts; }
+    auto getInstanceFcts() const -> const VulkanInstanceFcts& override { return m_instance.getFcts(); }
     auto getMemoryAllocator() const -> shared_ptr<IMemoryAllocator> override
     {
         if (!m_pMemoryAllocator)
@@ -226,6 +227,14 @@ public:
             m_pImageFactory = createVulkanImageFactory(shared_from_this());
         }
         return m_pImageFactory;
+    }
+    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override
+    {
+        if (!m_pCommandQueue)
+        {
+            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo, "MainQueue");
+        }
+        return m_pCommandQueue;
     }
     auto getCommandQueue() -> shared_ptr<ICommandQueue> override
     {

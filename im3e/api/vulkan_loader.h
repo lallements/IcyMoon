@@ -17,6 +17,7 @@ struct VulkanGlobalFcts
 
 struct VulkanInstanceFcts
 {
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr{};
     PFN_vkDestroyInstance vkDestroyInstance{};
     PFN_vkCreateDevice vkCreateDevice{};
 
@@ -47,11 +48,22 @@ struct VulkanDeviceFcts
     PFN_vkEndCommandBuffer vkEndCommandBuffer{};
     PFN_vkCmdPipelineBarrier2 vkCmdPipelineBarrier2{};
     PFN_vkCmdClearColorImage vkCmdClearColorImage{};
+    PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass{};
+    PFN_vkCmdEndRenderPass vkCmdEndRenderPass{};
 
     PFN_vkCreateFence vkCreateFence{};
     PFN_vkDestroyFence vkDestroyFence{};
     PFN_vkWaitForFences vkWaitForFences{};
     PFN_vkResetFences vkResetFences{};
+
+    PFN_vkCreateFramebuffer vkCreateFramebuffer{};
+    PFN_vkDestroyFramebuffer vkDestroyFramebuffer{};
+    PFN_vkCreateRenderPass vkCreateRenderPass{};
+    PFN_vkDestroyRenderPass vkDestroyRenderPass{};
+    PFN_vkCreateDescriptorPool vkCreateDescriptorPool{};
+    PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool{};
+    PFN_vkCreateImageView vkCreateImageView{};
+    PFN_vkDestroyImageView vkDestroyImageView{};
 };
 
 class IVulkanLoader

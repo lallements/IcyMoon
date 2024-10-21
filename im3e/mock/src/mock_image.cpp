@@ -5,6 +5,33 @@ using namespace std;
 
 namespace {
 
+class MockProxyImageView : public IImageView
+{
+public:
+    MockProxyImageView(MockImageView& rMock)
+      : m_rMock(rMock)
+    {
+    }
+
+    auto getVkImageView() const -> VkImageView override { return m_rMock.getVkImageView(); }
+    auto getVkImage() const -> VkImage override { return m_rMock.getVkImage(); }
+
+private:
+    MockImageView& m_rMock;
+};
+
+}  // namespace
+
+MockImageView::MockImageView() = default;
+MockImageView::~MockImageView() = default;
+
+auto MockImageView::createMockProxy() -> unique_ptr<IImageView>
+{
+    return make_unique<MockProxyImageView>(*this);
+}
+
+namespace {
+
 class MockProxyImageMetadata : public IImageMetadata
 {
 public:
@@ -46,6 +73,8 @@ public:
     {
     }
 
+    auto createView() const -> unique_ptr<IImageView> override { return m_rMock.createView(); }
+
     auto getVkImage() const -> VkImage override { return m_rMock.getVkImage(); }
     auto getVkExtent() const -> VkExtent2D override { return m_rMock.getVkExtent(); }
     auto getFormat() const -> VkFormat override { return m_rMock.getFormat(); }
@@ -60,6 +89,7 @@ private:
 
 MockImage::MockImage()
 {
+    ON_CALL(*this, createView()).WillByDefault(Invoke([this] { return m_mockView.createMockProxy(); }));
     ON_CALL(*this, getMetadata()).WillByDefault(Invoke([this] { return m_mockMetadata.createMockProxy(); }));
     ON_CALL(Const(*this), getMetadata()).WillByDefault(Invoke([this] { return m_mockMetadata.createMockProxy(); }));
 }

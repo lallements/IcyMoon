@@ -63,8 +63,10 @@ public:
     auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_rMock.getVkPhysicalDevice(); }
     auto getVkDevice() const -> VkDevice override { return m_rMock.getVkDevice(); }
     auto getFcts() const -> const VulkanDeviceFcts& override { return m_rMock.getFcts(); }
+    auto getInstanceFcts() const -> const VulkanInstanceFcts& override { return m_rMock.getInstanceFcts(); }
     auto getMemoryAllocator() const -> shared_ptr<IMemoryAllocator> override { return m_rMock.getMemoryAllocator(); }
     auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_rMock.getImageFactory(); }
+    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override { return m_rMock.getCommandQueue(); }
     auto getCommandQueue() -> shared_ptr<ICommandQueue> override { return m_rMock.getCommandQueue(); }
 
 private:

@@ -56,6 +56,7 @@ public:
     virtual auto startScopedCommand(std::string_view name, CommandExecutionType executionType)
         -> UniquePtrWithDeleter<ICommandBuffer> = 0;
 
+    virtual auto getQueueFamilyIndex() const -> uint32_t = 0;
     virtual auto getVkQueue() const -> VkQueue = 0;
 };
 
