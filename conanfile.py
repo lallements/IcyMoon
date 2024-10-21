@@ -12,6 +12,7 @@ class IcyMoonEngineRecipe(ConanFile):
 
     requires = {
         "fmt/11.0.2",
+        "glfw/3.4",
         "gtest/1.15.0",
         "vulkan-headers/1.3.243.0", # version depended on by vulkan-memory-allocator
         "vulkan-memory-allocator/cci.20231120",

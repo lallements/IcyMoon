@@ -166,11 +166,22 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkEndCommandBuffer");
     expectDeviceFctLoaded(vkDevice, "vkCmdPipelineBarrier2");
     expectDeviceFctLoaded(vkDevice, "vkCmdClearColorImage");
+    expectDeviceFctLoaded(vkDevice, "vkCmdBeginRenderPass");
+    expectDeviceFctLoaded(vkDevice, "vkCmdEndRenderPass");
 
     expectDeviceFctLoaded(vkDevice, "vkCreateFence");
     expectDeviceFctLoaded(vkDevice, "vkDestroyFence");
     expectDeviceFctLoaded(vkDevice, "vkWaitForFences");
     expectDeviceFctLoaded(vkDevice, "vkResetFences");
+
+    expectDeviceFctLoaded(vkDevice, "vkCreateFramebuffer");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyFramebuffer");
+    expectDeviceFctLoaded(vkDevice, "vkCreateRenderPass");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyRenderPass");
+    expectDeviceFctLoaded(vkDevice, "vkCreateDescriptorPool");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyDescriptorPool");
+    expectDeviceFctLoaded(vkDevice, "vkCreateImageView");
+    expectDeviceFctLoaded(vkDevice, "vkDestroyImageView");
 
     auto deviceFcts = pLoader->loadDeviceFcts(vkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
@@ -187,11 +198,22 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkEndCommandBuffer, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdPipelineBarrier2, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdClearColorImage, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdBeginRenderPass, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdEndRenderPass, NotNull());
 
     EXPECT_THAT(deviceFcts.vkCreateFence, NotNull());
     EXPECT_THAT(deviceFcts.vkDestroyFence, NotNull());
     EXPECT_THAT(deviceFcts.vkWaitForFences, NotNull());
     EXPECT_THAT(deviceFcts.vkResetFences, NotNull());
+
+    EXPECT_THAT(deviceFcts.vkCreateFramebuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyFramebuffer, NotNull());
+    EXPECT_THAT(deviceFcts.vkCreateRenderPass, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyRenderPass, NotNull());
+    EXPECT_THAT(deviceFcts.vkCreateDescriptorPool, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyDescriptorPool, NotNull());
+    EXPECT_THAT(deviceFcts.vkCreateImageView, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroyImageView, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadDeviceFctsThrowsWithoutDevice)

@@ -46,6 +46,7 @@ public:
     MOCK_METHOD(UniquePtrWithDeleter<ICommandBuffer>, startScopedCommand,
                 (std::string_view name, CommandExecutionType executionType), (override));
 
+    MOCK_METHOD(uint32_t, getQueueFamilyIndex, (), (const, override));
     MOCK_METHOD(VkQueue, getVkQueue, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandQueue>;

@@ -279,6 +279,7 @@ public:
             });
     }
 
+    auto getQueueFamilyIndex() const -> uint32_t override { return m_queueInfo.queueFamilyIndex; }
     auto getVkQueue() const -> VkQueue override { return m_queueInfo.vkQueue; }
 
 private:

@@ -227,6 +227,14 @@ public:
         }
         return m_pImageFactory;
     }
+    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override
+    {
+        if (!m_pCommandQueue)
+        {
+            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo, "MainQueue");
+        }
+        return m_pCommandQueue;
+    }
     auto getCommandQueue() -> shared_ptr<ICommandQueue> override
     {
         if (!m_pCommandQueue)

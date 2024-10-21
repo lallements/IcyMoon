@@ -1,5 +1,6 @@
 add_subdirectory(api)
 add_subdirectory(devices)
+add_subdirectory(guis)
 add_subdirectory(loggers)
 add_subdirectory(mock)
 add_subdirectory(test_utils)

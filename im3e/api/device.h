@@ -34,6 +34,7 @@ public:
     virtual auto getFcts() const -> const VulkanDeviceFcts& = 0;
     virtual auto getMemoryAllocator() const -> std::shared_ptr<IMemoryAllocator> = 0;
     virtual auto getImageFactory() const -> std::shared_ptr<const IImageFactory> = 0;
+    virtual auto getCommandQueue() const -> std::shared_ptr<const ICommandQueue> = 0;
     virtual auto getCommandQueue() -> std::shared_ptr<ICommandQueue> = 0;
 };
 

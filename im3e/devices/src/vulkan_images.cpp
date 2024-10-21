@@ -63,6 +63,50 @@ struct VulkanImageBuffer
     VmaAllocationInfo m_vmaAllocationInfo{};
 };
 
+auto getAspectMaskFromImageUsage(VkImageUsageFlags vkImageUsage) -> VkImageAspectFlags
+{
+    if (vkFlagsContain(vkImageUsage, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT))
+    {
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    return VK_IMAGE_ASPECT_COLOR_BIT;
+}
+
+class VulkanImageView : public IImageView
+{
+public:
+    VulkanImageView(shared_ptr<const VulkanImageBuffer> pImageBuffer)
+      : m_pImageBuffer(throwIfArgNull(move(pImageBuffer), "Cannot create a Vulkan image view without an image"))
+    {
+        VkImageViewCreateInfo vkCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = m_pImageBuffer->m_vkImage,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = m_pImageBuffer->m_config.vkFormat,
+            .subresourceRange{
+                .aspectMask = getAspectMaskFromImageUsage(m_pImageBuffer->m_config.vkUsage),
+                .levelCount = 1U,
+                .layerCount = 1U,
+            },
+        };
+
+        const auto vkDevice = m_pImageBuffer->m_pDevice->getVkDevice();
+        const auto& rFcts = m_pImageBuffer->m_pDevice->getFcts();
+
+        VkImageView vkImageView{};
+        throwIfVkFailed(rFcts.vkCreateImageView(vkDevice, &vkCreateInfo, nullptr, &vkImageView),
+                        "Could not create image buffer view");
+        m_pVkImageView = makeVkUniquePtr<VkImageView>(vkDevice, vkImageView, rFcts.vkDestroyImageView);
+    }
+
+    auto getVkImageView() const -> VkImageView override { return m_pVkImageView.get(); }
+    auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
+
+private:
+    shared_ptr<const VulkanImageBuffer> m_pImageBuffer;
+    VkUniquePtr<VkImageView> m_pVkImageView;
+};
+
 class VulkanImageMetadata : public IImageMetadata
 {
 public:
@@ -85,11 +129,13 @@ class VulkanImage : public IImage
 {
 public:
     VulkanImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
-      : m_pImageBuffer(make_unique<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_OPTIMAL,
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_OPTIMAL,
                                                       VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
+
+    auto createView() const -> unique_ptr<IImageView> override { return make_unique<VulkanImageView>(m_pImageBuffer); }
 
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
@@ -98,7 +144,7 @@ public:
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
 private:
-    unique_ptr<VulkanImageBuffer> m_pImageBuffer;
+    shared_ptr<VulkanImageBuffer> m_pImageBuffer;
     shared_ptr<IImageMetadata> m_pMetadata;
 };
 
@@ -155,6 +201,8 @@ public:
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
+
+    auto createView() const -> unique_ptr<IImageView> override { return make_unique<VulkanImageView>(m_pImageBuffer); }
 
     auto map() -> unique_ptr<IMapping> override { return make_unique<VulkanHostVisibleImageMapping>(m_pImageBuffer); }
     auto mapReadOnly() const -> unique_ptr<const IMapping> override

@@ -13,6 +13,15 @@ struct ImageConfig
     VkImageCreateFlags vkCreateFlags{};
 };
 
+class IImageView
+{
+public:
+    virtual ~IImageView() = default;
+
+    virtual auto getVkImageView() const -> VkImageView = 0;
+    virtual auto getVkImage() const -> VkImage = 0;
+};
+
 class IImageMetadata
 {
 public:
@@ -32,6 +41,8 @@ class IImage
 {
 public:
     virtual ~IImage() = default;
+
+    virtual auto createView() const -> std::unique_ptr<IImageView> = 0;
 
     virtual auto getVkImage() const -> VkImage = 0;
     virtual auto getVkExtent() const -> VkExtent2D = 0;

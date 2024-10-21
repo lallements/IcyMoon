@@ -1,5 +1,6 @@
 add_library(im3e_test_utils STATIC
     std.h
+    test_utils.h
     vk.h
     src/vk.cpp  
 )

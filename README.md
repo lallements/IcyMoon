@@ -34,6 +34,8 @@ Then, run the `conan install` command from the `build` folder with one of the pr
 conan install .. -pr:a ../profiles/<my_profile> --build=missing
 ```
 
+> Important: On Linux, conan may fail due to missing packages. In this case, a command of the form "apt-get install ..." will appear in the error message. Use this command in sudo to install the missing packages.
+
 We use Conan to download some tools needed for compilation (e.g. CMake). To use these tools during compilation, we need to first start a virtual environment. To do so, Conan generates a `conanbuild.sh` and `deactivate_conanbuild.sh` scripts for each profile, located under `build/<my_profile>/generators/`. For example, to build `gcc-debug`, we start the corresponding virtual environment as follows:
 
 ```bash

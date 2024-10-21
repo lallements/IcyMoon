@@ -45,6 +45,7 @@ public:
     MOCK_METHOD(const VulkanDeviceFcts&, getFcts, (), (const, override));
     MOCK_METHOD(std::shared_ptr<IMemoryAllocator>, getMemoryAllocator, (), (const, override));
     MOCK_METHOD(std::shared_ptr<const IImageFactory>, getImageFactory, (), (const, override));
+    MOCK_METHOD(std::shared_ptr<const ICommandQueue>, getCommandQueue, (), (const, override));
     MOCK_METHOD(std::shared_ptr<ICommandQueue>, getCommandQueue, (), (override));
 
     auto createMockProxy() -> std::unique_ptr<IDevice>;
