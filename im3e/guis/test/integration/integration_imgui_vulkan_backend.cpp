@@ -5,6 +5,7 @@
 #include <im3e/devices/devices.h>
 #include <im3e/loggers/loggers.h>
 #include <im3e/test_utils/test_utils.h>
+#include <im3e/utils/imgui_utils.h>
 
 #include <fmt/format.h>
 #include <imgui_impl_vulkan.h>
@@ -37,6 +38,9 @@ TEST_F(ImguiVulkanBackendIntegration, drawWindow)
     // A ImGui context must be active while using the backend:
     auto pContextGuard = m_imguiContext.makeCurrent();
     ImguiVulkanBackend backend(m_pDevice, pImage, 1U, nullptr);
+    // ImGui assumes at least double buffering in its code. As a result, we need to at least draw the frame twice before
+    // the result is visibile in the output image:
+    for (auto i = 0U; i < 2; i++)
     {
         auto pCommandBuffer = m_pCommandQueue->startScopedCommand("executeBackend", CommandExecutionType::Sync);
 
@@ -48,7 +52,11 @@ TEST_F(ImguiVulkanBackendIntegration, drawWindow)
         rIo.DisplaySize.y = pImage->getVkExtent().height;
 
         ImGui::NewFrame();
-
+        {
+            ImGui::SetNextWindowPos(ImVec2(0, 0));
+            ImGui::SetNextWindowSize(rIo.DisplaySize);
+            ImguiScope window(ImGui::Begin("Test Window"), &ImGui::End, true);
+        }
         ImGui::Render();
 
         backend.scheduleExecution(*pCommandBuffer);
@@ -75,4 +83,6 @@ TEST_F(ImguiVulkanBackendIntegration, drawWindow)
             }
         }
     }
+
+    pImageMapping->save("img.bmp");
 }

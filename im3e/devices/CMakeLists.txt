@@ -29,6 +29,7 @@ target_link_libraries(im3e_devices
   PUBLIC
     im3e_api
   PRIVATE
+    cimg::cimg
     im3e_utils
     im3e_vulkan_loaders
 )

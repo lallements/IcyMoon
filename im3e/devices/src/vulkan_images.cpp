@@ -2,10 +2,12 @@
 
 #include <im3e/utils/throw_utils.h>
 
+#include <CImg.h>
 #include <fmt/format.h>
 
 using namespace im3e;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
 
@@ -177,8 +179,19 @@ public:
     VulkanHostVisibleImageMapping(shared_ptr<VulkanImageBuffer> pImageBuffer)
       : m_pImageBuffer(throwIfArgNull(move(pImageBuffer), "Host-visible image mapping requires a buffer"))
       , m_pData(mapHostVisibleMemory(m_pImageBuffer->m_pMemoryAllocator, m_pImageBuffer->m_vmaAllocation))
+      , m_formatProperties(getFormatProperties(m_pImageBuffer->m_config.vkFormat))
+      , m_vkExtent(m_pImageBuffer->m_config.vkExtent)
       , m_rowPitch(queryImageRowPitch(*m_pImageBuffer->m_pDevice, m_pImageBuffer->m_vkImage))
     {
+    }
+
+    void save(const filesystem::path& rFileName) const override
+    {
+        cimg_library::cimg::exception_mode(0U);  // disable log messages from cimg
+        cimg_library::CImg<uint8_t> image(m_pData.get(), m_formatProperties.componentCount, m_vkExtent.width,
+                                          m_vkExtent.height, 1U, false);
+        image.permute_axes("yzcx");
+        image.save(rFileName.string().c_str());
     }
 
     auto getData() -> uint8_t* override { return m_pData.get(); }
@@ -189,6 +202,8 @@ public:
 private:
     shared_ptr<VulkanImageBuffer> m_pImageBuffer;
     UniquePtrWithDeleter<uint8_t> m_pData;
+    const FormatProperties m_formatProperties{};
+    const VkExtent2D m_vkExtent{};
     const VkDeviceSize m_rowPitch{};
 };
 

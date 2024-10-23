@@ -38,4 +38,12 @@ constexpr bool vkFlagsContain(VkFlags vkFlags, T vkFlag)
     return (vkFlags & static_cast<VkFlags>(vkFlag)) != 0U;
 }
 
+struct FormatProperties
+{
+    VkDeviceSize sizeInBytes{};
+    VkDeviceSize componentSizeInBytes{};
+    uint32_t componentCount{};
+};
+auto getFormatProperties(VkFormat vkFormat) -> FormatProperties;
+
 }  // namespace im3e

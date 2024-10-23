@@ -1,4 +1,5 @@
 add_library(im3e_utils STATIC
+    imgui_utils.h
     throw_utils.h
     types.h
     vk_utils.h

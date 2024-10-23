@@ -2,6 +2,8 @@
 
 #include <im3e/utils/vk_utils.h>
 
+#include <filesystem>
+
 namespace im3e {
 
 struct ImageConfig
@@ -60,6 +62,8 @@ public:
     {
     public:
         virtual ~IMapping() = default;
+
+        virtual void save(const std::filesystem::path& rFileName) const = 0;
 
         virtual auto getData() -> uint8_t* = 0;
         virtual auto getConstData() const -> const uint8_t* = 0;
