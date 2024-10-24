@@ -26,7 +26,7 @@ TEST_F(VulkanImageIntegration, createImageRgbaSnorm)
     ASSERT_THAT(pImage, NotNull());
     EXPECT_THAT(pImage->getVkImage(), Ne(VK_NULL_HANDLE));
     EXPECT_THAT(pImage->getVkExtent(), Eq(ExpectedExtent));
-    EXPECT_THAT(pImage->getFormat(), Eq(ExpectedFormat));
+    EXPECT_THAT(pImage->getVkFormat(), Eq(ExpectedFormat));
 }
 
 TEST_F(VulkanImageIntegration, createImageRgbaSrgb)
@@ -43,7 +43,7 @@ TEST_F(VulkanImageIntegration, createImageRgbaSrgb)
     ASSERT_THAT(pImage, NotNull());
     EXPECT_THAT(pImage->getVkImage(), Ne(VK_NULL_HANDLE));
     EXPECT_THAT(pImage->getVkExtent(), Eq(ExpectedExtent));
-    EXPECT_THAT(pImage->getFormat(), Eq(ExpectedFormat));
+    EXPECT_THAT(pImage->getVkFormat(), Eq(ExpectedFormat));
 }
 
 TEST_F(VulkanImageIntegration, createHostVisibleImageRgbaUnorm)
@@ -60,7 +60,7 @@ TEST_F(VulkanImageIntegration, createHostVisibleImageRgbaUnorm)
     ASSERT_THAT(pImage, NotNull());
     EXPECT_THAT(pImage->getVkImage(), Ne(VK_NULL_HANDLE));
     EXPECT_THAT(pImage->getVkExtent(), Eq(ExpectedExtent));
-    EXPECT_THAT(pImage->getFormat(), Eq(ExpectedFormat));
+    EXPECT_THAT(pImage->getVkFormat(), Eq(ExpectedFormat));
 
     auto pImageMapping = pImage->map();
     EXPECT_THAT(pImageMapping->getData(), NotNull());

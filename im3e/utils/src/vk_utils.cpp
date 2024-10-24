@@ -14,14 +14,18 @@ auto im3e::getFormatProperties(VkFormat vkFormat) -> FormatProperties
     {
         case VK_FORMAT_B8G8R8_SRGB:
         case VK_FORMAT_B8G8R8_UNORM:
+        case VK_FORMAT_B8G8R8_SNORM:
         case VK_FORMAT_R8G8B8_SRGB:
         case VK_FORMAT_R8G8B8_UNORM:
+        case VK_FORMAT_R8G8B8_SNORM:
             return FormatProperties{.sizeInBytes = 3U, .componentSizeInBytes = 1U, .componentCount = 3U};
 
         case VK_FORMAT_B8G8R8A8_SRGB:
         case VK_FORMAT_B8G8R8A8_UNORM:
+        case VK_FORMAT_B8G8R8A8_SNORM:
         case VK_FORMAT_R8G8B8A8_SRGB:
         case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_SNORM:
             return FormatProperties{.sizeInBytes = 4U, .componentSizeInBytes = 1U, .componentCount = 4U};
 
         case VK_FORMAT_R32G32_SFLOAT:

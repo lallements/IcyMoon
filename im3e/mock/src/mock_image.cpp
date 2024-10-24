@@ -77,7 +77,11 @@ public:
 
     auto getVkImage() const -> VkImage override { return m_rMock.getVkImage(); }
     auto getVkExtent() const -> VkExtent2D override { return m_rMock.getVkExtent(); }
-    auto getFormat() const -> VkFormat override { return m_rMock.getFormat(); }
+    auto getVkFormat() const -> VkFormat override { return m_rMock.getVkFormat(); }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_rMock.getVkSubresourceLayers();
+    }
     auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_rMock.getMetadata(); }
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_rMock.getMetadata(); }
 
@@ -89,6 +93,11 @@ private:
 
 MockImage::MockImage()
 {
+    ON_CALL(*this, getVkSubresourceLayers())
+        .WillByDefault(Return(VkImageSubresourceLayers{
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .layerCount = 1U,
+        }));
     ON_CALL(*this, createView()).WillByDefault(Invoke([this] { return m_mockView.createMockProxy(); }));
     ON_CALL(*this, getMetadata()).WillByDefault(Invoke([this] { return m_mockMetadata.createMockProxy(); }));
     ON_CALL(Const(*this), getMetadata()).WillByDefault(Invoke([this] { return m_mockMetadata.createMockProxy(); }));

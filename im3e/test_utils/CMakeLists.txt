@@ -1,9 +1,11 @@
 add_library(im3e_test_utils STATIC
     device_integration_test.h
+    pipeline_integration_test.h
     std.h
     test_utils.h
     vk.h
     src/device_integration_test.cpp
+    src/pipeline_integration_test.cpp
     src/vk.cpp
 )
 

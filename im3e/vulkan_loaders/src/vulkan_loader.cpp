@@ -80,6 +80,8 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkEndCommandBuffer),
         LOAD_DEVICE_FCT(vkCmdPipelineBarrier2),
         LOAD_DEVICE_FCT(vkCmdClearColorImage),
+        LOAD_DEVICE_FCT(vkCmdBlitImage),
+        LOAD_DEVICE_FCT(vkCmdCopyImage),
         LOAD_DEVICE_FCT(vkCmdBeginRenderPass),
         LOAD_DEVICE_FCT(vkCmdEndRenderPass),
 

@@ -48,7 +48,8 @@ public:
 
     virtual auto getVkImage() const -> VkImage = 0;
     virtual auto getVkExtent() const -> VkExtent2D = 0;
-    virtual auto getFormat() const -> VkFormat = 0;
+    virtual auto getVkFormat() const -> VkFormat = 0;
+    virtual auto getVkSubresourceLayers() const -> VkImageSubresourceLayers = 0;
     virtual auto getMetadata() -> std::shared_ptr<IImageMetadata> = 0;
     virtual auto getMetadata() const -> std::shared_ptr<const IImageMetadata> = 0;
 };
@@ -69,6 +70,7 @@ public:
         virtual auto getConstData() const -> const uint8_t* = 0;
         virtual auto getSizeInBytes() const -> VkDeviceSize = 0;
         virtual auto getRowPitch() const -> VkDeviceSize = 0;
+        virtual auto getPixel(uint32_t x, uint32_t y) const -> const uint8_t* = 0;
     };
 
     /// @brief Map image data to access it from the CPU.

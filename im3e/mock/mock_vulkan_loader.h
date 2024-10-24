@@ -87,6 +87,12 @@ public:
     MOCK_METHOD(void, vkCmdClearColorImage,
                 (VkCommandBuffer commandBuffer, VkImage image, VkImageLayout imageLayout,
                  const VkClearColorValue* pColor, uint32_t rangeCount, const VkImageSubresourceRange* pRanges));
+    MOCK_METHOD(void, vkCmdBlitImage,
+                (VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage,
+                 VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit* pRegions, VkFilter filter));
+    MOCK_METHOD(void, vkCmdCopyImage,
+                (VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage,
+                 VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy* pRegions));
     MOCK_METHOD(void, vkCmdBeginRenderPass,
                 (VkCommandBuffer commandBuffer, const VkRenderPassBeginInfo* pRenderPassBegin,
                  VkSubpassContents contents));

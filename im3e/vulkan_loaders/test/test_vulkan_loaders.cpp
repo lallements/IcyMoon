@@ -177,6 +177,8 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkEndCommandBuffer");
     expectDeviceFctLoaded(vkDevice, "vkCmdPipelineBarrier2");
     expectDeviceFctLoaded(vkDevice, "vkCmdClearColorImage");
+    expectDeviceFctLoaded(vkDevice, "vkCmdBlitImage");
+    expectDeviceFctLoaded(vkDevice, "vkCmdCopyImage");
     expectDeviceFctLoaded(vkDevice, "vkCmdBeginRenderPass");
     expectDeviceFctLoaded(vkDevice, "vkCmdEndRenderPass");
 
@@ -209,6 +211,8 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkEndCommandBuffer, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdPipelineBarrier2, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdClearColorImage, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdBlitImage, NotNull());
+    EXPECT_THAT(deviceFcts.vkCmdCopyImage, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdBeginRenderPass, NotNull());
     EXPECT_THAT(deviceFcts.vkCmdEndRenderPass, NotNull());
 

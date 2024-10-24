@@ -267,7 +267,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithImageBarrier)
 {
     MockImage mockImage;
     const auto mockVkImage = reinterpret_cast<VkImage>(0xb43ea);
-    ON_CALL(mockImage, getVkImage()).WillByDefault(Return(mockVkImage));
+    EXPECT_CALL(mockImage, getVkImage()).WillRepeatedly(Return(mockVkImage));
 
     auto pCommandQueue = createCommandQueue();
     const auto mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0x92e6fa);

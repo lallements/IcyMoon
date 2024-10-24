@@ -56,6 +56,14 @@ struct VulkanImageBuffer
 
     ~VulkanImageBuffer() { m_pMemoryAllocator->destroyImage(m_vkImage, m_vmaAllocation); }
 
+    auto getVkSubresourceLayers() const
+    {
+        return VkImageSubresourceLayers{
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .layerCount = 1U,
+        };
+    }
+
     shared_ptr<const IDevice> m_pDevice;
     shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
     const ImageConfig m_config;
@@ -141,7 +149,11 @@ public:
 
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
-    auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_pImageBuffer->getVkSubresourceLayers();
+    }
     auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
@@ -198,6 +210,10 @@ public:
     auto getConstData() const -> const uint8_t* override { return m_pData.get(); }
     auto getSizeInBytes() const -> VkDeviceSize override { return m_pImageBuffer->m_vmaAllocationInfo.size; }
     auto getRowPitch() const -> VkDeviceSize override { return m_rowPitch; }
+    auto getPixel(uint32_t x, uint32_t y) const -> const uint8_t* override
+    {
+        return m_pData.get() + y * m_rowPitch + x * m_formatProperties.sizeInBytes;
+    }
 
 private:
     shared_ptr<VulkanImageBuffer> m_pImageBuffer;
@@ -227,7 +243,11 @@ public:
 
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
-    auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_pImageBuffer->getVkSubresourceLayers();
+    }
     auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 

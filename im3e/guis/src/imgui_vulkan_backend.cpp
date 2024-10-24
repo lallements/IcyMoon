@@ -168,7 +168,7 @@ ImguiVulkanBackend::ImguiVulkanBackend(shared_ptr<const IDevice> pDevice, shared
   , m_pOutputImageView(m_pOutputImage->createView())
   , m_pGlfwWindow(pGlfwWindow)
   , m_pLogger(m_pDevice->createLogger("ImGui Vulkan Backend"))
-  , m_pVkRenderPass(makeRenderPass(m_pDevice->getFcts(), m_pDevice->getVkDevice(), m_pOutputImage->getFormat()))
+  , m_pVkRenderPass(makeRenderPass(m_pDevice->getFcts(), m_pDevice->getVkDevice(), m_pOutputImage->getVkFormat()))
   , m_pVkDescriptorPool(makeDescriptorPool(m_pDevice->getFcts(), m_pDevice->getVkDevice()))
   , m_pVkFramebuffer(makeFramebuffer(m_pDevice->getFcts(), m_pDevice->getVkDevice(), m_pVkRenderPass.get(),
                                      m_pOutputImageView->getVkImageView(), m_pOutputImage->getVkExtent()))

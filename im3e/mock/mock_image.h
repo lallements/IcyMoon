@@ -45,7 +45,8 @@ public:
 
     MOCK_METHOD(VkImage, getVkImage, (), (const, override));
     MOCK_METHOD(VkExtent2D, getVkExtent, (), (const, override));
-    MOCK_METHOD(VkFormat, getFormat, (), (const, override));
+    MOCK_METHOD(VkFormat, getVkFormat, (), (const, override));
+    MOCK_METHOD(VkImageSubresourceLayers, getVkSubresourceLayers, (), (const, override));
     MOCK_METHOD(std::shared_ptr<IImageMetadata>, getMetadata, (), (override));
     MOCK_METHOD(std::shared_ptr<const IImageMetadata>, getMetadata, (), (const, override));
 

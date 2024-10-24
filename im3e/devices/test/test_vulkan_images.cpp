@@ -69,7 +69,7 @@ TEST_F(ImageFactoryTest, createImage)
     ASSERT_THAT(pImage, NotNull());
     EXPECT_THAT(pImage->getVkImage(), Eq(vkImage));
     EXPECT_THAT(pImage->getVkExtent(), Eq(imageConfig.vkExtent));
-    EXPECT_THAT(pImage->getFormat(), Eq(imageConfig.vkFormat));
+    EXPECT_THAT(pImage->getVkFormat(), Eq(imageConfig.vkFormat));
 
     EXPECT_CALL(m_rMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));
 }
@@ -131,7 +131,7 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     ASSERT_THAT(pImage, NotNull());
     EXPECT_THAT(pImage->getVkImage(), Eq(vkImage));
     EXPECT_THAT(pImage->getVkExtent(), Eq(imageConfig.vkExtent));
-    EXPECT_THAT(pImage->getFormat(), Eq(imageConfig.vkFormat));
+    EXPECT_THAT(pImage->getVkFormat(), Eq(imageConfig.vkFormat));
 
     auto* pData = reinterpret_cast<uint8_t*>(0xb43e2a67cf);
     EXPECT_CALL(m_mockDevice.getMockMemoryAllocator(), mapMemory(vmaAllocation, NotNull()))
