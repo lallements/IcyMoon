@@ -2,9 +2,7 @@
 
 #include "src/imgui_context.h"
 
-#include <im3e/devices/devices.h>
-#include <im3e/loggers/loggers.h>
-#include <im3e/test_utils/test_utils.h>
+#include <im3e/test_utils/pipeline_integration_test.h>
 #include <im3e/utils/imgui_utils.h>
 
 #include <fmt/format.h>
@@ -13,76 +11,105 @@
 using namespace im3e;
 using namespace std;
 
-struct ImguiVulkanBackendIntegration : public Test
+namespace {
+
+inline void blitImage(const VulkanDeviceFcts& rFcts, VkCommandBuffer vkCommandBuffer, const VkExtent2D& rVkExtent,
+                      VkImage vkSrcImage, VkImage vkDstImage)
 {
-    void TearDown() override { EXPECT_THAT(m_pLoggerTracker->getErrors(), IsEmpty()); }
+    const VkImageSubresourceLayers vkSubresourceLayers{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .layerCount = 1U};
+    const VkOffset3D vkStartOffset{};
+    const VkOffset3D vkEndOffset{
+        .x = vkStartOffset.x + static_cast<int32_t>(rVkExtent.width),
+        .y = vkStartOffset.y + static_cast<int32_t>(rVkExtent.height),
+        .z = 1,
+    };
 
-    unique_ptr<ILogger> m_pLogger = createTerminalLogger();
-    UniquePtrWithDeleter<ILoggerTracker> m_pLoggerTracker = m_pLogger->createGlobalTracker();
+    VkImageBlit vkImageBlit{
+        .srcSubresource = vkSubresourceLayers,
+        .srcOffsets{vkStartOffset, vkEndOffset},
+        .dstSubresource = vkSubresourceLayers,
+        .dstOffsets{vkStartOffset, vkEndOffset},
+    };
 
-    shared_ptr<IDevice> m_pDevice = createDevice(*m_pLogger, DeviceConfig{.isDebugEnabled = true});
-    shared_ptr<const IImageFactory> m_pImageFactory = m_pDevice->getImageFactory();
-    shared_ptr<ICommandQueue> m_pCommandQueue = m_pDevice->getCommandQueue();
+    rFcts.vkCmdBlitImage(vkCommandBuffer, vkSrcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, vkDstImage,
+                         VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &vkImageBlit, VK_FILTER_NEAREST);
+}
+
+struct ImguiVulkanBackendIntegration : public PipelineIntegrationTest
+{
     ImguiContext m_imguiContext;
 };
 
-TEST_F(ImguiVulkanBackendIntegration, drawWindow)
+}  // namespace
+
+TEST_F(ImguiVulkanBackendIntegration, renderImgui)
 {
-    shared_ptr<IHostVisibleImage> pImage = m_pImageFactory->createHostVisibleImage(ImageConfig{
-        .name = "TestImage",
-        .vkExtent{800U, 600U},
-        .vkFormat = VK_FORMAT_R8G8B8A8_UNORM,
-        .vkUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    constexpr VkExtent2D TestOutputExtent{800U, 600U};
+    constexpr auto TestOutputFormat = VK_FORMAT_R8G8B8A8_UNORM;
+
+    shared_ptr<IHostVisibleImage> pGuiImage = getDevice()->getImageFactory()->createHostVisibleImage(ImageConfig{
+        .name = "ImguiBackendImage",
+        .vkExtent = TestOutputExtent,
+        .vkFormat = TestOutputFormat,
+        .vkUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     });
 
     // A ImGui context must be active while using the backend:
     auto pContextGuard = m_imguiContext.makeCurrent();
-    ImguiVulkanBackend backend(m_pDevice, pImage, 1U, nullptr);
-    // ImGui assumes at least double buffering in its code. As a result, we need to at least draw the frame twice before
-    // the result is visibile in the output image:
-    for (auto i = 0U; i < 2; i++)
-    {
-        auto pCommandBuffer = m_pCommandQueue->startScopedCommand("executeBackend", CommandExecutionType::Sync);
+    auto pBackend = make_shared<ImguiVulkanBackend>(getDevice(), pGuiImage, 1U, nullptr);
 
-        ImGui_ImplVulkan_NewFrame();
+    initialize(
+        PipelineIntegrationTest::Config{
+            .vkOutputExtent = TestOutputExtent,
+            .vkOutputFormat = VK_FORMAT_R8G8B8A8_UNORM,
+        },
+        [&](ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage) {
+            ImGui_ImplVulkan_NewFrame();
 
-        // When doing offscreen rendering, a display size must be manually specified:
-        auto& rIo = ImGui::GetIO();
-        rIo.DisplaySize.x = pImage->getVkExtent().width;
-        rIo.DisplaySize.y = pImage->getVkExtent().height;
+            // When doing offscreen rendering, a display size must be manually specified:
+            auto& rIo = ImGui::GetIO();
+            rIo.DisplaySize.x = pOutputImage->getVkExtent().width;
+            rIo.DisplaySize.y = pOutputImage->getVkExtent().height;
 
-        ImGui::NewFrame();
-        {
-            ImGui::SetNextWindowPos(ImVec2(0, 0));
-            ImGui::SetNextWindowSize(rIo.DisplaySize);
-            ImguiScope window(ImGui::Begin("Test Window"), &ImGui::End, true);
-        }
-        ImGui::Render();
+            ImGui::NewFrame();
+            {
+                ImGui::SetNextWindowPos(ImVec2(0, 0));
+                ImGui::SetNextWindowSize(rIo.DisplaySize);
+                ImguiScope window(ImGui::Begin("Test Window"), &ImGui::End, true);
+            }
+            ImGui::Render();
 
-        backend.scheduleExecution(*pCommandBuffer);
-        {
-            auto pBarrier = pCommandBuffer->startScopedBarrier("finalizeImage");
-            pBarrier->addImageBarrier(*pImage, ImageBarrierConfig{
-                                                   .vkLayout = VK_IMAGE_LAYOUT_GENERAL,
-                                               });
-        }
-    }
+            pBackend->scheduleExecution(rCommandBuffer);
+            {
+                auto pBarrier = rCommandBuffer.startScopedBarrier("finalizeImage");
+                pBarrier->addImageBarrier(*pGuiImage, ImageBarrierConfig{
+                                                          .vkDstStageMask = VK_PIPELINE_STAGE_2_BLIT_BIT,
+                                                          .vkDstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
+                                                          .vkLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                                                      });
+                pBarrier->addImageBarrier(*pOutputImage, ImageBarrierConfig{
+                                                             .vkDstStageMask = VK_PIPELINE_STAGE_2_BLIT_BIT,
+                                                             .vkDstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+                                                             .vkLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                                         });
+            }
+            blitImage(getDevice()->getFcts(), rCommandBuffer.getVkCommandBuffer(), TestOutputExtent,
+                      pGuiImage->getVkImage(), pOutputImage->getVkImage());
+        });
+    runTest(2U);
 
-    auto pImageMapping = pImage->mapReadOnly();
+    auto pImageMapping = mapOutputImage();
     auto pData = reinterpret_cast<const uint32_t*>(pImageMapping->getConstData());
     const auto rowPitch = pImageMapping->getRowPitch();
-    const auto vkExtent = pImage->getVkExtent();
-    for (VkDeviceSize row = 0U; row < vkExtent.height; row++)
+    for (VkDeviceSize row = 0U; row < TestOutputExtent.height; row++)
     {
-        for (VkDeviceSize col = 0U; col < vkExtent.width; col++)
+        for (VkDeviceSize col = 0U; col < TestOutputExtent.width; col++)
         {
             const auto pixel = *(pData + row * rowPitch + col);
             if (pixel != 0U)
             {
-                m_pLogger->info(fmt::format("We got a non-zero pixel! {}", pixel));
+                getLogger().info(fmt::format("We got a non-zero pixel! {}", pixel));
             }
         }
     }
-
-    pImageMapping->save("img.bmp");
 }

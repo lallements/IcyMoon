@@ -217,6 +217,13 @@ MockVulkanLoader::MockVulkanLoader()
                 g_pMock->getMockDeviceFcts().vkCmdClearColorImage(commandBuffer, image, imageLayout, pColor, rangeCount,
                                                                   pRanges);
             },
+        .vkCmdBlitImage =
+            [](VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage,
+               VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit* pRegions, VkFilter filter) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdBlitImage(commandBuffer, srcImage, srcImageLayout, dstImage,
+                                                            dstImageLayout, regionCount, pRegions, filter);
+            },
         .vkCmdBeginRenderPass =
             [](VkCommandBuffer commandBuffer, const VkRenderPassBeginInfo* pRenderPassBegin,
                VkSubpassContents contents) {

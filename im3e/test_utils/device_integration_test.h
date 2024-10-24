@@ -6,14 +6,16 @@
 #include <im3e/api/logger.h>
 #include <im3e/utils/types.h>
 
-#include <gmock/gmock.h>
-
 #include <filesystem>
 #include <memory>
 #include <string>
 
 namespace im3e {
 
+/// @brief Test fixture base class for writing integration tests that require a device.
+/// The class initializes a IDevice object as well as a ILogger that writes to a file of the same name as the test
+/// suite. The device is created with debug enabled and the logger is tracked for any error messages. The test fails
+/// if an error message is logged.
 class DeviceIntegrationTest : public Test
 {
 public:

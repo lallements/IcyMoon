@@ -48,6 +48,7 @@ struct VulkanDeviceFcts
     PFN_vkEndCommandBuffer vkEndCommandBuffer{};
     PFN_vkCmdPipelineBarrier2 vkCmdPipelineBarrier2{};
     PFN_vkCmdClearColorImage vkCmdClearColorImage{};
+    PFN_vkCmdBlitImage vkCmdBlitImage{};
     PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass{};
     PFN_vkCmdEndRenderPass vkCmdEndRenderPass{};
 
