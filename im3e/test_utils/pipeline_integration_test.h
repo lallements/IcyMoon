@@ -29,6 +29,7 @@ protected:
     {
         VkExtent2D vkOutputExtent{};
         VkFormat vkOutputFormat{};
+        uint32_t frameInFlightCount{};
     };
     void initialize(Config config, std::unique_ptr<IFramePipeline> pFramePipeline);
     void initialize(Config config, PipelineFct pipelineFct);

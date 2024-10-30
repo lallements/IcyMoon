@@ -17,6 +17,7 @@ class IcyMoonEngineRecipe(ConanFile):
         "gtest/1.15.0",
         "vulkan-headers/1.3.243.0", # version depended on by vulkan-memory-allocator
         "vulkan-memory-allocator/cci.20231120",
+        "whereami/cci.20220112",
     }
 
     options = {

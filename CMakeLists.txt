@@ -56,6 +56,7 @@ find_package(glfw3 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
+find_package(whereami REQUIRED)
 
 
 add_subdirectory(applications)

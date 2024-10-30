@@ -62,6 +62,7 @@ TEST_F(ImguiVulkanBackendIntegration, renderImgui)
         PipelineIntegrationTest::Config{
             .vkOutputExtent = TestOutputExtent,
             .vkOutputFormat = VK_FORMAT_R8G8B8A8_UNORM,
+            .frameInFlightCount = 2U,
         },
         [&](ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage) {
             ImGui_ImplVulkan_NewFrame();
@@ -79,7 +80,7 @@ TEST_F(ImguiVulkanBackendIntegration, renderImgui)
             }
             ImGui::Render();
 
-            pBackend->scheduleExecution(rCommandBuffer);
+            pBackend->prepareExecution(rCommandBuffer);
             {
                 auto pBarrier = rCommandBuffer.startScopedBarrier("finalizeImage");
                 pBarrier->addImageBarrier(*pGuiImage, ImageBarrierConfig{

@@ -195,7 +195,7 @@ ImguiVulkanBackend::~ImguiVulkanBackend()
     }
 }
 
-void ImguiVulkanBackend::scheduleExecution(const ICommandBuffer& rCommandBuffer)
+void ImguiVulkanBackend::prepareExecution(const ICommandBuffer& rCommandBuffer)
 {
     {
         auto pBarrierRecorder = rCommandBuffer.startScopedBarrier("BeforeImGuiVulkanBackendRender");

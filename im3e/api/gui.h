@@ -1,6 +1,6 @@
 #pragma once
 
-namespace {
+namespace im3e {
 
 class IGuiPanel
 {
@@ -14,4 +14,4 @@ public:
     virtual ~IGuiWorkspace() = default;
 };
 
-}  // namespace
+}  // namespace im3e

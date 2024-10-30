@@ -18,7 +18,7 @@ public:
                        uint32_t frameInFlightCount, GLFWwindow* pGlfwWindow);
     ~ImguiVulkanBackend();
 
-    void scheduleExecution(const ICommandBuffer& rCommandBuffer);
+    void prepareExecution(const ICommandBuffer& rCommandBuffer);
 
 private:
     std::shared_ptr<const IDevice> m_pDevice;

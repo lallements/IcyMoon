@@ -120,6 +120,7 @@ auto createVkDevice(const VulkanInstanceFcts& rInstFcts, const VulkanExtensions&
         .ppEnabledLayerNames = rLayers.data(),
         .enabledExtensionCount = static_cast<uint32_t>(rDeviceExtensions.size()),
         .ppEnabledExtensionNames = rDeviceExtensions.data(),
+        .pEnabledFeatures = &rPhysicalDevice.vkDeviceFeatures,
     };
 
     auto vk11Features = makeVk11Features();
