@@ -77,13 +77,13 @@ void PipelineIntegrationTest::runTest(uint32_t iterationCount)
         {
             auto pBarrierRecorder = pCommandBuffer->startScopedBarrier("prepareHostVisibleOutput");
             pBarrierRecorder->addImageBarrier(*m_pOutputImage, ImageBarrierConfig{
-                                                                   .vkDstStageMask = VK_PIPELINE_STAGE_2_BLIT_BIT,
+                                                                   .vkDstStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
                                                                    .vkDstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
                                                                    .vkLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                                                                });
             pBarrierRecorder->addImageBarrier(*m_pHostVisibleOutputImage,
                                               ImageBarrierConfig{
-                                                  .vkDstStageMask = VK_PIPELINE_STAGE_2_BLIT_BIT,
+                                                  .vkDstStageMask = VK_PIPELINE_STAGE_2_COPY_BIT,
                                                   .vkDstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
                                                   .vkLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                               });

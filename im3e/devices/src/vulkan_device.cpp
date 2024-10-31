@@ -112,6 +112,16 @@ auto createVkDevice(const VulkanInstanceFcts& rInstFcts, const VulkanExtensions&
     const auto& rLayers = rExtensions.getLayers();
     const auto& rDeviceExtensions = rExtensions.getDeviceExtensions();
 
+    VkPhysicalDeviceFeatures features{
+        .samplerAnisotropy = VK_TRUE,
+        .textureCompressionETC2 = rPhysicalDevice.vkDeviceFeatures.textureCompressionETC2,
+        .textureCompressionASTC_LDR = rPhysicalDevice.vkDeviceFeatures.textureCompressionASTC_LDR,
+        .textureCompressionBC = rPhysicalDevice.vkDeviceFeatures.textureCompressionBC,
+        .shaderSampledImageArrayDynamicIndexing = VK_TRUE,
+        .shaderInt64 = VK_TRUE,
+        .shaderInt16 = VK_TRUE,
+    };
+
     VkDeviceCreateInfo vkCreateInfo{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount = static_cast<uint32_t>(vkQueueCreateInfos.size()),
@@ -120,7 +130,7 @@ auto createVkDevice(const VulkanInstanceFcts& rInstFcts, const VulkanExtensions&
         .ppEnabledLayerNames = rLayers.data(),
         .enabledExtensionCount = static_cast<uint32_t>(rDeviceExtensions.size()),
         .ppEnabledExtensionNames = rDeviceExtensions.data(),
-        .pEnabledFeatures = &rPhysicalDevice.vkDeviceFeatures,
+        .pEnabledFeatures = &features,
     };
 
     auto vk11Features = makeVk11Features();

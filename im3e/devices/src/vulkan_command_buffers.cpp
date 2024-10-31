@@ -133,6 +133,7 @@ public:
     {
         VkCommandBufferBeginInfo vkBeginInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         };
         throwIfVkFailed(m_pDevice->getFcts().vkBeginCommandBuffer(m_pVkCommandBuffer.get(), &vkBeginInfo),
                         "Could not begin command buffer recording");
