@@ -62,6 +62,7 @@ public:
     virtual ~MockVulkanDeviceFcts();
 
     MOCK_METHOD(void, vkDestroyDevice, (VkDevice device, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkDeviceWaitIdle, (VkDevice device));
     MOCK_METHOD(void, vkGetDeviceQueue,
                 (VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue));
     MOCK_METHOD(VkResult, vkQueueSubmit,

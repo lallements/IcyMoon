@@ -152,6 +152,10 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
             },
+        .vkDeviceWaitIdle = [](VkDevice device) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkDeviceWaitIdle(device);
+        },
         .vkGetDeviceQueue =
             [](VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue) {
                 assertMockExists();

@@ -35,6 +35,7 @@ struct VulkanInstanceFcts
 struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
+    PFN_vkDeviceWaitIdle vkDeviceWaitIdle{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
     PFN_vkQueueSubmit vkQueueSubmit{};
     PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};

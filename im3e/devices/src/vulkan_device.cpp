@@ -212,6 +212,13 @@ public:
         m_pLogger->info("Successfully initialized");
     }
 
+    ~VulkanDevice() override
+    {
+        m_pLogger->debug("Waiting for device to be idle");
+        m_fcts.vkDeviceWaitIdle(m_pVkDevice.get());
+        m_pLogger->debug("Device idle, destroying");
+    }
+
     auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> override
     {
         return m_pLogger->createChild(name);
