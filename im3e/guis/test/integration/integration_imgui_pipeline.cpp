@@ -34,11 +34,36 @@ inline void blitImage(const VulkanDeviceFcts& rFcts, VkCommandBuffer vkCommandBu
                          VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1U, &vkImageBlit, VK_FILTER_NEAREST);
 }
 
+class TestImguiPanel : public IGuiPanel
+{
+public:
+    TestImguiPanel(std::string_view content)
+      : m_content(content)
+    {
+    }
+
+    void draw(const ICommandBuffer&) override { ImGui::Text("%s", m_content.c_str()); }
+
+    auto getName() const -> string override { return m_content; }
+
+private:
+    std::string m_content;
+};
+
 struct ImguiPipelineIntegration : public PipelineIntegrationTest
 {
+    ImguiPipelineIntegration()
+    {
+        m_pWorkspace->addPanel(IGuiWorkspace::Location::Top, make_shared<TestImguiPanel>("Top Panel"));
+        m_pWorkspace->addPanel(IGuiWorkspace::Location::Bottom, make_shared<TestImguiPanel>("Bottom Panel"));
+        m_pWorkspace->addPanel(IGuiWorkspace::Location::Center, make_shared<TestImguiPanel>("Center Panel"));
+        m_pWorkspace->addPanel(IGuiWorkspace::Location::Left, make_shared<TestImguiPanel>("Left Panel"));
+        m_pWorkspace->addPanel(IGuiWorkspace::Location::Right, make_shared<TestImguiPanel>("Right Panel"));
+    }
+
     auto createImguiPipeline() { return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace); }
 
-    shared_ptr<ImguiWorkspace> m_pWorkspace = make_shared<ImguiWorkspace>();
+    shared_ptr<ImguiWorkspace> m_pWorkspace = make_shared<ImguiWorkspace>("Test Workspace");
 };
 
 }  // namespace
@@ -62,7 +87,7 @@ TEST_F(ImguiPipelineIntegration, emptyWorkspace)
             .frameInFlightCount = 2U,
         },
         createImguiPipeline());
-    runTest(2U);
+    runTest(3U);
 
     auto pImageMapping = mapOutputImage();
     pImageMapping->save(generateFilePath("output", "bmp"));
