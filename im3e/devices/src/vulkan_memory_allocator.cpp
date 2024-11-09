@@ -25,14 +25,14 @@ auto createVmaAllocator(VkInstance vkInstance, VkPhysicalDevice vkPhysicalDevice
     return VkUniquePtr<VmaAllocator>(vmaAllocator, [](auto* pVmaAllocator) { vmaDestroyAllocator(pVmaAllocator); });
 }
 
-class VulkanMemoryAllocator : public IMemoryAllocator
+class VulkanMemoryAllocator : public IVulkanMemoryAllocator
 {
 public:
-    VulkanMemoryAllocator(shared_ptr<const IDevice> pDevice, VmaVulkanFunctions vmaFcts)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Vulkan memory allocator requires a device"))
+    VulkanMemoryAllocator(const IDevice& rDevice, VmaVulkanFunctions vmaFcts)
+      : m_rDevice(rDevice)
       , m_vmaFcts(move(vmaFcts))
-      , m_pVmaAllocator(createVmaAllocator(m_pDevice->getVkInstance(), m_pDevice->getVkPhysicalDevice(),
-                                           m_pDevice->getVkDevice(), vmaFcts))
+      , m_pVmaAllocator(createVmaAllocator(m_rDevice.getVkInstance(), m_rDevice.getVkPhysicalDevice(),
+                                           m_rDevice.getVkDevice(), vmaFcts))
     {
     }
 
@@ -63,15 +63,15 @@ public:
     }
 
 private:
-    shared_ptr<const IDevice> m_pDevice;
+    const IDevice& m_rDevice;
     VmaVulkanFunctions m_vmaFcts;
     VkUniquePtr<VmaAllocator> m_pVmaAllocator;
 };
 
 }  // namespace
 
-auto im3e::createVulkanMemoryAllocator(shared_ptr<const IDevice> pDevice, VmaVulkanFunctions vmaFcts)
-    -> unique_ptr<IMemoryAllocator>
+auto im3e::createVulkanMemoryAllocator(const IDevice& rDevice, VmaVulkanFunctions vmaFcts)
+    -> unique_ptr<IVulkanMemoryAllocator>
 {
-    return make_unique<VulkanMemoryAllocator>(move(pDevice), move(vmaFcts));
+    return make_unique<VulkanMemoryAllocator>(rDevice, move(vmaFcts));
 }

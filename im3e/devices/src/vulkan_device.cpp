@@ -208,6 +208,9 @@ public:
       , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
       , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
       , m_commandQueueInfo(findCommandQueueInfo(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies))
+      , m_pMemoryAllocator(createVulkanMemoryAllocator(*this, m_instance.loadVmaFcts(m_pVkDevice.get())))
+      , m_pImageFactory(createVulkanImageFactory(*this, m_pMemoryAllocator))
+      , m_pCommandQueue(createVulkanCommandQueue(*this, m_commandQueueInfo, "MainQueue"))
     {
         m_pLogger->info("Successfully initialized");
     }
@@ -229,39 +232,9 @@ public:
     auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
     auto getFcts() const -> const VulkanDeviceFcts& override { return m_fcts; }
     auto getInstanceFcts() const -> const VulkanInstanceFcts& override { return m_instance.getFcts(); }
-    auto getMemoryAllocator() const -> shared_ptr<IMemoryAllocator> override
-    {
-        if (!m_pMemoryAllocator)
-        {
-            m_pMemoryAllocator = createVulkanMemoryAllocator(shared_from_this(),
-                                                             m_instance.loadVmaFcts(m_pVkDevice.get()));
-        }
-        return m_pMemoryAllocator;
-    }
-    auto getImageFactory() const -> shared_ptr<const IImageFactory> override
-    {
-        if (!m_pImageFactory)
-        {
-            m_pImageFactory = createVulkanImageFactory(shared_from_this());
-        }
-        return m_pImageFactory;
-    }
-    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override
-    {
-        if (!m_pCommandQueue)
-        {
-            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo, "MainQueue");
-        }
-        return m_pCommandQueue;
-    }
-    auto getCommandQueue() -> shared_ptr<ICommandQueue> override
-    {
-        if (!m_pCommandQueue)
-        {
-            m_pCommandQueue = createVulkanCommandQueue(shared_from_this(), m_commandQueueInfo, "MainQueue");
-        }
-        return m_pCommandQueue;
-    }
+    auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_pImageFactory; }
+    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override { return m_pCommandQueue; }
+    auto getCommandQueue() -> shared_ptr<ICommandQueue> override { return m_pCommandQueue; }
 
 private:
     unique_ptr<ILogger> m_pLogger;
@@ -273,9 +246,9 @@ private:
     VkUniquePtr<VkDevice> m_pVkDevice;
     const VulkanCommandQueueInfo m_commandQueueInfo;
 
-    mutable shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
-    mutable shared_ptr<IImageFactory> m_pImageFactory;
-    mutable shared_ptr<ICommandQueue> m_pCommandQueue;
+    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
+    shared_ptr<IImageFactory> m_pImageFactory;
+    shared_ptr<ICommandQueue> m_pCommandQueue;
 };
 
 }  // namespace

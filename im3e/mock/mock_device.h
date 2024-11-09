@@ -13,24 +13,6 @@
 
 namespace im3e {
 
-class MockMemoryAllocator : public IMemoryAllocator
-{
-public:
-    MockMemoryAllocator();
-    ~MockMemoryAllocator() override;
-
-    MOCK_METHOD(VkResult, createImage,
-                (const VkImageCreateInfo* pVkCreateInfo, const VmaAllocationCreateInfo* pVmaCreateInfo,
-                 VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo* pVmaAllocationInfo),
-                (override));
-    MOCK_METHOD(void, destroyImage, (VkImage vkImage, VmaAllocation vmaAllocation), (override));
-
-    MOCK_METHOD(VkResult, mapMemory, (VmaAllocation vmaAllocation, void** ppData), (override));
-    MOCK_METHOD(void, unmapMemory, (VmaAllocation vmaAllocation), (override));
-
-    auto createMockProxy() -> std::unique_ptr<IMemoryAllocator>;
-};
-
 class MockDevice : public IDevice
 {
 public:
@@ -44,7 +26,6 @@ public:
     MOCK_METHOD(VkDevice, getVkDevice, (), (const, override));
     MOCK_METHOD(const VulkanDeviceFcts&, getFcts, (), (const, override));
     MOCK_METHOD(const VulkanInstanceFcts&, getInstanceFcts, (), (const, override));
-    MOCK_METHOD(std::shared_ptr<IMemoryAllocator>, getMemoryAllocator, (), (const, override));
     MOCK_METHOD(std::shared_ptr<const IImageFactory>, getImageFactory, (), (const, override));
     MOCK_METHOD(std::shared_ptr<const ICommandQueue>, getCommandQueue, (), (const, override));
     MOCK_METHOD(std::shared_ptr<ICommandQueue>, getCommandQueue, (), (override));
@@ -57,7 +38,6 @@ public:
     auto getMockVkDevice() const -> VkDevice { return m_vkDevice; }
     auto getMockVulkanLoader() -> MockVulkanLoader& { return m_mockVulkanLoader; }
     auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockVulkanLoader.getMockDeviceFcts(); }
-    auto getMockMemoryAllocator() -> MockMemoryAllocator& { return m_mockMemoryAllocator; }
     auto getMockImageFactory() -> MockImageFactory& { return m_mockImageFactory; }
     auto getMockCommandQueue() -> MockCommandQueue& { return m_mockCommandQueue; }
 
@@ -68,7 +48,6 @@ private:
 
     ::testing::NiceMock<MockLogger> m_mockLogger;
     ::testing::NiceMock<MockVulkanLoader> m_mockVulkanLoader;
-    ::testing::NiceMock<MockMemoryAllocator> m_mockMemoryAllocator;
     ::testing::NiceMock<MockImageFactory> m_mockImageFactory;
     ::testing::NiceMock<MockCommandQueue> m_mockCommandQueue;
 };

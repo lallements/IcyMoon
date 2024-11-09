@@ -164,6 +164,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     const auto vkDevice = reinterpret_cast<VkDevice>(0xaf34d2ce8);
 
     expectDeviceFctLoaded(vkDevice, "vkDestroyDevice");
+    expectDeviceFctLoaded(vkDevice, "vkDeviceWaitIdle");
     expectDeviceFctLoaded(vkDevice, "vkGetDeviceQueue");
     expectDeviceFctLoaded(vkDevice, "vkQueueSubmit");
     expectDeviceFctLoaded(vkDevice, "vkGetImageSubresourceLayout");
@@ -198,6 +199,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
 
     auto deviceFcts = pLoader->loadDeviceFcts(vkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
+    EXPECT_THAT(deviceFcts.vkDeviceWaitIdle, NotNull());
     EXPECT_THAT(deviceFcts.vkGetDeviceQueue, NotNull());
     EXPECT_THAT(deviceFcts.vkQueueSubmit, NotNull());
     EXPECT_THAT(deviceFcts.vkGetImageSubresourceLayout, NotNull());

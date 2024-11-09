@@ -104,29 +104,29 @@ auto createVkFence(VkDevice vkDevice, const VulkanDeviceFcts& rFcts)
 class VulkanCommandBuffer : public ICommandBuffer
 {
 public:
-    VulkanCommandBuffer(const ICommandQueue& rQueue, shared_ptr<const IDevice> pDevice, VkCommandPool vkCommandPool,
+    VulkanCommandBuffer(const ICommandQueue& rQueue, const IDevice& rDevice, VkCommandPool vkCommandPool,
                         string_view name)
       : m_rQueue(rQueue)
-      , m_pDevice(throwIfArgNull(move(pDevice), "Cannot create Vulkan command buffer without a device"))
-      , m_pLogger(m_pDevice->createLogger(name))
+      , m_rDevice(rDevice)
+      , m_pLogger(m_rDevice.createLogger(name))
       , m_name(name)
-      , m_pVkCommandBuffer(createVkCommandBuffer(m_pDevice->getVkDevice(), m_pDevice->getFcts(), vkCommandPool))
-      , m_pVkFence(createVkFence(m_pDevice->getVkDevice(), m_pDevice->getFcts()))
+      , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
+      , m_pVkFence(createVkFence(m_rDevice.getVkDevice(), m_rDevice.getFcts()))
     {
     }
 
     auto startScopedBarrier(string_view name) const -> unique_ptr<ICommandBarrierRecorder> override
     {
-        return make_unique<VulkanCommandBarrierRecorder>(name, m_pDevice->getFcts(), *this);
+        return make_unique<VulkanCommandBarrierRecorder>(name, m_rDevice.getFcts(), *this);
     }
 
     void reset()
     {
-        throwIfVkFailed(m_pDevice->getFcts().vkResetCommandBuffer(m_pVkCommandBuffer.get(), 0U),
+        throwIfVkFailed(m_rDevice.getFcts().vkResetCommandBuffer(m_pVkCommandBuffer.get(), 0U),
                         "Failed to reset command buffer");
 
         const auto vkFence = m_pVkFence.get();
-        throwIfVkFailed(m_pDevice->getFcts().vkResetFences(m_pDevice->getVkDevice(), 1U, &vkFence),
+        throwIfVkFailed(m_rDevice.getFcts().vkResetFences(m_rDevice.getVkDevice(), 1U, &vkFence),
                         "Failed to reset command buffer fence");
     }
     void beginRecording(string_view)
@@ -135,12 +135,12 @@ public:
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         };
-        throwIfVkFailed(m_pDevice->getFcts().vkBeginCommandBuffer(m_pVkCommandBuffer.get(), &vkBeginInfo),
+        throwIfVkFailed(m_rDevice.getFcts().vkBeginCommandBuffer(m_pVkCommandBuffer.get(), &vkBeginInfo),
                         "Could not begin command buffer recording");
     }
     void endRecording()
     {
-        throwIfVkFailed(m_pDevice->getFcts().vkEndCommandBuffer(m_pVkCommandBuffer.get()),
+        throwIfVkFailed(m_rDevice.getFcts().vkEndCommandBuffer(m_pVkCommandBuffer.get()),
                         "Failed to end command buffer recording");
     }
 
@@ -152,7 +152,7 @@ public:
             .commandBufferCount = 1U,
             .pCommandBuffers = &vkCommandBuffer,
         };
-        throwIfVkFailed(m_pDevice->getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
+        throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                         "Failed to execute command buffer");
 
         if (executionType == CommandExecutionType::Sync)
@@ -165,8 +165,8 @@ public:
     void waitForCompletion() const
     {
         const auto vkFence = m_pVkFence.get();
-        logIfVkFailed(m_pDevice->getFcts().vkWaitForFences(m_pDevice->getVkDevice(), 1U, &vkFence, VK_TRUE,
-                                                           numeric_limits<uint64_t>::max()),
+        logIfVkFailed(m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE,
+                                                          numeric_limits<uint64_t>::max()),
                       *m_pLogger, "Failed to wait for fence while destroying command buffer");
     }
 
@@ -175,7 +175,7 @@ public:
     auto isExecutionComplete() const
     {
         const auto vkFence = m_pVkFence.get();
-        const auto vkResult = m_pDevice->getFcts().vkWaitForFences(m_pDevice->getVkDevice(), 1U, &vkFence, VK_TRUE, 0U);
+        const auto vkResult = m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE, 0U);
         if (vkResult == VK_SUCCESS)
         {
             return true;
@@ -190,7 +190,7 @@ public:
 
 private:
     const ICommandQueue& m_rQueue;
-    shared_ptr<const IDevice> m_pDevice;
+    const IDevice& m_rDevice;
     unique_ptr<ILogger> m_pLogger;
     const string m_name;
 
@@ -216,12 +216,11 @@ auto createVkCommandPool(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, uint3
 class VulkanCommandQueue : public ICommandQueue, public enable_shared_from_this<VulkanCommandQueue>
 {
 public:
-    VulkanCommandQueue(shared_ptr<const IDevice> pDevice, VulkanCommandQueueInfo queueInfo, string_view name)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Vulkan command queue requires a device"))
+    VulkanCommandQueue(const IDevice& rDevice, VulkanCommandQueueInfo queueInfo, string_view name)
+      : m_rDevice(rDevice)
       , m_queueInfo(move(queueInfo))
       , m_name(name)
-      , m_pVkCommandPool(
-            createVkCommandPool(m_pDevice->getVkDevice(), m_pDevice->getFcts(), queueInfo.queueFamilyIndex))
+      , m_pVkCommandPool(createVkCommandPool(m_rDevice.getVkDevice(), m_rDevice.getFcts(), queueInfo.queueFamilyIndex))
     {
     }
 
@@ -255,7 +254,7 @@ public:
         if (m_pAvailable.empty())
         {
             m_pVkCommandBuffers.emplace_back(make_unique<VulkanCommandBuffer>(
-                *this, m_pDevice, m_pVkCommandPool.get(), fmt::format("{}_{}", m_name, m_pVkCommandBuffers.size())));
+                *this, m_rDevice, m_pVkCommandPool.get(), fmt::format("{}_{}", m_name, m_pVkCommandBuffers.size())));
             pCommandBuffer = m_pVkCommandBuffers.back().get();
         }
         else
@@ -284,7 +283,7 @@ public:
     auto getVkQueue() const -> VkQueue override { return m_queueInfo.vkQueue; }
 
 private:
-    shared_ptr<const IDevice> m_pDevice;
+    const IDevice& m_rDevice;
     const VulkanCommandQueueInfo m_queueInfo;
     const string m_name;
 
@@ -296,8 +295,8 @@ private:
 
 }  // namespace
 
-auto im3e::createVulkanCommandQueue(shared_ptr<const IDevice> pDevice, VulkanCommandQueueInfo queueInfo,
-                                    string_view name) -> shared_ptr<ICommandQueue>
+auto im3e::createVulkanCommandQueue(const IDevice& rDevice, VulkanCommandQueueInfo queueInfo, string_view name)
+    -> shared_ptr<ICommandQueue>
 {
-    return make_shared<VulkanCommandQueue>(move(pDevice), move(queueInfo), name);
+    return make_shared<VulkanCommandQueue>(rDevice, move(queueInfo), name);
 }

@@ -1,5 +1,7 @@
 #include "src/vulkan_images.h"
 
+#include "mock_vulkan_memory_allocator.h"
+
 #include <im3e/mock/mock_device.h>
 #include <im3e/test_utils/test_utils.h>
 #include <im3e/test_utils/vk.h>
@@ -9,15 +11,15 @@ using namespace std;
 
 struct ImageFactoryTest : public Test
 {
-    auto createFactory() { return createVulkanImageFactory(m_mockDevice.createMockProxy()); }
+    auto createFactory() { return createVulkanImageFactory(m_mockDevice, m_pMockAllocator); }
 
     NiceMock<MockDevice> m_mockDevice;
-    MockMemoryAllocator& m_rMockAllocator = m_mockDevice.getMockMemoryAllocator();
+    shared_ptr<MockVulkanMemoryAllocator> m_pMockAllocator = make_shared<MockVulkanMemoryAllocator>();
 };
 
-TEST_F(ImageFactoryTest, createVulkanImageFactoryThrowsIfDeviceNull)
+TEST_F(ImageFactoryTest, createVulkanImageFactoryThrowsIfAllocatorNull)
 {
-    EXPECT_THROW(auto pFactory = createVulkanImageFactory(nullptr), invalid_argument);
+    EXPECT_THROW(auto pFactory = createVulkanImageFactory(m_mockDevice, nullptr), invalid_argument);
 }
 
 TEST_F(ImageFactoryTest, createVulkanImageFactory)
@@ -40,7 +42,7 @@ TEST_F(ImageFactoryTest, createImage)
     const auto vkImage = reinterpret_cast<VkImage>(0xab34ef56);
     const auto vmaAllocation = reinterpret_cast<VmaAllocation>(0x542e8ce);
 
-    EXPECT_CALL(m_rMockAllocator, createImage(NotNull(), NotNull(), NotNull(), NotNull(), NotNull()))
+    EXPECT_CALL(*m_pMockAllocator, createImage(NotNull(), NotNull(), NotNull(), NotNull(), NotNull()))
         .WillOnce(Invoke([&](const VkImageCreateInfo* pVkCreateInfo, const VmaAllocationCreateInfo* pVmaCreateInfo,
                              VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo*) {
             EXPECT_THAT(pVkCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO));
@@ -71,7 +73,7 @@ TEST_F(ImageFactoryTest, createImage)
     EXPECT_THAT(pImage->getVkExtent(), Eq(imageConfig.vkExtent));
     EXPECT_THAT(pImage->getVkFormat(), Eq(imageConfig.vkFormat));
 
-    EXPECT_CALL(m_rMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));
+    EXPECT_CALL(*m_pMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));
 }
 
 TEST_F(ImageFactoryTest, createHostVisibleImage)
@@ -92,7 +94,7 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     const VkDeviceSize memSize = 234U;
     const VkDeviceSize rowPitch = 32U;
 
-    EXPECT_CALL(m_rMockAllocator, createImage(NotNull(), NotNull(), NotNull(), NotNull(), NotNull()))
+    EXPECT_CALL(*m_pMockAllocator, createImage(NotNull(), NotNull(), NotNull(), NotNull(), NotNull()))
         .WillOnce(Invoke([&](const VkImageCreateInfo* pVkCreateInfo, const VmaAllocationCreateInfo* pVmaCreateInfo,
                              VkImage* pVkImage, VmaAllocation* pVmaAllocation, VmaAllocationInfo* pVmaAllocationInfo) {
             EXPECT_THAT(pVkCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO));
@@ -134,11 +136,10 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     EXPECT_THAT(pImage->getVkFormat(), Eq(imageConfig.vkFormat));
 
     auto* pData = reinterpret_cast<uint8_t*>(0xb43e2a67cf);
-    EXPECT_CALL(m_mockDevice.getMockMemoryAllocator(), mapMemory(vmaAllocation, NotNull()))
-        .WillOnce(Invoke([&](Unused, void** ppData) {
-            *ppData = pData;
-            return VK_SUCCESS;
-        }));
+    EXPECT_CALL(*m_pMockAllocator, mapMemory(vmaAllocation, NotNull())).WillOnce(Invoke([&](Unused, void** ppData) {
+        *ppData = pData;
+        return VK_SUCCESS;
+    }));
     auto pMapping = pImage->map();
 
     ASSERT_THAT(pMapping, NotNull());
@@ -147,8 +148,8 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
     EXPECT_THAT(pMapping->getSizeInBytes(), Eq(memSize));
     EXPECT_THAT(pMapping->getRowPitch(), Eq(rowPitch));
 
-    EXPECT_CALL(m_mockDevice.getMockMemoryAllocator(), unmapMemory(vmaAllocation));
+    EXPECT_CALL(*m_pMockAllocator, unmapMemory(vmaAllocation));
     pMapping.reset();
 
-    EXPECT_CALL(m_rMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));
+    EXPECT_CALL(*m_pMockAllocator, destroyImage(Eq(vkImage), Eq(vmaAllocation)));
 }

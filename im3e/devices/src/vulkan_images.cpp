@@ -13,10 +13,11 @@ namespace {
 
 struct VulkanImageBuffer
 {
-    VulkanImageBuffer(shared_ptr<const IDevice> pDevice, ImageConfig config, VkImageTiling vkTiling,
-                      VmaMemoryUsage vmaMemoryUsage)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Cannot create Vulkan image without a device"))
-      , m_pMemoryAllocator(m_pDevice->getMemoryAllocator())
+    VulkanImageBuffer(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator, ImageConfig config,
+                      VkImageTiling vkTiling, VmaMemoryUsage vmaMemoryUsage)
+      : m_rDevice(rDevice)
+      , m_pMemoryAllocator(
+            throwIfArgNull(move(pMemoryAllocator), "Cannot create Vulkan image without a memory allocator"))
       , m_config(move(config))
     {
         VkImageCreateInfo vkCreateInfo{
@@ -64,8 +65,8 @@ struct VulkanImageBuffer
         };
     }
 
-    shared_ptr<const IDevice> m_pDevice;
-    shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
+    const IDevice& m_rDevice;
+    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
     const ImageConfig m_config;
 
     VkImage m_vkImage{};
@@ -100,8 +101,8 @@ public:
             },
         };
 
-        const auto vkDevice = m_pImageBuffer->m_pDevice->getVkDevice();
-        const auto& rFcts = m_pImageBuffer->m_pDevice->getFcts();
+        const auto vkDevice = m_pImageBuffer->m_rDevice.getVkDevice();
+        const auto& rFcts = m_pImageBuffer->m_rDevice.getFcts();
 
         VkImageView vkImageView{};
         throwIfVkFailed(rFcts.vkCreateImageView(vkDevice, &vkCreateInfo, nullptr, &vkImageView),
@@ -138,9 +139,9 @@ private:
 class VulkanImage : public IImage
 {
 public:
-    VulkanImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
-      : m_pImageBuffer(make_shared<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_OPTIMAL,
-                                                      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
+    VulkanImage(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator, ImageConfig config)
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(rDevice, move(pMemoryAllocator), move(config),
+                                                      VK_IMAGE_TILING_OPTIMAL, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
@@ -162,7 +163,7 @@ private:
     shared_ptr<IImageMetadata> m_pMetadata;
 };
 
-auto mapHostVisibleMemory(shared_ptr<IMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
+auto mapHostVisibleMemory(shared_ptr<IVulkanMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
 {
     void* pData{};
     throwIfVkFailed(pAllocator->mapMemory(vmaAllocation, &pData), "Failed to map host-visible image memory");
@@ -193,7 +194,7 @@ public:
       , m_pData(mapHostVisibleMemory(m_pImageBuffer->m_pMemoryAllocator, m_pImageBuffer->m_vmaAllocation))
       , m_formatProperties(getFormatProperties(m_pImageBuffer->m_config.vkFormat))
       , m_vkExtent(m_pImageBuffer->m_config.vkExtent)
-      , m_rowPitch(queryImageRowPitch(*m_pImageBuffer->m_pDevice, m_pImageBuffer->m_vkImage))
+      , m_rowPitch(queryImageRowPitch(m_pImageBuffer->m_rDevice, m_pImageBuffer->m_vkImage))
     {
     }
 
@@ -226,9 +227,10 @@ private:
 class VulkanHostVisibleImage : public IHostVisibleImage
 {
 public:
-    VulkanHostVisibleImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
-      : m_pImageBuffer(make_shared<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_LINEAR,
-                                                      VMA_MEMORY_USAGE_AUTO_PREFER_HOST))
+    VulkanHostVisibleImage(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator,
+                           ImageConfig config)
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(rDevice, move(pMemoryAllocator), move(config),
+                                                      VK_IMAGE_TILING_LINEAR, VMA_MEMORY_USAGE_AUTO_PREFER_HOST))
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
@@ -259,28 +261,32 @@ private:
 class VulkanImageFactory : public IImageFactory
 {
 public:
-    VulkanImageFactory(shared_ptr<const IDevice> pDevice)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Image Factory requires a device"))
+    VulkanImageFactory(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
+      : m_rDevice(rDevice)
+      , m_pMemoryAllocator(
+            throwIfArgNull(move(pMemoryAllocator), "Cannot create Vulkan image factory without memory allocator"))
     {
     }
 
     auto createImage(ImageConfig config) const -> unique_ptr<IImage> override
     {
-        return make_unique<VulkanImage>(m_pDevice, move(config));
+        return make_unique<VulkanImage>(m_rDevice, m_pMemoryAllocator, move(config));
     }
 
     auto createHostVisibleImage(ImageConfig config) const -> unique_ptr<IHostVisibleImage> override
     {
-        return make_unique<VulkanHostVisibleImage>(m_pDevice, move(config));
+        return make_unique<VulkanHostVisibleImage>(m_rDevice, m_pMemoryAllocator, move(config));
     }
 
 private:
-    shared_ptr<const IDevice> m_pDevice;
+    const IDevice& m_rDevice;
+    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
 };
 
 }  // namespace
 
-auto im3e::createVulkanImageFactory(shared_ptr<const IDevice> pDevice) -> unique_ptr<IImageFactory>
+auto im3e::createVulkanImageFactory(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
+    -> unique_ptr<IImageFactory>
 {
-    return make_unique<VulkanImageFactory>(move(pDevice));
+    return make_unique<VulkanImageFactory>(rDevice, move(pMemoryAllocator));
 }

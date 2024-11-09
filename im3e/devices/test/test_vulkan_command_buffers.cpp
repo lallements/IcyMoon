@@ -20,7 +20,7 @@ struct VulkanCommandBuffersTest : public Test
                 return VK_SUCCESS;
             }));
 
-        return createVulkanCommandQueue(m_pMockDevice,
+        return createVulkanCommandQueue(m_mockDevice,
                                         VulkanCommandQueueInfo{
                                             .vkQueue = m_mockVkQueue,
                                             .queueFamilyIndex = m_queueFamilyIndex,
@@ -94,19 +94,13 @@ struct VulkanCommandBuffersTest : public Test
             .WillOnce(Return(vkResult));
     }
 
-    shared_ptr<MockDevice> m_pMockDevice = make_shared<NiceMock<MockDevice>>();
-    MockVulkanDeviceFcts& m_rMockFcts = m_pMockDevice->getMockDeviceFcts();
-    const VkDevice m_mockVkDevice = m_pMockDevice->getMockVkDevice();
+    NiceMock<MockDevice> m_mockDevice;
+    MockVulkanDeviceFcts& m_rMockFcts = m_mockDevice.getMockDeviceFcts();
+    const VkDevice m_mockVkDevice = m_mockDevice.getMockVkDevice();
     const VkQueue m_mockVkQueue = reinterpret_cast<VkQueue>(0xaf31e5f);
     const uint32_t m_queueFamilyIndex = 42U;
     const VkCommandPool m_mockVkCommandPool = reinterpret_cast<VkCommandPool>(0x493ead23);
 };
-
-TEST_F(VulkanCommandBuffersTest, createCommandQueueThrowsIfDeviceNull)
-{
-    EXPECT_THROW(auto pCommandQueue = createVulkanCommandQueue(nullptr, VulkanCommandQueueInfo{}, "test"),
-                 invalid_argument);
-}
 
 TEST_F(VulkanCommandBuffersTest, createCommandQueue)
 {
