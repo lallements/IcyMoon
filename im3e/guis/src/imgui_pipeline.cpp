@@ -89,7 +89,7 @@ inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, VkCommandBuffer vkC
 }  // namespace
 
 ImguiPipeline::ImguiPipeline(shared_ptr<const IDevice> pDevice, GLFWwindow* pGlfwWindow,
-                             shared_ptr<IGuiWorkspace> pWorkspace)
+                             shared_ptr<ImguiWorkspace> pWorkspace)
   : m_pDevice(throwIfArgNull(move(pDevice), "ImGui Pipeline requires a device"))
   , m_pLogger(m_pDevice->createLogger("ImGui Pipeline"))
   , m_pGlfwWindow(pGlfwWindow)
@@ -134,6 +134,8 @@ void ImguiPipeline::prepareExecution(ICommandBuffer& rCommandBuffer, shared_ptr<
         rIo.DisplaySize.y = vkExtent.height;
     }
     ImGui::NewFrame();
+
+    m_pWorkspace->draw(rCommandBuffer);
 
     ImGui::Render();
     m_pBackend->prepareExecution(rCommandBuffer);

@@ -38,7 +38,7 @@ struct ImguiPipelineIntegration : public PipelineIntegrationTest
 {
     auto createImguiPipeline() { return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace); }
 
-    shared_ptr<IGuiWorkspace> m_pWorkspace = make_shared<ImguiWorkspace>();
+    shared_ptr<ImguiWorkspace> m_pWorkspace = make_shared<ImguiWorkspace>();
 };
 
 }  // namespace
