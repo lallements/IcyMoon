@@ -16,6 +16,7 @@ target_include_directories(im3e_vulkan_loaders
 target_link_libraries(im3e_vulkan_loaders
   PUBLIC
     im3e_api
+    Vulkan::Headers
   PRIVATE
     fmt::fmt
 )

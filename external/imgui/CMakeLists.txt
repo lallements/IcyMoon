@@ -33,6 +33,7 @@ target_include_directories(imgui
 target_link_libraries(imgui
   PUBLIC
     glfw
+    Vulkan::Headers
 )
 
 target_compile_definitions(imgui

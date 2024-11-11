@@ -9,3 +9,4 @@ compiler.libcxx=libstdc++11
 [conf]
 tools.cmake.cmake_layout:build_folder_vars = ['settings.compiler', 'settings.build_type']
 tools.system.package_manager:mode = 'install'
+tools.system.package_manager:sudo = True
