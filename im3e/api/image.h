@@ -2,6 +2,8 @@
 
 #include <im3e/utils/vk_utils.h>
 
+#include <filesystem>
+
 namespace im3e {
 
 struct ImageConfig
@@ -11,6 +13,15 @@ struct ImageConfig
     VkFormat vkFormat = VK_FORMAT_UNDEFINED;
     VkImageUsageFlags vkUsage{};
     VkImageCreateFlags vkCreateFlags{};
+};
+
+class IImageView
+{
+public:
+    virtual ~IImageView() = default;
+
+    virtual auto getVkImageView() const -> VkImageView = 0;
+    virtual auto getVkImage() const -> VkImage = 0;
 };
 
 class IImageMetadata
@@ -33,9 +44,12 @@ class IImage
 public:
     virtual ~IImage() = default;
 
+    virtual auto createView() const -> std::unique_ptr<IImageView> = 0;
+
     virtual auto getVkImage() const -> VkImage = 0;
     virtual auto getVkExtent() const -> VkExtent2D = 0;
-    virtual auto getFormat() const -> VkFormat = 0;
+    virtual auto getVkFormat() const -> VkFormat = 0;
+    virtual auto getVkSubresourceLayers() const -> VkImageSubresourceLayers = 0;
     virtual auto getMetadata() -> std::shared_ptr<IImageMetadata> = 0;
     virtual auto getMetadata() const -> std::shared_ptr<const IImageMetadata> = 0;
 };
@@ -50,10 +64,13 @@ public:
     public:
         virtual ~IMapping() = default;
 
+        virtual void save(const std::filesystem::path& rFileName) const = 0;
+
         virtual auto getData() -> uint8_t* = 0;
         virtual auto getConstData() const -> const uint8_t* = 0;
         virtual auto getSizeInBytes() const -> VkDeviceSize = 0;
         virtual auto getRowPitch() const -> VkDeviceSize = 0;
+        virtual auto getPixel(uint32_t x, uint32_t y) const -> const uint8_t* = 0;
     };
 
     /// @brief Map image data to access it from the CPU.

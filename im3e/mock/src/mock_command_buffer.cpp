@@ -86,6 +86,7 @@ public:
         return m_rMock.startScopedCommand(name, executionType);
     }
 
+    auto getQueueFamilyIndex() const -> uint32_t override { return m_rMock.getQueueFamilyIndex(); }
     auto getVkQueue() const -> VkQueue override { return m_rMock.getVkQueue(); }
 
 private:

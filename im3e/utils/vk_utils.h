@@ -38,4 +38,21 @@ constexpr bool vkFlagsContain(VkFlags vkFlags, T vkFlag)
     return (vkFlags & static_cast<VkFlags>(vkFlag)) != 0U;
 }
 
+struct FormatProperties
+{
+    VkDeviceSize sizeInBytes{};
+    VkDeviceSize componentSizeInBytes{};
+    uint32_t componentCount{};
+};
+auto getFormatProperties(VkFormat vkFormat) -> FormatProperties;
+
+inline auto toVkExtent3D(const VkExtent2D& rVkExtent2d)
+{
+    return VkExtent3D{
+        .width = rVkExtent2d.width,
+        .height = rVkExtent2d.height,
+        .depth = 1U,
+    };
+}
+
 }  // namespace im3e

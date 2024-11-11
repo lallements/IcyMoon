@@ -20,7 +20,7 @@ public:
     virtual void prepareExecution(ICommandBuffer& rCommandBuffer, std::shared_ptr<IImage> pOutputImage) = 0;
 
     /// @brief Resize the frame
-    virtual void resize(const VkExtent2D& rVkExtent) = 0;
+    virtual void resize(const VkExtent2D& rVkExtent, uint32_t frameInFlightCount) = 0;
 };
 
 }  // namespace im3e

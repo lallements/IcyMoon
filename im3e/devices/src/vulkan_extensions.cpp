@@ -24,6 +24,9 @@ auto generateDeviceExtensions()
 {
     vector<const char*> deviceExtensions;
 
+    // For presentation:
+    insertIfUnique(VK_KHR_SWAPCHAIN_EXTENSION_NAME, deviceExtensions);
+
     // For ray tracing:
     insertIfUnique(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME, deviceExtensions);
     insertIfUnique(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME, deviceExtensions);
@@ -45,6 +48,9 @@ void addLayers(bool isVkValidationEnabled, vector<const char*>& rLayers)
 
 void addInstanceExtensions(bool isVkValidationEnabled, vector<const char*>& rExtensions)
 {
+    // For presentation:
+    insertIfUnique(VK_KHR_SURFACE_EXTENSION_NAME, rExtensions);
+
     if (isVkValidationEnabled)
     {
         insertIfUnique(VK_EXT_DEBUG_UTILS_EXTENSION_NAME, rExtensions);

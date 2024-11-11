@@ -81,6 +81,10 @@ MockVulkanLoader::MockVulkanLoader()
             },
     })
   , m_iFcts(VulkanInstanceFcts{
+        .vkGetInstanceProcAddr = [](VkInstance instance, const char* pName) -> PFN_vkVoidFunction {
+            assertMockExists();
+            return g_pMock->getMockInstanceFcts().vkGetInstanceProcAddr(instance, pName);
+        },
         .vkDestroyInstance =
             [](VkInstance instance, const VkAllocationCallbacks* pAllocator) {
                 assertMockExists();
@@ -148,6 +152,10 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkDestroyDevice(device, pAllocator);
             },
+        .vkDeviceWaitIdle = [](VkDevice device) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkDeviceWaitIdle(device);
+        },
         .vkGetDeviceQueue =
             [](VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue) {
                 assertMockExists();
@@ -213,6 +221,31 @@ MockVulkanLoader::MockVulkanLoader()
                 g_pMock->getMockDeviceFcts().vkCmdClearColorImage(commandBuffer, image, imageLayout, pColor, rangeCount,
                                                                   pRanges);
             },
+        .vkCmdBlitImage =
+            [](VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage,
+               VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageBlit* pRegions, VkFilter filter) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdBlitImage(commandBuffer, srcImage, srcImageLayout, dstImage,
+                                                            dstImageLayout, regionCount, pRegions, filter);
+            },
+        .vkCmdCopyImage =
+            [](VkCommandBuffer commandBuffer, VkImage srcImage, VkImageLayout srcImageLayout, VkImage dstImage,
+               VkImageLayout dstImageLayout, uint32_t regionCount, const VkImageCopy* pRegions) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdCopyImage(commandBuffer, srcImage, srcImageLayout, dstImage,
+                                                            dstImageLayout, regionCount, pRegions);
+            },
+        .vkCmdBeginRenderPass =
+            [](VkCommandBuffer commandBuffer, const VkRenderPassBeginInfo* pRenderPassBegin,
+               VkSubpassContents contents) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdBeginRenderPass(commandBuffer, pRenderPassBegin, move(contents));
+            },
+        .vkCmdEndRenderPass =
+            [](VkCommandBuffer commandBuffer) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkCmdEndRenderPass(commandBuffer);
+            },
 
         .vkCreateFence =
             [](VkDevice device, const VkFenceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
@@ -234,6 +267,49 @@ MockVulkanLoader::MockVulkanLoader()
             [](VkDevice device, uint32_t fenceCount, const VkFence* pFences) {
                 assertMockExists();
                 return g_pMock->getMockDeviceFcts().vkResetFences(device, fenceCount, pFences);
+            },
+
+        .vkCreateFramebuffer = [](VkDevice device, const VkFramebufferCreateInfo* pCreateInfo,
+                                  const VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateFramebuffer(device, pCreateInfo, pAllocator, pFramebuffer);
+        },
+        .vkDestroyFramebuffer =
+            [](VkDevice device, VkFramebuffer framebuffer, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyFramebuffer(device, framebuffer, pAllocator);
+            },
+        .vkCreateRenderPass = [](VkDevice device, const VkRenderPassCreateInfo* pCreateInfo,
+                                 const VkAllocationCallbacks* pAllocator, VkRenderPass* pRenderPass) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateRenderPass(device, pCreateInfo, pAllocator, pRenderPass);
+        },
+        .vkDestroyRenderPass =
+            [](VkDevice device, VkRenderPass renderPass, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyRenderPass(device, renderPass, pAllocator);
+            },
+        .vkCreateDescriptorPool = [](VkDevice device, const VkDescriptorPoolCreateInfo* pCreateInfo,
+                                     const VkAllocationCallbacks* pAllocator,
+                                     VkDescriptorPool* pDescriptorPool) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateDescriptorPool(device, pCreateInfo, pAllocator,
+                                                                       pDescriptorPool);
+        },
+        .vkDestroyDescriptorPool =
+            [](VkDevice device, VkDescriptorPool descriptorPool, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyDescriptorPool(device, descriptorPool, pAllocator);
+            },
+        .vkCreateImageView = [](VkDevice device, const VkImageViewCreateInfo* pCreateInfo,
+                                const VkAllocationCallbacks* pAllocator, VkImageView* pView) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateImageView(device, pCreateInfo, pAllocator, pView);
+        },
+        .vkDestroyImageView =
+            [](VkDevice device, VkImageView imageView, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroyImageView(device, imageView, pAllocator);
             },
     })
   , m_vmaFcts(VmaVulkanFunctions{

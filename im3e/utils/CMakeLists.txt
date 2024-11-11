@@ -1,7 +1,10 @@
 add_library(im3e_utils STATIC
+    imgui_utils.h
     throw_utils.h
+    platform_utils.h
     types.h
     vk_utils.h
+    src/platform_utils.cpp
     src/vk_utils.cpp
 )
 
@@ -18,6 +21,8 @@ target_link_libraries(im3e_utils
     fmt::fmt
     vulkan-memory-allocator::vulkan-memory-allocator
     Vulkan::Headers
+  PRIVATE
+    whereami::whereami
 )
 
 add_subdirectory(test)

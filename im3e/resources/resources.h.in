@@ -1,0 +1,24 @@
+#pragma once
+
+#include <im3e/utils/platform_utils.h>
+
+#include <filesystem>
+
+namespace im3e {
+
+inline auto getAssetsPath()
+{
+    return std::filesystem::path("@IM3E_RESOURCES_PATH@/assets");
+}
+
+inline auto getGuiFontPath()
+{
+    return getCurrentExecutableFolder() / "fonts" / "SourceCodePro-Regular.ttf";
+}
+
+inline auto getImagesPath()
+{
+    return std::filesystem::path("@IM3E_RESOURCES_PATH@/images");
+}
+
+}  // namespace im3e

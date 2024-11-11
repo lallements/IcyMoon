@@ -43,6 +43,7 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstan
     throwIfArgNull(vkInstance, "Cannot load Vulkan instance functions without an instance");
 
     VulkanInstanceFcts fcts{
+        LOAD_INST_FCT(vkGetInstanceProcAddr),
         LOAD_INST_FCT(vkDestroyInstance),
         LOAD_INST_FCT(vkCreateDevice),
 
@@ -66,6 +67,7 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
 
     return VulkanDeviceFcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
+        LOAD_DEVICE_FCT(vkDeviceWaitIdle),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
         LOAD_DEVICE_FCT(vkQueueSubmit),
         LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
@@ -79,11 +81,24 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkEndCommandBuffer),
         LOAD_DEVICE_FCT(vkCmdPipelineBarrier2),
         LOAD_DEVICE_FCT(vkCmdClearColorImage),
+        LOAD_DEVICE_FCT(vkCmdBlitImage),
+        LOAD_DEVICE_FCT(vkCmdCopyImage),
+        LOAD_DEVICE_FCT(vkCmdBeginRenderPass),
+        LOAD_DEVICE_FCT(vkCmdEndRenderPass),
 
         LOAD_DEVICE_FCT(vkCreateFence),
         LOAD_DEVICE_FCT(vkDestroyFence),
         LOAD_DEVICE_FCT(vkWaitForFences),
         LOAD_DEVICE_FCT(vkResetFences),
+
+        LOAD_DEVICE_FCT(vkCreateFramebuffer),
+        LOAD_DEVICE_FCT(vkDestroyFramebuffer),
+        LOAD_DEVICE_FCT(vkCreateRenderPass),
+        LOAD_DEVICE_FCT(vkDestroyRenderPass),
+        LOAD_DEVICE_FCT(vkCreateDescriptorPool),
+        LOAD_DEVICE_FCT(vkDestroyDescriptorPool),
+        LOAD_DEVICE_FCT(vkCreateImageView),
+        LOAD_DEVICE_FCT(vkDestroyImageView),
     };
 }
 

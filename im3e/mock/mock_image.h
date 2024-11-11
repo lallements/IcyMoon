@@ -5,6 +5,18 @@
 
 namespace im3e {
 
+class MockImageView : public IImageView
+{
+public:
+    MockImageView();
+    ~MockImageView() override;
+
+    MOCK_METHOD(VkImageView, getVkImageView, (), (const, override));
+    MOCK_METHOD(VkImage, getVkImage, (), (const, override));
+
+    auto createMockProxy() -> std::unique_ptr<IImageView>;
+};
+
 class MockImageMetadata : public IImageMetadata
 {
 public:
@@ -29,17 +41,22 @@ public:
     MockImage();
     ~MockImage() override;
 
+    MOCK_METHOD(std::unique_ptr<IImageView>, createView, (), (const, override));
+
     MOCK_METHOD(VkImage, getVkImage, (), (const, override));
     MOCK_METHOD(VkExtent2D, getVkExtent, (), (const, override));
-    MOCK_METHOD(VkFormat, getFormat, (), (const, override));
+    MOCK_METHOD(VkFormat, getVkFormat, (), (const, override));
+    MOCK_METHOD(VkImageSubresourceLayers, getVkSubresourceLayers, (), (const, override));
     MOCK_METHOD(std::shared_ptr<IImageMetadata>, getMetadata, (), (override));
     MOCK_METHOD(std::shared_ptr<const IImageMetadata>, getMetadata, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<IImage>;
 
+    auto getMockImageView() -> MockImageView& { return m_mockView; }
     auto getMockMetadata() -> MockImageMetadata& { return m_mockMetadata; }
 
 private:
+    NiceMock<MockImageView> m_mockView;
     NiceMock<MockImageMetadata> m_mockMetadata;
 };
 

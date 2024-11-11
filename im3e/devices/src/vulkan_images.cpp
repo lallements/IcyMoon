@@ -2,19 +2,22 @@
 
 #include <im3e/utils/throw_utils.h>
 
+#include <CImg.h>
 #include <fmt/format.h>
 
 using namespace im3e;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
 
 struct VulkanImageBuffer
 {
-    VulkanImageBuffer(shared_ptr<const IDevice> pDevice, ImageConfig config, VkImageTiling vkTiling,
-                      VmaMemoryUsage vmaMemoryUsage)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Cannot create Vulkan image without a device"))
-      , m_pMemoryAllocator(m_pDevice->getMemoryAllocator())
+    VulkanImageBuffer(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator, ImageConfig config,
+                      VkImageTiling vkTiling, VmaMemoryUsage vmaMemoryUsage)
+      : m_rDevice(rDevice)
+      , m_pMemoryAllocator(
+            throwIfArgNull(move(pMemoryAllocator), "Cannot create Vulkan image without a memory allocator"))
       , m_config(move(config))
     {
         VkImageCreateInfo vkCreateInfo{
@@ -54,13 +57,65 @@ struct VulkanImageBuffer
 
     ~VulkanImageBuffer() { m_pMemoryAllocator->destroyImage(m_vkImage, m_vmaAllocation); }
 
-    shared_ptr<const IDevice> m_pDevice;
-    shared_ptr<IMemoryAllocator> m_pMemoryAllocator;
+    auto getVkSubresourceLayers() const
+    {
+        return VkImageSubresourceLayers{
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .layerCount = 1U,
+        };
+    }
+
+    const IDevice& m_rDevice;
+    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
     const ImageConfig m_config;
 
     VkImage m_vkImage{};
     VmaAllocation m_vmaAllocation{};
     VmaAllocationInfo m_vmaAllocationInfo{};
+};
+
+auto getAspectMaskFromImageUsage(VkImageUsageFlags vkImageUsage) -> VkImageAspectFlags
+{
+    if (vkFlagsContain(vkImageUsage, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT))
+    {
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+    return VK_IMAGE_ASPECT_COLOR_BIT;
+}
+
+class VulkanImageView : public IImageView
+{
+public:
+    VulkanImageView(shared_ptr<const VulkanImageBuffer> pImageBuffer)
+      : m_pImageBuffer(throwIfArgNull(move(pImageBuffer), "Cannot create a Vulkan image view without an image"))
+    {
+        VkImageViewCreateInfo vkCreateInfo{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = m_pImageBuffer->m_vkImage,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = m_pImageBuffer->m_config.vkFormat,
+            .subresourceRange{
+                .aspectMask = getAspectMaskFromImageUsage(m_pImageBuffer->m_config.vkUsage),
+                .levelCount = 1U,
+                .layerCount = 1U,
+            },
+        };
+
+        const auto vkDevice = m_pImageBuffer->m_rDevice.getVkDevice();
+        const auto& rFcts = m_pImageBuffer->m_rDevice.getFcts();
+
+        VkImageView vkImageView{};
+        throwIfVkFailed(rFcts.vkCreateImageView(vkDevice, &vkCreateInfo, nullptr, &vkImageView),
+                        "Could not create image buffer view");
+        m_pVkImageView = makeVkUniquePtr<VkImageView>(vkDevice, vkImageView, rFcts.vkDestroyImageView);
+    }
+
+    auto getVkImageView() const -> VkImageView override { return m_pVkImageView.get(); }
+    auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
+
+private:
+    shared_ptr<const VulkanImageBuffer> m_pImageBuffer;
+    VkUniquePtr<VkImageView> m_pVkImageView;
 };
 
 class VulkanImageMetadata : public IImageMetadata
@@ -84,25 +139,31 @@ private:
 class VulkanImage : public IImage
 {
 public:
-    VulkanImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
-      : m_pImageBuffer(make_unique<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_OPTIMAL,
-                                                      VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
+    VulkanImage(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator, ImageConfig config)
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(rDevice, move(pMemoryAllocator), move(config),
+                                                      VK_IMAGE_TILING_OPTIMAL, VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE))
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
 
+    auto createView() const -> unique_ptr<IImageView> override { return make_unique<VulkanImageView>(m_pImageBuffer); }
+
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
-    auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_pImageBuffer->getVkSubresourceLayers();
+    }
     auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
 private:
-    unique_ptr<VulkanImageBuffer> m_pImageBuffer;
+    shared_ptr<VulkanImageBuffer> m_pImageBuffer;
     shared_ptr<IImageMetadata> m_pMetadata;
 };
 
-auto mapHostVisibleMemory(shared_ptr<IMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
+auto mapHostVisibleMemory(shared_ptr<IVulkanMemoryAllocator> pAllocator, VmaAllocation vmaAllocation)
 {
     void* pData{};
     throwIfVkFailed(pAllocator->mapMemory(vmaAllocation, &pData), "Failed to map host-visible image memory");
@@ -131,30 +192,50 @@ public:
     VulkanHostVisibleImageMapping(shared_ptr<VulkanImageBuffer> pImageBuffer)
       : m_pImageBuffer(throwIfArgNull(move(pImageBuffer), "Host-visible image mapping requires a buffer"))
       , m_pData(mapHostVisibleMemory(m_pImageBuffer->m_pMemoryAllocator, m_pImageBuffer->m_vmaAllocation))
-      , m_rowPitch(queryImageRowPitch(*m_pImageBuffer->m_pDevice, m_pImageBuffer->m_vkImage))
+      , m_formatProperties(getFormatProperties(m_pImageBuffer->m_config.vkFormat))
+      , m_vkExtent(m_pImageBuffer->m_config.vkExtent)
+      , m_rowPitch(queryImageRowPitch(m_pImageBuffer->m_rDevice, m_pImageBuffer->m_vkImage))
     {
+    }
+
+    void save(const filesystem::path& rFileName) const override
+    {
+        cimg_library::cimg::exception_mode(0U);  // disable log messages from cimg
+        cimg_library::CImg<uint8_t> image(m_pData.get(), m_formatProperties.componentCount, m_vkExtent.width,
+                                          m_vkExtent.height, 1U, false);
+        image.permute_axes("yzcx");
+        image.save(rFileName.string().c_str());
     }
 
     auto getData() -> uint8_t* override { return m_pData.get(); }
     auto getConstData() const -> const uint8_t* override { return m_pData.get(); }
     auto getSizeInBytes() const -> VkDeviceSize override { return m_pImageBuffer->m_vmaAllocationInfo.size; }
     auto getRowPitch() const -> VkDeviceSize override { return m_rowPitch; }
+    auto getPixel(uint32_t x, uint32_t y) const -> const uint8_t* override
+    {
+        return m_pData.get() + y * m_rowPitch + x * m_formatProperties.sizeInBytes;
+    }
 
 private:
     shared_ptr<VulkanImageBuffer> m_pImageBuffer;
     UniquePtrWithDeleter<uint8_t> m_pData;
+    const FormatProperties m_formatProperties{};
+    const VkExtent2D m_vkExtent{};
     const VkDeviceSize m_rowPitch{};
 };
 
 class VulkanHostVisibleImage : public IHostVisibleImage
 {
 public:
-    VulkanHostVisibleImage(shared_ptr<const IDevice> pDevice, ImageConfig config)
-      : m_pImageBuffer(make_shared<VulkanImageBuffer>(move(pDevice), move(config), VK_IMAGE_TILING_LINEAR,
-                                                      VMA_MEMORY_USAGE_AUTO_PREFER_HOST))
+    VulkanHostVisibleImage(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator,
+                           ImageConfig config)
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(rDevice, move(pMemoryAllocator), move(config),
+                                                      VK_IMAGE_TILING_LINEAR, VMA_MEMORY_USAGE_AUTO_PREFER_HOST))
       , m_pMetadata(make_shared<VulkanImageMetadata>())
     {
     }
+
+    auto createView() const -> unique_ptr<IImageView> override { return make_unique<VulkanImageView>(m_pImageBuffer); }
 
     auto map() -> unique_ptr<IMapping> override { return make_unique<VulkanHostVisibleImageMapping>(m_pImageBuffer); }
     auto mapReadOnly() const -> unique_ptr<const IMapping> override
@@ -164,7 +245,11 @@ public:
 
     auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
     auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
-    auto getFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_pImageBuffer->getVkSubresourceLayers();
+    }
     auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
     auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
 
@@ -176,28 +261,32 @@ private:
 class VulkanImageFactory : public IImageFactory
 {
 public:
-    VulkanImageFactory(shared_ptr<const IDevice> pDevice)
-      : m_pDevice(throwIfArgNull(move(pDevice), "Image Factory requires a device"))
+    VulkanImageFactory(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
+      : m_rDevice(rDevice)
+      , m_pMemoryAllocator(
+            throwIfArgNull(move(pMemoryAllocator), "Cannot create Vulkan image factory without memory allocator"))
     {
     }
 
     auto createImage(ImageConfig config) const -> unique_ptr<IImage> override
     {
-        return make_unique<VulkanImage>(m_pDevice, move(config));
+        return make_unique<VulkanImage>(m_rDevice, m_pMemoryAllocator, move(config));
     }
 
     auto createHostVisibleImage(ImageConfig config) const -> unique_ptr<IHostVisibleImage> override
     {
-        return make_unique<VulkanHostVisibleImage>(m_pDevice, move(config));
+        return make_unique<VulkanHostVisibleImage>(m_rDevice, m_pMemoryAllocator, move(config));
     }
 
 private:
-    shared_ptr<const IDevice> m_pDevice;
+    const IDevice& m_rDevice;
+    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
 };
 
 }  // namespace
 
-auto im3e::createVulkanImageFactory(shared_ptr<const IDevice> pDevice) -> unique_ptr<IImageFactory>
+auto im3e::createVulkanImageFactory(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
+    -> unique_ptr<IImageFactory>
 {
-    return make_unique<VulkanImageFactory>(move(pDevice));
+    return make_unique<VulkanImageFactory>(rDevice, move(pMemoryAllocator));
 }

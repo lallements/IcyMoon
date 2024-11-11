@@ -2,8 +2,8 @@ im3e_add_integration_tests_executable(
   TARGET
     integration_im3e_devices
   SOURCES
-    integration_device.cpp
     integration_vulkan_command_buffers.cpp
+    integration_vulkan_device.cpp
     integration_vulkan_images.cpp
 )
 

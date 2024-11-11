@@ -1,5 +1,7 @@
 #include "src/vulkan_instance.h"
 
+#include "mock_vulkan_helper.h"
+
 #include <im3e/mock/mock_logger.h>
 #include <im3e/mock/mock_vulkan_loader.h>
 #include <im3e/test_utils/test_utils.h>
@@ -10,6 +12,7 @@ using namespace std;
 namespace {
 
 constexpr bool DebugIsEnabled = true;
+constexpr bool DebugIsDisabled = false;
 
 }  // namespace
 
@@ -17,6 +20,7 @@ struct VulkanInstanceTest : public Test
 {
     auto createInstance(bool isDebugEnabled = false)
     {
+        expectInstanceExtensionsEnumerated(m_mockVkLoader, isDebugEnabled);
         return VulkanInstance(m_mockLogger, isDebugEnabled, m_mockVkLoader.createMockProxy());
     }
 
@@ -42,7 +46,7 @@ TEST_F(VulkanInstanceTest, constructor)
             return VK_SUCCESS;
         }));
     EXPECT_CALL(m_mockVkLoader, loadInstanceFcts(mockVkInstance));
-    auto instance = createInstance();
+    auto instance = createInstance(DebugIsDisabled);
 }
 
 TEST_F(VulkanInstanceTest, constructorWithDebugEnabled)
@@ -50,16 +54,6 @@ TEST_F(VulkanInstanceTest, constructorWithDebugEnabled)
     auto mockVkInstance = reinterpret_cast<VkInstance>(0xb45ef76a);
 
     EXPECT_CALL(m_mockVkLoader, loadGlobalFcts());
-    EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkEnumerateInstanceExtensionProperties(IsNull(), NotNull(), _))
-        .WillOnce(Invoke([&](Unused, auto* pCount, auto* pProperties) {
-            *pCount = 1U;
-            EXPECT_THAT(pProperties, IsNull());
-            return VK_SUCCESS;
-        }))
-        .WillOnce(Invoke([&](Unused, Unused, VkExtensionProperties* pProperties) {
-            *pProperties = VkExtensionProperties{.extensionName = VK_EXT_DEBUG_UTILS_EXTENSION_NAME};
-            return VK_SUCCESS;
-        }));
     EXPECT_CALL(m_mockVkLoader.getMockGlobalFcts(), vkCreateInstance(NotNull(), nullptr, NotNull()))
         .WillOnce(Invoke([&](auto* pCreateInfo, Unused, auto* pVkInstance) {
             EXPECT_THAT(pCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO));
@@ -88,7 +82,8 @@ TEST_F(VulkanInstanceTest, constructorWithDebugEnabledButNotSupportedThrows)
             return VK_SUCCESS;
         }))
         .WillOnce(Invoke([&](Unused, Unused, Unused) { return VK_SUCCESS; }));
-    EXPECT_THROW(createInstance(DebugIsEnabled), runtime_error);
+    EXPECT_THROW(VulkanInstance instance(m_mockLogger, DebugIsEnabled, m_mockVkLoader.createMockProxy()),
+                 runtime_error);
 }
 
 TEST_F(VulkanInstanceTest, loadDeviceFcts)

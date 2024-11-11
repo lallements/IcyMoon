@@ -25,6 +25,8 @@ endif()
 add_definitions(
     -DVK_NO_PROTOTYPES # for vulkan headers: we link dynamically and do not want vk function definitions
 
+    -Dcimg_display=0 # so that CImg does not try to link display-related dependencies
+
     # Vulkan Memory Allocator
     -DVMA_STATIC_VULKAN_FUNCTIONS=0
     -DVMA_DYNAMIC_VULKAN_FUNCTIONS=0
@@ -48,13 +50,17 @@ endif()
 add_subdirectory(cmake)
 im3e_set_coverage_flags()
 
+find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
+find_package(glfw3 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
+find_package(whereami REQUIRED)
 
 
 add_subdirectory(applications)
+add_subdirectory(external)
 add_subdirectory(im3e)
 
 im3e_init_code_coverage()

@@ -11,10 +11,13 @@ class IcyMoonEngineRecipe(ConanFile):
     generators = "VirtualBuildEnv"
 
     requires = {
+        "cimg/3.3.2",
         "fmt/11.0.2",
+        "glfw/3.4",
         "gtest/1.15.0",
         "vulkan-headers/1.3.243.0", # version depended on by vulkan-memory-allocator
         "vulkan-memory-allocator/cci.20231120",
+        "whereami/cci.20220112",
     }
 
     options = {
@@ -23,6 +26,16 @@ class IcyMoonEngineRecipe(ConanFile):
 
     default_options = {
         "coverage": None,
+        "cimg/*:enable_fftw": False,
+        "cimg/*:enable_jpeg": True,
+        "cimg/*:enable_openexr": False,
+        "cimg/*:enable_png": True,
+        "cimg/*:enable_tiff": True,
+        "cimg/*:enable_ffmpeg": False,
+        "cimg/*:enable_opencv": False,
+        "cimg/*:enable_magick": False,
+        "cimg/*:enable_xrandr": False,
+        "cimg/*:enable_xshm": False,
     }
 
     tool_requires = {

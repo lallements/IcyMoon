@@ -17,6 +17,7 @@ struct VulkanGlobalFcts
 
 struct VulkanInstanceFcts
 {
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr{};
     PFN_vkDestroyInstance vkDestroyInstance{};
     PFN_vkCreateDevice vkCreateDevice{};
 
@@ -34,6 +35,7 @@ struct VulkanInstanceFcts
 struct VulkanDeviceFcts
 {
     PFN_vkDestroyDevice vkDestroyDevice{};
+    PFN_vkDeviceWaitIdle vkDeviceWaitIdle{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
     PFN_vkQueueSubmit vkQueueSubmit{};
     PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
@@ -47,11 +49,24 @@ struct VulkanDeviceFcts
     PFN_vkEndCommandBuffer vkEndCommandBuffer{};
     PFN_vkCmdPipelineBarrier2 vkCmdPipelineBarrier2{};
     PFN_vkCmdClearColorImage vkCmdClearColorImage{};
+    PFN_vkCmdBlitImage vkCmdBlitImage{};
+    PFN_vkCmdCopyImage vkCmdCopyImage{};
+    PFN_vkCmdBeginRenderPass vkCmdBeginRenderPass{};
+    PFN_vkCmdEndRenderPass vkCmdEndRenderPass{};
 
     PFN_vkCreateFence vkCreateFence{};
     PFN_vkDestroyFence vkDestroyFence{};
     PFN_vkWaitForFences vkWaitForFences{};
     PFN_vkResetFences vkResetFences{};
+
+    PFN_vkCreateFramebuffer vkCreateFramebuffer{};
+    PFN_vkDestroyFramebuffer vkDestroyFramebuffer{};
+    PFN_vkCreateRenderPass vkCreateRenderPass{};
+    PFN_vkDestroyRenderPass vkDestroyRenderPass{};
+    PFN_vkCreateDescriptorPool vkCreateDescriptorPool{};
+    PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool{};
+    PFN_vkCreateImageView vkCreateImageView{};
+    PFN_vkDestroyImageView vkDestroyImageView{};
 };
 
 class IVulkanLoader
