@@ -11,6 +11,7 @@ namespace im3e {
 
 struct ImguiWorkspacePanelInfo
 {
+    IGuiWorkspace::Location location;
     std::shared_ptr<IGuiPanel> pPanel;
     float fraction = 0.25F;
     ImGuiID dockSpaceId;
@@ -33,7 +34,7 @@ private:
     bool m_imguiDemoVisible = false;
 
     ImguiWorkspacePanelInfo m_centerPanel;
-    std::map<Location, ImguiWorkspacePanelInfo> m_panelInfos;
+    std::vector<ImguiWorkspacePanelInfo> m_panelInfos;
 };
 
 }  // namespace im3e

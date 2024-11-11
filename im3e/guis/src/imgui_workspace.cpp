@@ -24,16 +24,16 @@ auto convertLocationToImGuiDir(IGuiWorkspace::Location location) -> ImGuiDir
 }
 
 void resetWorkspace(ImGuiID dockSpaceId, ImGuiDockNodeFlags dockspaceFlags, ImguiWorkspacePanelInfo& rCenterPanel,
-                    map<IGuiWorkspace::Location, ImguiWorkspacePanelInfo>& rPanelInfos)
+                    vector<ImguiWorkspacePanelInfo>& rPanelInfos)
 {
     ImGui::DockBuilderRemoveNode(dockSpaceId);  // clear any previous layout
     ImGui::DockBuilderAddNode(dockSpaceId, dockspaceFlags | ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(dockSpaceId, ImGui::GetMainViewport()->Size);
 
-    for (auto& [rLocation, rPanelInfo] : rPanelInfos)
+    for (auto& rPanelInfo : rPanelInfos)
     {
-        rPanelInfo.dockSpaceId = ImGui::DockBuilderSplitNode(dockSpaceId, convertLocationToImGuiDir(rLocation),
-                                                             rPanelInfo.fraction, nullptr, &dockSpaceId);
+        rPanelInfo.dockSpaceId = ImGui::DockBuilderSplitNode(
+            dockSpaceId, convertLocationToImGuiDir(rPanelInfo.location), rPanelInfo.fraction, nullptr, &dockSpaceId);
     }
 
     rCenterPanel.dockSpaceId = dockSpaceId;
@@ -43,7 +43,7 @@ void resetWorkspace(ImGuiID dockSpaceId, ImGuiDockNodeFlags dockspaceFlags, Imgu
     {
         ImGui::DockBuilderDockWindow(rCenterPanel.pPanel->getName().c_str(), rCenterPanel.dockSpaceId);
     }
-    for (auto& [rLocation, rPanelInfo] : rPanelInfos)
+    for (auto& rPanelInfo : rPanelInfos)
     {
         ImGui::DockBuilderDockWindow(rPanelInfo.pPanel->getName().c_str(), rPanelInfo.dockSpaceId);
     }
@@ -118,7 +118,7 @@ void ImguiWorkspace::draw(const ICommandBuffer& rCommandBuffer)
         }
     }
 
-    for (auto& [rLocation, rPanelInfo] : m_panelInfos)
+    for (auto& rPanelInfo : m_panelInfos)
     {
         if (ImguiScope panelScope(ImGui::Begin(rPanelInfo.pPanel->getName().c_str()), &ImGui::End, true);
             panelScope.isOpen())
@@ -131,6 +131,7 @@ void ImguiWorkspace::draw(const ICommandBuffer& rCommandBuffer)
 void ImguiWorkspace::addPanel(Location location, std::shared_ptr<IGuiPanel> pPanel, float fraction)
 {
     ImguiWorkspacePanelInfo panelInfo{
+        .location = location,
         .pPanel = throwIfArgNull(std::move(pPanel), "Null panel provided to ImGui workspace"),
         .fraction = fraction,
     };
@@ -141,7 +142,7 @@ void ImguiWorkspace::addPanel(Location location, std::shared_ptr<IGuiPanel> pPan
     }
     else
     {
-        m_panelInfos[location] = move(panelInfo);
+        m_panelInfos.emplace_back(move(panelInfo));
     }
 
     m_workspaceInitialized = false;  // need to reset the workspace to add the new panel
