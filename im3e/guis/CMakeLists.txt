@@ -1,5 +1,9 @@
 add_library(im3e_guis
     guis.h
+    src/glfw_window.cpp
+    src/glfw_window.h
+    src/glfw_window_application.cpp
+    src/glfw_window_application.h
     src/imgui_context.cpp
     src/imgui_context.h
     src/imgui_pipeline.cpp
@@ -24,6 +28,7 @@ target_link_libraries(im3e_guis
     im3e_utils
   PRIVATE
     glfw
+    im3e_devices
     im3e_resources
     imgui
 )
