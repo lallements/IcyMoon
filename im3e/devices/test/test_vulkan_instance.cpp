@@ -21,7 +21,7 @@ struct VulkanInstanceTest : public Test
     auto createInstance(bool isDebugEnabled = false)
     {
         expectInstanceExtensionsEnumerated(m_mockVkLoader, isDebugEnabled);
-        return VulkanInstance(m_mockLogger, isDebugEnabled, m_mockVkLoader.createMockProxy());
+        return VulkanInstance(m_mockLogger, isDebugEnabled, {}, m_mockVkLoader.createMockProxy());
     }
 
     NiceMock<MockLogger> m_mockLogger;
@@ -82,7 +82,7 @@ TEST_F(VulkanInstanceTest, constructorWithDebugEnabledButNotSupportedThrows)
             return VK_SUCCESS;
         }))
         .WillOnce(Invoke([&](Unused, Unused, Unused) { return VK_SUCCESS; }));
-    EXPECT_THROW(VulkanInstance instance(m_mockLogger, DebugIsEnabled, m_mockVkLoader.createMockProxy()),
+    EXPECT_THROW(VulkanInstance instance(m_mockLogger, DebugIsEnabled, {}, m_mockVkLoader.createMockProxy()),
                  runtime_error);
 }
 

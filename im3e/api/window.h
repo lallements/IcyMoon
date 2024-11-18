@@ -1,6 +1,7 @@
 #pragma once
 
 #include <im3e/api/device.h>
+#include <im3e/api/gui.h>
 
 #include <memory>
 
@@ -17,7 +18,7 @@ class IWindowApplication
 public:
     virtual ~IWindowApplication() = default;
 
-    virtual void createWindow() = 0;
+    virtual void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) = 0;
 
     virtual void run() = 0;
 

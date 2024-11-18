@@ -30,7 +30,11 @@ public:
 
     virtual auto startScopedBarrier(std::string_view name) const -> std::unique_ptr<ICommandBarrierRecorder> = 0;
 
+    virtual void setWaitSemaphore(VkSemaphore vkSemaphore) = 0;
+
     virtual auto getVkCommandBuffer() const -> VkCommandBuffer = 0;
+    virtual auto getVkSignalSemaphore() const -> VkSemaphore = 0;
+    virtual auto getVkFence() const -> VkFence = 0;
 };
 
 enum class CommandExecutionType : uint8_t

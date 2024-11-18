@@ -1,5 +1,8 @@
 #include "glfw_window.h"
 
+#include "guis.h"
+#include "imgui_pipeline.h"
+
 #include <fmt/format.h>
 
 using namespace im3e;
@@ -45,11 +48,24 @@ auto createWindow(const ILogger& rLogger, std::string_view name, GlfwWindowCallb
     return UniquePtrWithDeleter<GLFWwindow>(pGlfwWindow, [](auto* pW) { glfwDestroyWindow(pW); });
 }
 
+auto createVkSurface(const IDevice& rDevice, GLFWwindow* pWindow)
+{
+    const auto vkInstance = rDevice.getVkInstance();
+
+    VkSurfaceKHR surface{};
+    throwIfVkFailed(glfwCreateWindowSurface(vkInstance, pWindow, nullptr, &surface), "Could not create window surface");
+
+    return VkUniquePtr<VkSurfaceKHR>(surface, [fcts = rDevice.getInstanceFcts(), vkInstance](auto* s) {
+        fcts.vkDestroySurfaceKHR(vkInstance, s, nullptr);
+    });
+}
+
 }  // namespace
 
-GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, string_view name)
+GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, string_view name, shared_ptr<ImguiWorkspace> pWorkspace)
   : m_pDevice(throwIfArgNull(move(pDevice), "Glfw window requires a device"))
   , m_name(name)
+  , m_pWorkspace(throwIfArgNull(move(pWorkspace), "Glfw window requires a workspace"))
   , m_pLogger(m_pDevice->createLogger(m_name))
   , m_pCallbacks([&] {
       auto pCallbacks = make_unique<GlfwWindowCallbacks>();
@@ -58,18 +74,25 @@ GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, string_view name)
       return pCallbacks;
   }())
   , m_pWindow(createWindow(*m_pLogger, m_name, m_pCallbacks.get()))
+  , m_pVkSurface(createVkSurface(*m_pDevice, m_pWindow.get()))
+  , m_pPresenter(make_unique<Presenter>(m_pDevice, m_pVkSurface.get(),
+                                        make_unique<ImguiPipeline>(m_pDevice, m_pWindow.get(), m_pWorkspace)))
 {
 }
 
-void GlfwWindow::draw() {}
+void GlfwWindow::draw()
+{
+    m_pPresenter->present();
+}
 
 void GlfwWindow::_onWindowResized(int width, int height)
 {
+    m_pPresenter->reset();
     m_pLogger->info(fmt::format("Resized to {}x{}", width, height));
 }
 
 void GlfwWindow::_onWindowIconify(bool iconify)
 {
-    m_pLogger->info(fmt::format("Window iconify set to {}", iconify));
     m_iconified = iconify;
+    m_pLogger->info(fmt::format("Window iconify set to {}", iconify));
 }

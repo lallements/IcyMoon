@@ -14,7 +14,8 @@ namespace im3e {
 class VulkanInstance
 {
 public:
-    VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, std::unique_ptr<IVulkanLoader> pLoader);
+    VulkanInstance(const ILogger& rLogger, bool isDebugEnabled,
+                   const std::vector<const char*>& rRequiredInstanceExtensions, std::unique_ptr<IVulkanLoader> pLoader);
 
     auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts;
     auto loadVmaFcts(VkDevice vkDevice) const -> VmaVulkanFunctions;

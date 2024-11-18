@@ -1,5 +1,9 @@
 #pragma once
 
+#include "imgui_workspace.h"
+#include "presenter.h"
+
+#include <im3e/api/gui.h>
 #include <im3e/api/window.h>
 
 #include <GLFW/glfw3.h>
@@ -15,7 +19,7 @@ struct GlfwWindowCallbacks
 class GlfwWindow : public IWindow
 {
 public:
-    GlfwWindow(std::shared_ptr<IDevice> pDevice, std::string_view name);
+    GlfwWindow(std::shared_ptr<IDevice> pDevice, std::string_view name, std::shared_ptr<ImguiWorkspace> pWorkspace);
 
     void draw();
 
@@ -28,12 +32,15 @@ private:
 
     std::shared_ptr<IDevice> m_pDevice;
     const std::string m_name;
+    std::shared_ptr<ImguiWorkspace> m_pWorkspace;
     std::unique_ptr<ILogger> m_pLogger;
 
     std::unique_ptr<GlfwWindowCallbacks> m_pCallbacks;
     UniquePtrWithDeleter<GLFWwindow> m_pWindow;
-
+    VkUniquePtr<VkSurfaceKHR> m_pVkSurface;
     bool m_iconified;
+
+    std::unique_ptr<Presenter> m_pPresenter;
 };
 
 }  // namespace im3e

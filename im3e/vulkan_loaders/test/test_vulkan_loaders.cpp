@@ -129,27 +129,41 @@ TEST_F(VulkanLoaderTest, loadInstanceFcts)
     expectInstFctLoaded(vkInstance, "vkGetInstanceProcAddr");
     expectInstFctLoaded(vkInstance, "vkDestroyInstance");
     expectInstFctLoaded(vkInstance, "vkCreateDevice");
+    expectInstFctLoaded(vkInstance, "vkDestroySurfaceKHR");
+
     expectInstFctLoaded(vkInstance, "vkCreateDebugUtilsMessengerEXT");
     expectInstFctLoaded(vkInstance, "vkDestroyDebugUtilsMessengerEXT");
+
     expectInstFctLoaded(vkInstance, "vkEnumeratePhysicalDevices");
     expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceProperties");
     expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceFeatures");
     expectInstFctLoaded(vkInstance, "vkEnumerateDeviceExtensionProperties");
     expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceQueueFamilyProperties");
     expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceMemoryProperties");
+
+    expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceSurfaceFormatsKHR");
+    expectInstFctLoaded(vkInstance, "vkGetPhysicalDeviceSurfacePresentModesKHR");
+
     auto instanceFcts = pLoader->loadInstanceFcts(vkInstance);
 
     EXPECT_THAT(instanceFcts.vkGetInstanceProcAddr, NotNull());
     EXPECT_THAT(instanceFcts.vkDestroyInstance, NotNull());
     EXPECT_THAT(instanceFcts.vkCreateDevice, NotNull());
+    EXPECT_THAT(instanceFcts.vkDestroySurfaceKHR, NotNull());
+
     EXPECT_THAT(instanceFcts.vkCreateDebugUtilsMessengerEXT, NotNull());
     EXPECT_THAT(instanceFcts.vkDestroyDebugUtilsMessengerEXT, NotNull());
+
     EXPECT_THAT(instanceFcts.vkEnumeratePhysicalDevices, NotNull());
     EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceProperties, NotNull());
     EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceFeatures, NotNull());
     EXPECT_THAT(instanceFcts.vkEnumerateDeviceExtensionProperties, NotNull());
     EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceQueueFamilyProperties, NotNull());
     EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceMemoryProperties, NotNull());
+    EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceSurfaceCapabilitiesKHR, NotNull());
+    EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceSurfaceFormatsKHR, NotNull());
+    EXPECT_THAT(instanceFcts.vkGetPhysicalDeviceSurfacePresentModesKHR, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadInstanceFctsThrowsWithoutInstance)
@@ -188,6 +202,15 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkWaitForFences");
     expectDeviceFctLoaded(vkDevice, "vkResetFences");
 
+    expectDeviceFctLoaded(vkDevice, "vkCreateSemaphore");
+    expectDeviceFctLoaded(vkDevice, "vkDestroySemaphore");
+
+    expectDeviceFctLoaded(vkDevice, "vkCreateSwapchainKHR");
+    expectDeviceFctLoaded(vkDevice, "vkDestroySwapchainKHR");
+    expectDeviceFctLoaded(vkDevice, "vkGetSwapchainImagesKHR");
+    expectDeviceFctLoaded(vkDevice, "vkAcquireNextImageKHR");
+    expectDeviceFctLoaded(vkDevice, "vkQueuePresentKHR");
+
     expectDeviceFctLoaded(vkDevice, "vkCreateFramebuffer");
     expectDeviceFctLoaded(vkDevice, "vkDestroyFramebuffer");
     expectDeviceFctLoaded(vkDevice, "vkCreateRenderPass");
@@ -222,6 +245,15 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkDestroyFence, NotNull());
     EXPECT_THAT(deviceFcts.vkWaitForFences, NotNull());
     EXPECT_THAT(deviceFcts.vkResetFences, NotNull());
+
+    EXPECT_THAT(deviceFcts.vkCreateSemaphore, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroySemaphore, NotNull());
+
+    EXPECT_THAT(deviceFcts.vkCreateSwapchainKHR, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroySwapchainKHR, NotNull());
+    EXPECT_THAT(deviceFcts.vkGetSwapchainImagesKHR, NotNull());
+    EXPECT_THAT(deviceFcts.vkAcquireNextImageKHR, NotNull());
+    EXPECT_THAT(deviceFcts.vkQueuePresentKHR, NotNull());
 
     EXPECT_THAT(deviceFcts.vkCreateFramebuffer, NotNull());
     EXPECT_THAT(deviceFcts.vkDestroyFramebuffer, NotNull());

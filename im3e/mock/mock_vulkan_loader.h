@@ -32,6 +32,8 @@ public:
     MOCK_METHOD(VkResult, vkCreateDevice,
                 (VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo,
                  const VkAllocationCallbacks* pAllocator, VkDevice* pDevice));
+    MOCK_METHOD(void, vkDestroySurfaceKHR,
+                (VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator));
 
     MOCK_METHOD(VkResult, vkCreateDebugUtilsMessengerEXT,
                 (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
@@ -53,6 +55,16 @@ public:
                  VkQueueFamilyProperties* pQueueFamilyProperties));
     MOCK_METHOD(void, vkGetPhysicalDeviceMemoryProperties,
                 (VkPhysicalDevice physicalDevice, VkPhysicalDeviceMemoryProperties* pMemoryProperties));
+
+    MOCK_METHOD(VkResult, vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+                (VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+                 VkSurfaceCapabilitiesKHR* pSurfaceCapabilities));
+    MOCK_METHOD(VkResult, vkGetPhysicalDeviceSurfaceFormatsKHR,
+                (VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t* pSurfaceFormatCount,
+                 VkSurfaceFormatKHR* pSurfaceFormats));
+    MOCK_METHOD(VkResult, vkGetPhysicalDeviceSurfacePresentModesKHR,
+                (VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, uint32_t* pPresentModeCount,
+                 VkPresentModeKHR* pPresentModes));
 };
 
 class MockVulkanDeviceFcts
@@ -106,6 +118,24 @@ public:
     MOCK_METHOD(VkResult, vkWaitForFences,
                 (VkDevice device, uint32_t fenceCount, const VkFence* pFences, VkBool32 waitAll, uint64_t timeout));
     MOCK_METHOD(VkResult, vkResetFences, (VkDevice device, uint32_t fenceCount, const VkFence* pFences));
+
+    MOCK_METHOD(VkResult, vkCreateSemaphore,
+                (VkDevice device, const VkSemaphoreCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkSemaphore* pSemaphore));
+    MOCK_METHOD(void, vkDestroySemaphore,
+                (VkDevice device, VkSemaphore semaphore, const VkAllocationCallbacks* pAllocator));
+
+    MOCK_METHOD(VkResult, vkCreateSwapchainKHR,
+                (VkDevice device, const VkSwapchainCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkSwapchainKHR* pSwapchain));
+    MOCK_METHOD(void, vkDestroySwapchainKHR,
+                (VkDevice device, VkSwapchainKHR swapchain, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkGetSwapchainImagesKHR,
+                (VkDevice device, VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages));
+    MOCK_METHOD(VkResult, vkAcquireNextImageKHR,
+                (VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore, VkFence fence,
+                 uint32_t* pImageIndex));
+    MOCK_METHOD(VkResult, vkQueuePresentKHR, (VkQueue queue, const VkPresentInfoKHR* pPresentInfo));
 
     MOCK_METHOD(VkResult, vkCreateFramebuffer,
                 (VkDevice device, const VkFramebufferCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,

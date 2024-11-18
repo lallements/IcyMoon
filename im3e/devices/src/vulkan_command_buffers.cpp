@@ -88,19 +88,6 @@ auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkC
     });
 }
 
-auto createVkFence(VkDevice vkDevice, const VulkanDeviceFcts& rFcts)
-{
-    VkFenceCreateInfo vkCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-    };
-
-    VkFence vkFence{};
-    throwIfVkFailed(rFcts.vkCreateFence(vkDevice, &vkCreateInfo, nullptr, &vkFence),
-                    "Could not create fence for Vulkan command buffer");
-
-    return makeVkUniquePtr<VkFence>(vkDevice, vkFence, rFcts.vkDestroyFence);
-}
-
 class VulkanCommandBuffer : public ICommandBuffer
 {
 public:
@@ -111,7 +98,8 @@ public:
       , m_pLogger(m_rDevice.createLogger(name))
       , m_name(name)
       , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
-      , m_pVkFence(createVkFence(m_rDevice.getVkDevice(), m_rDevice.getFcts()))
+      , m_pVkSignalSemaphore(m_rDevice.createVkSemaphore())
+      , m_pVkFence(m_rDevice.createVkFence())
     {
     }
 
@@ -119,6 +107,8 @@ public:
     {
         return make_unique<VulkanCommandBarrierRecorder>(name, m_rDevice.getFcts(), *this);
     }
+
+    void setWaitSemaphore(VkSemaphore vkSemaphore) override { m_vkWaitSemaphore = vkSemaphore; }
 
     void reset()
     {
@@ -128,6 +118,8 @@ public:
         const auto vkFence = m_pVkFence.get();
         throwIfVkFailed(m_rDevice.getFcts().vkResetFences(m_rDevice.getVkDevice(), 1U, &vkFence),
                         "Failed to reset command buffer fence");
+
+        m_vkWaitSemaphore = {};
     }
     void beginRecording(string_view)
     {
@@ -147,10 +139,15 @@ public:
     void submitToQueue(CommandExecutionType executionType)
     {
         const auto vkCommandBuffer = m_pVkCommandBuffer.get();
+        const auto vkSignalSemaphore = m_pVkSignalSemaphore.get();
         VkSubmitInfo vkSubmitInfo{
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreCount = m_vkWaitSemaphore ? 1U : 0U,
+            .pWaitSemaphores = m_vkWaitSemaphore ? &m_vkWaitSemaphore : nullptr,
             .commandBufferCount = 1U,
             .pCommandBuffers = &vkCommandBuffer,
+            .signalSemaphoreCount = 1U,
+            .pSignalSemaphores = &vkSignalSemaphore,
         };
         throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                         "Failed to execute command buffer");
@@ -170,8 +167,6 @@ public:
                       *m_pLogger, "Failed to wait for fence while destroying command buffer");
     }
 
-    auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
-
     auto isExecutionComplete() const
     {
         const auto vkFence = m_pVkFence.get();
@@ -188,6 +183,10 @@ public:
         return false;
     }
 
+    auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
+    auto getVkSignalSemaphore() const -> VkSemaphore override { return m_pVkSignalSemaphore.get(); }
+    auto getVkFence() const -> VkFence override { return m_pVkFence.get(); }
+
 private:
     const ICommandQueue& m_rQueue;
     const IDevice& m_rDevice;
@@ -195,7 +194,10 @@ private:
     const string m_name;
 
     VkUniquePtr<VkCommandBuffer> m_pVkCommandBuffer;
+    VkUniquePtr<VkSemaphore> m_pVkSignalSemaphore;
     VkUniquePtr<VkFence> m_pVkFence;
+
+    VkSemaphore m_vkWaitSemaphore{};
 };
 
 auto createVkCommandPool(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, uint32_t queueFamilyIndex)

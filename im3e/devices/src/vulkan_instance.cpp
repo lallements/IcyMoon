@@ -53,11 +53,13 @@ auto createVkInstance(ILogger& rLogger, const VulkanGlobalFcts& rFcts, const Vul
 
 }  // namespace
 
-VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled, unique_ptr<IVulkanLoader> pLoader)
+VulkanInstance::VulkanInstance(const ILogger& rLogger, bool isDebugEnabled,
+                               const vector<const char*>& rRequiredInstanceExtensions,
+                               unique_ptr<IVulkanLoader> pLoader)
   : m_pLogger(rLogger.createChild("VulkanInstance"))
   , m_pLoader(throwIfArgNull(move(pLoader), "Vulkan instance requires a Vulkan loader"))
   , m_globalFcts(m_pLoader->loadGlobalFcts())
-  , m_extensions(rLogger, m_globalFcts, isDebugEnabled)
+  , m_extensions(rLogger, m_globalFcts, isDebugEnabled, rRequiredInstanceExtensions)
 {
     auto vkInstance = createVkInstance(*m_pLogger, m_globalFcts, m_extensions, isDebugEnabled);
     m_fcts = m_pLoader->loadInstanceFcts(vkInstance);

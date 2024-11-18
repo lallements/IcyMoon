@@ -1,5 +1,7 @@
 #include "imgui_workspace.h"
 
+#include "guis.h"
+
 #include <im3e/utils/imgui_utils.h>
 
 #include <fmt/format.h>
@@ -146,4 +148,9 @@ void ImguiWorkspace::addPanel(Location location, std::shared_ptr<IGuiPanel> pPan
     }
 
     m_workspaceInitialized = false;  // need to reset the workspace to add the new panel
+}
+
+auto im3e::createImguiWorkspace(string_view name) -> shared_ptr<IGuiWorkspace>
+{
+    return make_shared<ImguiWorkspace>(name);
 }

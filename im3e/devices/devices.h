@@ -14,6 +14,7 @@ struct DeviceConfig
 {
     bool isDebugEnabled = false;
     IsPresentationSupportedFct isPresentationSupported{};
+    std::vector<const char*> requiredInstanceExtensions{};
 };
 auto createDevice(const ILogger& rLogger, DeviceConfig config = {}) -> std::shared_ptr<IDevice>;
 

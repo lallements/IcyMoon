@@ -26,6 +26,18 @@ GlfwInstance::~GlfwInstance()
     m_rLogger.debug("Successfully terminated GLFW");
 }
 
+auto GlfwInstance::getRequiredExtensions() const -> vector<const char*>
+{
+    uint32_t extensionCount{};
+    auto* pExtensionsArray = glfwGetRequiredInstanceExtensions(&extensionCount);
+    if (extensionCount == 0U)
+    {
+        return {};
+    }
+
+    return vector<const char*>(pExtensionsArray, pExtensionsArray + extensionCount);
+}
+
 GlfwWindowApplication::GlfwWindowApplication(const ILogger& rLogger, WindowApplicationConfig config)
   : m_config(move(config))
   , m_pLogger(rLogger.createChild(m_config.name))
@@ -33,14 +45,18 @@ GlfwWindowApplication::GlfwWindowApplication(const ILogger& rLogger, WindowAppli
   , m_pDevice(createDevice(*m_pLogger, DeviceConfig{
                                            .isDebugEnabled = false,
                                            .isPresentationSupported = glfwGetPhysicalDevicePresentationSupport,
+                                           .requiredInstanceExtensions = m_pGlfwInstance->getRequiredExtensions(),
                                        }))
 {
 }
 
-void GlfwWindowApplication::createWindow()
+void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
 {
+    auto pImguiWorkspace = dynamic_pointer_cast<ImguiWorkspace>(pWorkspace);
+    throwIfArgNull(pImguiWorkspace, "Cannot create window: GLFW only supports ImGui workspaces at the moment");
+
     const auto windowName = fmt::format("{} - Window #{}", m_config.name, m_pWindows.size());
-    m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice, windowName));
+    m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice, windowName, move(pImguiWorkspace)));
 }
 
 void GlfwWindowApplication::run()

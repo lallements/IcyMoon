@@ -13,6 +13,13 @@ namespace {
 
 struct VulkanImageBuffer
 {
+    VulkanImageBuffer(const IDevice& rDevice, VkImage vkImage, ImageConfig config)
+      : m_rDevice(rDevice)
+      , m_config(move(config))
+      , m_vkImage(throwIfArgNull(vkImage, "Cannot create Vulkan proxy image without an image"))
+    {
+    }
+
     VulkanImageBuffer(const IDevice& rDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator, ImageConfig config,
                       VkImageTiling vkTiling, VmaMemoryUsage vmaMemoryUsage)
       : m_rDevice(rDevice)
@@ -55,7 +62,13 @@ struct VulkanImageBuffer
                         fmt::format("Failed to create image \"{}\" with VMA", m_config.name));
     }
 
-    ~VulkanImageBuffer() { m_pMemoryAllocator->destroyImage(m_vkImage, m_vmaAllocation); }
+    ~VulkanImageBuffer()
+    {
+        if (m_pMemoryAllocator)
+        {
+            m_pMemoryAllocator->destroyImage(m_vkImage, m_vmaAllocation);
+        }
+    }
 
     auto getVkSubresourceLayers() const
     {
@@ -258,6 +271,32 @@ private:
     shared_ptr<VulkanImageMetadata> m_pMetadata;
 };
 
+class VulkanProxyImage : public IImage
+{
+public:
+    VulkanProxyImage(const IDevice& rDevice, VkImage vkImage, ImageConfig config)
+      : m_pImageBuffer(make_shared<VulkanImageBuffer>(rDevice, vkImage, move(config)))
+      , m_pMetadata(make_shared<VulkanImageMetadata>())
+    {
+    }
+
+    auto createView() const -> unique_ptr<IImageView> override { return make_unique<VulkanImageView>(m_pImageBuffer); }
+
+    auto getVkImage() const -> VkImage override { return m_pImageBuffer->m_vkImage; }
+    auto getVkExtent() const -> VkExtent2D override { return m_pImageBuffer->m_config.vkExtent; }
+    auto getVkFormat() const -> VkFormat override { return m_pImageBuffer->m_config.vkFormat; }
+    auto getVkSubresourceLayers() const -> VkImageSubresourceLayers override
+    {
+        return m_pImageBuffer->getVkSubresourceLayers();
+    }
+    auto getMetadata() -> shared_ptr<IImageMetadata> override { return m_pMetadata; }
+    auto getMetadata() const -> shared_ptr<const IImageMetadata> override { return m_pMetadata; }
+
+private:
+    shared_ptr<VulkanImageBuffer> m_pImageBuffer;
+    shared_ptr<IImageMetadata> m_pMetadata;
+};
+
 class VulkanImageFactory : public IImageFactory
 {
 public:
@@ -276,6 +315,11 @@ public:
     auto createHostVisibleImage(ImageConfig config) const -> unique_ptr<IHostVisibleImage> override
     {
         return make_unique<VulkanHostVisibleImage>(m_rDevice, m_pMemoryAllocator, move(config));
+    }
+
+    auto createProxyImage(VkImage vkImage, ImageConfig config) const -> unique_ptr<IImage> override
+    {
+        return make_unique<VulkanProxyImage>(m_rDevice, vkImage, move(config));
     }
 
 private:

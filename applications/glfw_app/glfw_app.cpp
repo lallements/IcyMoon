@@ -11,8 +11,12 @@ int main()
                                                           .name = "GLFW App",
                                                           .isDebugEnabled = true,
                                                       });
-    pApp->createWindow();
-    pApp->createWindow();
+
+    auto pWorkspace1 = createImguiWorkspace("Workspace 1");
+    pApp->createWindow(pWorkspace1);
+
+    // auto pWorkspace2 = createImguiWorkspace("Workspace 2");
+    // pApp->createWindow(pWorkspace2);
 
     pApp->run();
     return 0;

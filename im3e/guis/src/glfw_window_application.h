@@ -16,6 +16,8 @@ public:
     GlfwInstance(const ILogger& rLogger);
     ~GlfwInstance();
 
+    auto getRequiredExtensions() const -> std::vector<const char*>;
+
 private:
     const ILogger& m_rLogger;
 };
@@ -25,7 +27,7 @@ class GlfwWindowApplication : public IWindowApplication
 public:
     GlfwWindowApplication(const ILogger& rLogger, WindowApplicationConfig config);
 
-    void createWindow() override;
+    void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) override;
 
     void run() override;
 

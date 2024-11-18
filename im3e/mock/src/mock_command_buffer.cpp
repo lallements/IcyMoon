@@ -47,7 +47,11 @@ public:
         return m_rMock.startScopedBarrier(name);
     }
 
+    void setWaitSemaphore(VkSemaphore vkSemaphore) override { m_rMock.setWaitSemaphore(vkSemaphore); }
+
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_rMock.getVkCommandBuffer(); }
+    auto getVkSignalSemaphore() const -> VkSemaphore override { return m_rMock.getVkSignalSemaphore(); }
+    auto getVkFence() const -> VkFence override { return m_rMock.getVkFence(); }
 
 private:
     MockCommandBuffer& m_rMock;

@@ -96,6 +96,11 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 return g_pMock->getMockInstanceFcts().vkCreateDevice(physicalDevice, pCreateInfo, pAllocator, pDevice);
             },
+        .vkDestroySurfaceKHR =
+            [](VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockInstanceFcts().vkDestroySurfaceKHR(instance, surface, pAllocator);
+            },
 
         .vkCreateDebugUtilsMessengerEXT =
             [](VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
@@ -145,6 +150,27 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceMemoryProperties(physicalDevice, pMemoryProperties);
             },
+
+        .vkGetPhysicalDeviceSurfaceCapabilitiesKHR = [](VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+                                                        VkSurfaceCapabilitiesKHR* pSurfaceCapabilities) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface,
+                                                                                            pSurfaceCapabilities);
+        },
+        .vkGetPhysicalDeviceSurfaceFormatsKHR = [](VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+                                                   uint32_t* pSurfaceFormatCount,
+                                                   VkSurfaceFormatKHR* pSurfaceFormats) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceSurfaceFormatsKHR(
+                physicalDevice, surface, pSurfaceFormatCount, pSurfaceFormats);
+        },
+        .vkGetPhysicalDeviceSurfacePresentModesKHR = [](VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+                                                        uint32_t* pPresentModeCount,
+                                                        VkPresentModeKHR* pPresentModes) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockInstanceFcts().vkGetPhysicalDeviceSurfacePresentModesKHR(
+                physicalDevice, surface, pPresentModeCount, pPresentModes);
+        },
     })
   , m_dFcts(VulkanDeviceFcts{
         .vkDestroyDevice =
@@ -268,6 +294,44 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 return g_pMock->getMockDeviceFcts().vkResetFences(device, fenceCount, pFences);
             },
+
+        .vkCreateSemaphore = [](VkDevice device, const VkSemaphoreCreateInfo* pCreateInfo,
+                                const VkAllocationCallbacks* pAllocator, VkSemaphore* pSemaphore) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateSemaphore(device, pCreateInfo, pAllocator, pSemaphore);
+        },
+        .vkDestroySemaphore =
+            [](VkDevice device, VkSemaphore semaphore, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroySemaphore(device, semaphore, pAllocator);
+            },
+
+        .vkCreateSwapchainKHR = [](VkDevice device, const VkSwapchainCreateInfoKHR* pCreateInfo,
+                                   const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
+        },
+        .vkDestroySwapchainKHR =
+            [](VkDevice device, VkSwapchainKHR swapchain, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroySwapchainKHR(device, swapchain, pAllocator);
+            },
+        .vkGetSwapchainImagesKHR = [](VkDevice device, VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount,
+                                      VkImage* pSwapchainImages) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkGetSwapchainImagesKHR(device, swapchain, pSwapchainImageCount,
+                                                                        pSwapchainImages);
+        },
+        .vkAcquireNextImageKHR = [](VkDevice device, VkSwapchainKHR swapchain, uint64_t timeout, VkSemaphore semaphore,
+                                    VkFence fence, uint32_t* pImageIndex) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkAcquireNextImageKHR(device, swapchain, timeout, semaphore, fence,
+                                                                      pImageIndex);
+        },
+        .vkQueuePresentKHR = [](VkQueue queue, const VkPresentInfoKHR* pPresentInfo) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkQueuePresentKHR(queue, pPresentInfo);
+        },
 
         .vkCreateFramebuffer = [](VkDevice device, const VkFramebufferCreateInfo* pCreateInfo,
                                   const VkAllocationCallbacks* pAllocator, VkFramebuffer* pFramebuffer) -> VkResult {

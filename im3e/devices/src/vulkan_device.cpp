@@ -201,7 +201,7 @@ public:
       : m_pLogger(rLogger.createChild("VulkanDevice"))
       , m_config(move(config))
 
-      , m_instance(*m_pLogger, m_config.isDebugEnabled,
+      , m_instance(*m_pLogger, m_config.isDebugEnabled, m_config.requiredInstanceExtensions,
                    createVulkanLoader(VulkanLoaderConfig{
                        .isDebugEnabled = config.isDebugEnabled,
                    }))
@@ -220,6 +220,39 @@ public:
         m_pLogger->debug("Waiting for device to be idle");
         m_fcts.vkDeviceWaitIdle(m_pVkDevice.get());
         m_pLogger->debug("Device idle, destroying");
+    }
+
+    auto createVkSemaphore() const -> VkUniquePtr<VkSemaphore> override
+    {
+        VkSemaphoreCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+
+        VkSemaphore vkSemaphore{};
+        throwIfVkFailed(m_fcts.vkCreateSemaphore(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkSemaphore),
+                        "Failed to create semaphore for Vulkan Device");
+
+        return makeVkUniquePtr<VkSemaphore>(m_pVkDevice.get(), vkSemaphore, m_fcts.vkDestroySemaphore);
+    }
+
+    auto createVkFence(VkFenceCreateFlags vkFlags) const -> VkUniquePtr<VkFence> override
+    {
+        VkFenceCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = vkFlags};
+
+        VkFence vkFence{};
+        throwIfVkFailed(m_fcts.vkCreateFence(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkFence),
+                        "Could not create fence for Vulkan device");
+
+        return makeVkUniquePtr<VkFence>(m_pVkDevice.get(), vkFence, m_fcts.vkDestroyFence);
+    }
+
+    void waitForVkFence(VkFence vkFence) const override
+    {
+        if (!vkFence)
+        {
+            return;
+        }
+        throwIfVkFailed(
+            m_fcts.vkWaitForFences(m_pVkDevice.get(), 1U, &vkFence, VK_TRUE, numeric_limits<uint64_t>::max()),
+            "Failed to wait for fence from Vulkan Device");
     }
 
     auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> override

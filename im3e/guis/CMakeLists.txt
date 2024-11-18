@@ -12,6 +12,8 @@ add_library(im3e_guis
     src/imgui_vulkan_backend.h
     src/imgui_workspace.cpp
     src/imgui_workspace.h
+    src/presenter.cpp
+    src/presenter.h
 )
 
 target_include_directories(im3e_guis

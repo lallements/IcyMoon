@@ -11,6 +11,8 @@ namespace im3e {
 auto createImguiPipeline(std::shared_ptr<const IDevice> pDevice, std::shared_ptr<IGuiWorkspace> pGuiWorkspace)
     -> std::unique_ptr<IFramePipeline>;
 
+auto createImguiWorkspace(std::string_view name) -> std::shared_ptr<IGuiWorkspace>;
+
 struct WindowApplicationConfig
 {
     std::string name;

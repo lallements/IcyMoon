@@ -19,6 +19,10 @@ public:
     MockDevice();
     ~MockDevice() override;
 
+    MOCK_METHOD(VkUniquePtr<VkSemaphore>, createVkSemaphore, (), (const, override));
+    MOCK_METHOD(VkUniquePtr<VkFence>, createVkFence, (VkFenceCreateFlags vkFlags), (const, override));
+    MOCK_METHOD(void, waitForVkFence, (VkFence vkFence), (const, override));
+
     MOCK_METHOD(std::unique_ptr<ILogger>, createLogger, (std::string_view name), (const, override));
 
     MOCK_METHOD(VkInstance, getVkInstance, (), (const, override));

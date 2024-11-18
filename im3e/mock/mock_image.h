@@ -68,6 +68,7 @@ public:
 
     MOCK_METHOD(std::unique_ptr<IImage>, createImage, (ImageConfig config), (const, override));
     MOCK_METHOD(std::unique_ptr<IHostVisibleImage>, createHostVisibleImage, (ImageConfig config), (const, override));
+    MOCK_METHOD(std::unique_ptr<IImage>, createProxyImage, (VkImage vkImage, ImageConfig config), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<IImageFactory>;
 };
