@@ -171,12 +171,13 @@ void Presenter::present()
     const auto& rFcts = m_pDevice->getFcts();
     auto pCommandQueue = m_pDevice->getCommandQueue();
 
-    m_imageReadySemaphoreIndex = (m_imageReadySemaphoreIndex + 1U) % m_pImageReadySemaphores.size();
-    auto vkImageReadySemaphore = m_pImageReadySemaphores[m_imageReadySemaphoreIndex].get();
+    m_semaphoreIndex = (m_semaphoreIndex + 1U) % m_pReadyToWriteSemaphores.size();
+    auto vkReadyToWriteSemaphore = m_pReadyToWriteSemaphores[m_semaphoreIndex].get();
+    auto vkReadyToPresentSemaphore = m_pReadyToPresentSemaphores[m_semaphoreIndex].get();
     uint32_t imageIndex{};
     {
         auto vkResult = rFcts.vkAcquireNextImageKHR(m_pDevice->getVkDevice(), m_pVkSwapchain.get(),
-                                                    numeric_limits<uint64_t>::max(), vkImageReadySemaphore, nullptr,
+                                                    numeric_limits<uint64_t>::max(), vkReadyToWriteSemaphore, nullptr,
                                                     &imageIndex);
         if (vkResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
@@ -195,11 +196,10 @@ void Presenter::present()
             throwIfVkFailed(vkResult, "Failed to acquire next swapchain image for presenter");
         }
     }
-    VkSemaphore vkReadyToPresentSemaphore{};
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
-        pCommandBuffer->setWaitSemaphore(vkImageReadySemaphore);
-        vkReadyToPresentSemaphore = pCommandBuffer->getVkSignalSemaphore();
+        pCommandBuffer->setVkWaitSemaphore(vkReadyToWriteSemaphore);
+        pCommandBuffer->setVkSignalSemaphore(vkReadyToPresentSemaphore);
 
         m_pFramePipeline->prepareExecution(*pCommandBuffer, m_pImages[imageIndex]);
     }
@@ -226,9 +226,12 @@ void Presenter::reset()
     m_vkExtent = vkCreateInfo.imageExtent;
     m_pImages = getSwapchainImages(*m_pDevice, m_pVkSwapchain.get(), vkCreateInfo);
 
-    m_pImageReadySemaphores.resize(m_pImages.size());
-    ranges::for_each(m_pImageReadySemaphores, [&](auto& pSemaphore) { pSemaphore = m_pDevice->createVkSemaphore(); });
-    m_imageReadySemaphoreIndex = {};
+    m_pReadyToWriteSemaphores.resize(m_pImages.size());
+    m_pReadyToPresentSemaphores.resize(m_pImages.size());
+    auto createVkSemaphore = [&](auto& pSemaphore) { pSemaphore = m_pDevice->createVkSemaphore(); };
+    ranges::for_each(m_pReadyToWriteSemaphores, createVkSemaphore);
+    ranges::for_each(m_pReadyToPresentSemaphores, createVkSemaphore);
+    m_semaphoreIndex = {};
 
     m_pFramePipeline->resize(m_vkExtent, static_cast<uint32_t>(m_pImages.size()));
 

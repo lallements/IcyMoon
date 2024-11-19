@@ -98,7 +98,6 @@ public:
       , m_pLogger(m_rDevice.createLogger(name))
       , m_name(name)
       , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
-      , m_pVkSignalSemaphore(m_rDevice.createVkSemaphore())
       , m_pVkFence(m_rDevice.createVkFence())
     {
     }
@@ -108,7 +107,8 @@ public:
         return make_unique<VulkanCommandBarrierRecorder>(name, m_rDevice.getFcts(), *this);
     }
 
-    void setWaitSemaphore(VkSemaphore vkSemaphore) override { m_vkWaitSemaphore = vkSemaphore; }
+    void setVkSignalSemaphore(VkSemaphore vkSemaphore) override { m_vkSignalSemaphore = vkSemaphore; }
+    void setVkWaitSemaphore(VkSemaphore vkSemaphore) override { m_vkWaitSemaphore = vkSemaphore; }
 
     void reset()
     {
@@ -139,15 +139,14 @@ public:
     void submitToQueue(CommandExecutionType executionType)
     {
         const auto vkCommandBuffer = m_pVkCommandBuffer.get();
-        const auto vkSignalSemaphore = m_pVkSignalSemaphore.get();
         VkSubmitInfo vkSubmitInfo{
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
             .waitSemaphoreCount = m_vkWaitSemaphore ? 1U : 0U,
             .pWaitSemaphores = m_vkWaitSemaphore ? &m_vkWaitSemaphore : nullptr,
             .commandBufferCount = 1U,
             .pCommandBuffers = &vkCommandBuffer,
-            .signalSemaphoreCount = 1U,
-            .pSignalSemaphores = &vkSignalSemaphore,
+            .signalSemaphoreCount = m_vkSignalSemaphore ? 1U : 0U,
+            .pSignalSemaphores = m_vkSignalSemaphore ? &m_vkSignalSemaphore : nullptr,
         };
         throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                         "Failed to execute command buffer");
@@ -184,7 +183,6 @@ public:
     }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
-    auto getVkSignalSemaphore() const -> VkSemaphore override { return m_pVkSignalSemaphore.get(); }
     auto getVkFence() const -> VkFence override { return m_pVkFence.get(); }
 
 private:
@@ -197,6 +195,7 @@ private:
     VkUniquePtr<VkSemaphore> m_pVkSignalSemaphore;
     VkUniquePtr<VkFence> m_pVkFence;
 
+    VkSemaphore m_vkSignalSemaphore{};
     VkSemaphore m_vkWaitSemaphore{};
 };
 

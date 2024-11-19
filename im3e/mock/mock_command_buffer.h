@@ -25,10 +25,10 @@ public:
     MOCK_METHOD(std::unique_ptr<ICommandBarrierRecorder>, startScopedBarrier, (std::string_view name),
                 (const, override));
 
-    MOCK_METHOD(void, setWaitSemaphore, (VkSemaphore vkSemaphore), (override));
+    MOCK_METHOD(void, setVkSignalSemaphore, (VkSemaphore vkSemaphore), (override));
+    MOCK_METHOD(void, setVkWaitSemaphore, (VkSemaphore vkSemaphore), (override));
 
     MOCK_METHOD(VkCommandBuffer, getVkCommandBuffer, (), (const, override));
-    MOCK_METHOD(VkSemaphore, getVkSignalSemaphore, (), (const, override));
     MOCK_METHOD(VkFence, getVkFence, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandBuffer>;

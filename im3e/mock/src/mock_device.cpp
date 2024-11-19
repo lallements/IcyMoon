@@ -41,6 +41,13 @@ private:
 
 MockDevice::MockDevice()
 {
+    ON_CALL(*this, createVkSemaphore()).WillByDefault(Invoke([this] {
+        return VkUniquePtr<VkSemaphore>(m_vkSemaphore, [](auto*) {});
+    }));
+    ON_CALL(*this, createVkFence(_)).WillByDefault(InvokeWithoutArgs([this] {
+        return VkUniquePtr<VkFence>(m_vkFence, [](auto*) {});
+    }));
+
     ON_CALL(*this, createLogger(_)).WillByDefault(InvokeWithoutArgs([this] { return m_mockLogger.createMockProxy(); }));
 
     ON_CALL(*this, getVkInstance()).WillByDefault(Return(m_vkInstance));

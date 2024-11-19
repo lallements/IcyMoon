@@ -26,8 +26,9 @@ private:
     VkExtent2D m_vkExtent{};
     bool m_isOutOfDate = true;
 
-    std::vector<VkUniquePtr<VkSemaphore>> m_pImageReadySemaphores;
-    size_t m_imageReadySemaphoreIndex{};
+    std::vector<VkUniquePtr<VkSemaphore>> m_pReadyToWriteSemaphores;
+    std::vector<VkUniquePtr<VkSemaphore>> m_pReadyToPresentSemaphores;
+    size_t m_semaphoreIndex{};
 };
 
 }  // namespace im3e
