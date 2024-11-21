@@ -1,14 +1,7 @@
-#include "devices.h"
+#include "vulkan_device.h"
 
-#include "vulkan_command_buffers.h"
 #include "vulkan_images.h"
-#include "vulkan_instance.h"
-#include "vulkan_memory_allocator.h"
 
-#include <im3e/api/device.h>
-#include <im3e/api/image.h>
-#include <im3e/api/logger.h>
-#include <im3e/api/vulkan_loader.h>
 #include <im3e/utils/throw_utils.h>
 #include <im3e/utils/types.h>
 #include <im3e/utils/vk_utils.h>
@@ -194,97 +187,78 @@ auto findCommandQueueInfo(const VulkanDeviceFcts& rFcts, VkDevice vkDevice,
     throw runtime_error("Could not find Vulkan command queue with either presentation or graphics capabilities");
 }
 
-class VulkanDevice : public IDevice, public enable_shared_from_this<VulkanDevice>
-{
-public:
-    VulkanDevice(const ILogger& rLogger, DeviceConfig config)
-      : m_pLogger(rLogger.createChild("VulkanDevice"))
-      , m_config(move(config))
-
-      , m_instance(*m_pLogger, m_config.isDebugEnabled, m_config.requiredInstanceExtensions,
-                   createVulkanLoader(VulkanLoaderConfig{
-                       .isDebugEnabled = config.isDebugEnabled,
-                   }))
-      , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
-      , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
-      , m_commandQueueInfo(findCommandQueueInfo(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies))
-      , m_pMemoryAllocator(createVulkanMemoryAllocator(*this, m_instance.loadVmaFcts(m_pVkDevice.get())))
-      , m_pImageFactory(createVulkanImageFactory(*this, m_pMemoryAllocator))
-      , m_pCommandQueue(createVulkanCommandQueue(*this, m_commandQueueInfo, "MainQueue"))
-    {
-        m_pLogger->info("Successfully initialized");
-    }
-
-    ~VulkanDevice() override
-    {
-        m_pLogger->debug("Waiting for device to be idle");
-        m_fcts.vkDeviceWaitIdle(m_pVkDevice.get());
-        m_pLogger->debug("Device idle, destroying");
-    }
-
-    auto createVkSemaphore() const -> VkUniquePtr<VkSemaphore> override
-    {
-        VkSemaphoreCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-
-        VkSemaphore vkSemaphore{};
-        throwIfVkFailed(m_fcts.vkCreateSemaphore(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkSemaphore),
-                        "Failed to create semaphore for Vulkan Device");
-
-        return makeVkUniquePtr<VkSemaphore>(m_pVkDevice.get(), vkSemaphore, m_fcts.vkDestroySemaphore);
-    }
-
-    auto createVkFence(VkFenceCreateFlags vkFlags) const -> VkUniquePtr<VkFence> override
-    {
-        VkFenceCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = vkFlags};
-
-        VkFence vkFence{};
-        throwIfVkFailed(m_fcts.vkCreateFence(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkFence),
-                        "Could not create fence for Vulkan device");
-
-        return makeVkUniquePtr<VkFence>(m_pVkDevice.get(), vkFence, m_fcts.vkDestroyFence);
-    }
-
-    void waitForVkFence(VkFence vkFence) const override
-    {
-        if (!vkFence)
-        {
-            return;
-        }
-        throwIfVkFailed(
-            m_fcts.vkWaitForFences(m_pVkDevice.get(), 1U, &vkFence, VK_TRUE, numeric_limits<uint64_t>::max()),
-            "Failed to wait for fence from Vulkan Device");
-    }
-
-    auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> override
-    {
-        return m_pLogger->createChild(name);
-    }
-
-    auto getVkInstance() const -> VkInstance override { return m_instance.getVkInstance(); }
-    auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_physicalDevice.vkPhysicalDevice; }
-    auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
-    auto getFcts() const -> const VulkanDeviceFcts& override { return m_fcts; }
-    auto getInstanceFcts() const -> const VulkanInstanceFcts& override { return m_instance.getFcts(); }
-    auto getImageFactory() const -> shared_ptr<const IImageFactory> override { return m_pImageFactory; }
-    auto getCommandQueue() const -> shared_ptr<const ICommandQueue> override { return m_pCommandQueue; }
-    auto getCommandQueue() -> shared_ptr<ICommandQueue> override { return m_pCommandQueue; }
-
-private:
-    unique_ptr<ILogger> m_pLogger;
-    const DeviceConfig m_config;
-
-    const VulkanInstance m_instance;
-    const VulkanPhysicalDevice m_physicalDevice;
-    VulkanDeviceFcts m_fcts;
-    VkUniquePtr<VkDevice> m_pVkDevice;
-    const VulkanCommandQueueInfo m_commandQueueInfo;
-
-    shared_ptr<IVulkanMemoryAllocator> m_pMemoryAllocator;
-    shared_ptr<IImageFactory> m_pImageFactory;
-    shared_ptr<ICommandQueue> m_pCommandQueue;
-};
-
 }  // namespace
+
+VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
+  : m_pLogger(rLogger.createChild("VulkanDevice"))
+  , m_config(move(config))
+
+  , m_instance(*m_pLogger, m_config.isDebugEnabled, m_config.requiredInstanceExtensions,
+               createVulkanLoader(VulkanLoaderConfig{
+                   .isDebugEnabled = config.isDebugEnabled,
+               }))
+  , m_physicalDevice(m_instance.choosePhysicalDevice(config.isPresentationSupported))
+  , m_pVkDevice(createDeviceAndLoadFcts(m_instance, m_physicalDevice, m_fcts))
+  , m_commandQueueInfo(findCommandQueueInfo(m_fcts, m_pVkDevice.get(), m_physicalDevice.queueFamilies))
+  , m_pMemoryAllocator(createVulkanMemoryAllocator(*this, m_instance.loadVmaFcts(m_pVkDevice.get())))
+  , m_pCommandQueue(createVulkanCommandQueue(*this, m_commandQueueInfo, "MainQueue"))
+{
+    m_pLogger->info("Successfully initialized");
+}
+
+VulkanDevice::~VulkanDevice()
+{
+    m_pLogger->debug("Waiting for device to be idle");
+    m_fcts.vkDeviceWaitIdle(m_pVkDevice.get());
+    m_pLogger->debug("Device idle, destroying");
+}
+
+auto VulkanDevice::createVkSemaphore() const -> VkUniquePtr<VkSemaphore>
+{
+    VkSemaphoreCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+
+    VkSemaphore vkSemaphore{};
+    throwIfVkFailed(m_fcts.vkCreateSemaphore(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkSemaphore),
+                    "Failed to create semaphore for Vulkan Device");
+
+    return makeVkUniquePtr<VkSemaphore>(m_pVkDevice.get(), vkSemaphore, m_fcts.vkDestroySemaphore);
+}
+
+auto VulkanDevice::createVkFence(VkFenceCreateFlags vkFlags) const -> VkUniquePtr<VkFence>
+{
+    VkFenceCreateInfo vkCreateInfo{.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, .flags = vkFlags};
+
+    VkFence vkFence{};
+    throwIfVkFailed(m_fcts.vkCreateFence(m_pVkDevice.get(), &vkCreateInfo, nullptr, &vkFence),
+                    "Could not create fence for Vulkan device");
+
+    return makeVkUniquePtr<VkFence>(m_pVkDevice.get(), vkFence, m_fcts.vkDestroyFence);
+}
+
+void VulkanDevice::waitForVkFence(VkFence vkFence) const
+{
+    if (!vkFence)
+    {
+        return;
+    }
+    throwIfVkFailed(m_fcts.vkWaitForFences(m_pVkDevice.get(), 1U, &vkFence, VK_TRUE, numeric_limits<uint64_t>::max()),
+                    "Failed to wait for fence from Vulkan Device");
+}
+
+auto VulkanDevice::createLogger(std::string_view name) const -> std::unique_ptr<ILogger>
+{
+    return m_pLogger->createChild(name);
+}
+
+auto VulkanDevice::getImageFactory() const -> shared_ptr<const IImageFactory>
+{
+    if (!m_pImageFactory)
+    {
+        auto pThis = this->shared_from_this();
+        m_pImageFactory = createVulkanImageFactory(pThis, m_pMemoryAllocator);
+    }
+    return m_pImageFactory;
+}
 
 auto im3e::createDevice(const ILogger& rLogger, DeviceConfig config) -> shared_ptr<IDevice>
 {

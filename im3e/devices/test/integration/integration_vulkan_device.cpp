@@ -23,6 +23,7 @@ struct VulkanDeviceIntegration : public Test
             }
 
             s_pLogger = createFileLogger(filesystem::path{fmt::format("{}.log", suiteName)});
+            s_pLogger->setLevelFilter(LogLevel::Debug);
         }
     }
 
@@ -40,4 +41,16 @@ TEST_F(VulkanDeviceIntegration, constructorWithDebugEnabled)
 {
     auto pDevice = createDevice(*s_pLogger, DeviceConfig{.isDebugEnabled = true});
     ASSERT_THAT(pDevice, NotNull());
+}
+
+TEST_F(VulkanDeviceIntegration, destroyDeviceBeforeDestroyingImage)
+{
+    auto pDevice = createDevice(*s_pLogger, DeviceConfig{.isDebugEnabled = true});
+    auto pImage = pDevice->getImageFactory()->createImage(ImageConfig{
+        .vkExtent{24U, 24U},
+        .vkFormat = VK_FORMAT_R8G8B8A8_UNORM,
+        .vkUsage = VK_IMAGE_USAGE_SAMPLED_BIT,
+    });
+
+    pDevice.reset();
 }
