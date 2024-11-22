@@ -23,6 +23,7 @@ private:
 
     VkUniquePtr<VkSwapchainKHR> m_pVkSwapchain;
     std::vector<std::shared_ptr<IImage>> m_pImages;
+    std::vector<VkSharedPtr<VkFence>> m_pImageVkFences;
     VkExtent2D m_vkExtent{};
     bool m_isOutOfDate = true;
 

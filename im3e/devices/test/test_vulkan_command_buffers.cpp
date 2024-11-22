@@ -125,7 +125,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSync)
     expectBeginCommand(mockVkCommandBuffer);
     auto pCommandBuffer = pCommandQueue->startScopedCommand("testCommand", CommandExecutionType::Sync);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
-    EXPECT_THAT(pCommandBuffer->getVkFence(), Eq(mockVkFence));
+    EXPECT_THAT(pCommandBuffer->getVkFence().get(), Eq(mockVkFence));
     {
         InSequence s;
         expectEndCommand(mockVkCommandBuffer);

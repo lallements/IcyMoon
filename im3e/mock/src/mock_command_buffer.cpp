@@ -51,7 +51,7 @@ public:
     void setVkWaitSemaphore(VkSemaphore vkSemaphore) override { m_rMock.setVkWaitSemaphore(vkSemaphore); }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_rMock.getVkCommandBuffer(); }
-    auto getVkFence() const -> VkFence override { return m_rMock.getVkFence(); }
+    auto getVkFence() const -> VkSharedPtr<VkFence> override { return m_rMock.getVkFence(); }
 
 private:
     MockCommandBuffer& m_rMock;

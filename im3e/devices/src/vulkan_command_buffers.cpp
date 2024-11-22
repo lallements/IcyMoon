@@ -141,13 +141,18 @@ public:
         const auto vkCommandBuffer = m_pVkCommandBuffer.get();
         VkSubmitInfo vkSubmitInfo{
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount = m_vkWaitSemaphore ? 1U : 0U,
-            .pWaitSemaphores = m_vkWaitSemaphore ? &m_vkWaitSemaphore : nullptr,
             .commandBufferCount = 1U,
             .pCommandBuffers = &vkCommandBuffer,
             .signalSemaphoreCount = m_vkSignalSemaphore ? 1U : 0U,
             .pSignalSemaphores = m_vkSignalSemaphore ? &m_vkSignalSemaphore : nullptr,
         };
+        const VkPipelineStageFlags vkWaitDstMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        if (m_vkWaitSemaphore)
+        {
+            vkSubmitInfo.waitSemaphoreCount = 1U;
+            vkSubmitInfo.pWaitSemaphores = &m_vkWaitSemaphore;
+            vkSubmitInfo.pWaitDstStageMask = &vkWaitDstMask;
+        }
         throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                         "Failed to execute command buffer");
 
@@ -183,7 +188,7 @@ public:
     }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
-    auto getVkFence() const -> VkFence override { return m_pVkFence.get(); }
+    auto getVkFence() const -> VkSharedPtr<VkFence> override { return m_pVkFence; }
 
 private:
     const ICommandQueue& m_rQueue;
@@ -193,7 +198,7 @@ private:
 
     VkUniquePtr<VkCommandBuffer> m_pVkCommandBuffer;
     VkUniquePtr<VkSemaphore> m_pVkSignalSemaphore;
-    VkUniquePtr<VkFence> m_pVkFence;
+    VkSharedPtr<VkFence> m_pVkFence;
 
     VkSemaphore m_vkSignalSemaphore{};
     VkSemaphore m_vkWaitSemaphore{};

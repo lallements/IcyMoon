@@ -196,12 +196,24 @@ void Presenter::present()
             throwIfVkFailed(vkResult, "Failed to acquire next swapchain image for presenter");
         }
     }
+    if (auto& pImageVkFence = m_pImageVkFences[imageIndex])
+    {
+        m_pDevice->waitForVkFence(pImageVkFence.get());
+        pImageVkFence.reset();
+    }
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
         pCommandBuffer->setVkWaitSemaphore(vkReadyToWriteSemaphore);
         pCommandBuffer->setVkSignalSemaphore(vkReadyToPresentSemaphore);
+        m_pImageVkFences[imageIndex] = pCommandBuffer->getVkFence();
 
         m_pFramePipeline->prepareExecution(*pCommandBuffer, m_pImages[imageIndex]);
+        {
+            auto pBarrier = pCommandBuffer->startScopedBarrier("BeforePresentation");
+            pBarrier->addImageBarrier(*m_pImages[imageIndex], ImageBarrierConfig{
+                                                                  .vkLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                                                              });
+        }
     }
     const auto vkSwapchain = m_pVkSwapchain.get();
     const auto vkPresentInfo = makeVkPresentInfo(&vkSwapchain, &imageIndex, &vkReadyToPresentSemaphore);
@@ -219,15 +231,27 @@ void Presenter::present()
 
 void Presenter::reset()
 {
+    ranges::for_each(m_pImageVkFences, [this](auto& pVkFence) {
+        if (pVkFence)
+        {
+            m_pDevice->waitForVkFence(pVkFence.get());
+        }
+    });
+    m_pImageVkFences.clear();
     m_pVkSwapchain.reset();
 
     const auto vkCreateInfo = createVkSwapchainCreateInfo(*m_pLogger, *m_pDevice, m_vkSurface);
     m_pVkSwapchain = createVkSwapchain(*m_pDevice, vkCreateInfo);
     m_vkExtent = vkCreateInfo.imageExtent;
     m_pImages = getSwapchainImages(*m_pDevice, m_pVkSwapchain.get(), vkCreateInfo);
+    m_pImageVkFences.resize(m_pImages.size());
 
-    m_pReadyToWriteSemaphores.resize(m_pImages.size());
-    m_pReadyToPresentSemaphores.resize(m_pImages.size());
+    // We add 1 one more set of sync objects than the total image count because we may try to acquire the next image
+    // while all images have been queued. In this case, all sync object sets would also be used if we didn't have an
+    // extra set.
+    const auto syncObjectCount = m_pImages.size() + 1U;
+    m_pReadyToWriteSemaphores.resize(syncObjectCount);
+    m_pReadyToPresentSemaphores.resize(syncObjectCount);
     auto createVkSemaphore = [&](auto& pSemaphore) { pSemaphore = m_pDevice->createVkSemaphore(); };
     ranges::for_each(m_pReadyToWriteSemaphores, createVkSemaphore);
     ranges::for_each(m_pReadyToPresentSemaphores, createVkSemaphore);

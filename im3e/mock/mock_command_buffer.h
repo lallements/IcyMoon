@@ -29,7 +29,7 @@ public:
     MOCK_METHOD(void, setVkWaitSemaphore, (VkSemaphore vkSemaphore), (override));
 
     MOCK_METHOD(VkCommandBuffer, getVkCommandBuffer, (), (const, override));
-    MOCK_METHOD(VkFence, getVkFence, (), (const, override));
+    MOCK_METHOD(VkSharedPtr<VkFence>, getVkFence, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandBuffer>;
 

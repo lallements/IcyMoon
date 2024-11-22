@@ -34,7 +34,7 @@ public:
     virtual void setVkWaitSemaphore(VkSemaphore vkSemaphore) = 0;
 
     virtual auto getVkCommandBuffer() const -> VkCommandBuffer = 0;
-    virtual auto getVkFence() const -> VkFence = 0;
+    virtual auto getVkFence() const -> VkSharedPtr<VkFence> = 0;
 };
 
 enum class CommandExecutionType : uint8_t
