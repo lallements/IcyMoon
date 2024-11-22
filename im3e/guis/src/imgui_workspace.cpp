@@ -64,13 +64,12 @@ void ImguiWorkspace::draw(const ICommandBuffer& rCommandBuffer)
 {
     if (ImguiScope menuBarScope(ImGui::BeginMainMenuBar(), &ImGui::EndMainMenuBar); menuBarScope.isOpen())
     {
-        if (ImguiScope viewScope(ImGui::BeginMenu("View"), &ImGui::EndMenuBar); viewScope.isOpen())
+        if (ImguiScope viewScope(ImGui::BeginMenu("View"), &ImGui::EndMenu); viewScope.isOpen())
         {
             ImGui::SeparatorText("Demos");
             ImGui::MenuItem("ImGui Demo", "Alt+F", &m_imguiDemoVisible);
         }
     }
-
     {
         auto* pViewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(pViewport->Pos);
@@ -78,9 +77,10 @@ void ImguiWorkspace::draw(const ICommandBuffer& rCommandBuffer)
         ImGui::SetNextWindowViewport(pViewport->ID);
 
         ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
-                                       ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
-                                       ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                       ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+                                       ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize |
+                                       ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove |
+                                       ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus |
+                                       ImGuiWindowFlags_NoBackground;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0F);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0F);
