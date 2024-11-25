@@ -60,7 +60,11 @@ public:
 
 struct ImguiPipelineIntegration : public PipelineIntegrationTest
 {
-    auto createImguiPipeline() { return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace); }
+    auto createImguiPipeline()
+    {
+        return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace,
+                                          fmt::format("{}.{}.ini", getSuiteName(), getName()));
+    }
 
     auto expectRgbaPixel(const IHostVisibleImage::IMapping& rMapping, uint32_t x, uint32_t y,
                          array<uint8_t, 4U> expected)
@@ -89,7 +93,7 @@ TEST_F(ImguiPipelineIntegration, emptyWorkspace)
     expectRgbaPixel(*pImageMapping, 137U, 158U, {0U, 0U, 0U, 0U});
     expectRgbaPixel(*pImageMapping, 376U, 253U, {0U, 0U, 0U, 0U});
     expectRgbaPixel(*pImageMapping, 766U, 22U, {62U, 62U, 71U, 255U});
-    expectRgbaPixel(*pImageMapping, 745U, 24U, {56U, 56U, 66U, 64U});
+    expectRgbaPixel(*pImageMapping, 745U, 24U, {88U, 88U, 103U, 160U});
     expectRgbaPixel(*pImageMapping, 589, 5U, {28U, 28U, 28U, 255U});
 }
 
@@ -111,13 +115,13 @@ TEST_F(ImguiPipelineIntegration, withTestPanels)
     runTest(3U);
 
     auto pImageMapping = mapOutputImage();
-    expectRgbaPixel(*pImageMapping, 768U, 160U, {46U, 105U, 175U, 255U});
+    expectRgbaPixel(*pImageMapping, 768U, 160U, {0U, 13U, 28U, 254U});
     expectRgbaPixel(*pImageMapping, 60U, 10U, {28U, 28U, 28U, 255U});
     expectRgbaPixel(*pImageMapping, 379U, 23U, {82U, 82U, 95U, 255U});
     expectRgbaPixel(*pImageMapping, 55U, 238U, {0U, 13U, 28U, 254U});
     expectRgbaPixel(*pImageMapping, 200U, 288U, {79U, 80U, 95U, 255U});
-    expectRgbaPixel(*pImageMapping, 290U, 192U, {208U, 209U, 209U, 255U});
-    expectRgbaPixel(*pImageMapping, 550U, 167U, {0U, 0U, 0U, 255U});
+    expectRgbaPixel(*pImageMapping, 290U, 192U, {28U, 64U, 109U, 255U});
+    expectRgbaPixel(*pImageMapping, 550U, 167U, {0U, 13U, 28U, 254U});
     expectRgbaPixel(*pImageMapping, 531U, 511U, {28U, 64U, 109U, 255U});
     expectRgbaPixel(*pImageMapping, 272U, 595U, {0U, 13U, 28U, 254U});
 }

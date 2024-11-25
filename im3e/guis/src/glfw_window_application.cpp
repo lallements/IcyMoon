@@ -55,8 +55,14 @@ void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
     auto pImguiWorkspace = dynamic_pointer_cast<ImguiWorkspace>(pWorkspace);
     throwIfArgNull(pImguiWorkspace, "Cannot create window: GLFW only supports ImGui workspaces at the moment");
 
+    const auto iniFilename = fmt::format("{}.ini", m_config.name);
     const auto windowName = fmt::format("{} - Window #{}", m_config.name, m_pWindows.size());
-    m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice, windowName, move(pImguiWorkspace)));
+    m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice,
+                                                    GlfwWindow::Config{
+                                                        .name = windowName,
+                                                        .iniFilename = iniFilename,
+                                                    },
+                                                    move(pImguiWorkspace)));
 }
 
 void GlfwWindowApplication::run()

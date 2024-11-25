@@ -19,7 +19,7 @@ class ImguiPipeline : public IFramePipeline
 {
 public:
     ImguiPipeline(std::shared_ptr<const IDevice> pDevice, GLFWwindow* pGlfwWindow,
-                  std::shared_ptr<ImguiWorkspace> pWorkspace);
+                  std::shared_ptr<ImguiWorkspace> pWorkspace, std::optional<std::string> iniFilename = {});
     ~ImguiPipeline() override;
 
     void prepareExecution(ICommandBuffer& rCommandBuffer, std::shared_ptr<IImage> pOutputImage) override;
@@ -31,6 +31,7 @@ private:
     std::unique_ptr<ILogger> m_pLogger;
     GLFWwindow* m_pGlfwWindow;
     std::shared_ptr<ImguiWorkspace> m_pWorkspace;
+    std::optional<std::string> m_iniFilename;
 
     std::unique_ptr<ImguiContext> m_pContext;
     std::shared_ptr<IImage> m_pFrame;

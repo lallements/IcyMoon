@@ -19,7 +19,12 @@ struct GlfwWindowCallbacks
 class GlfwWindow : public IWindow
 {
 public:
-    GlfwWindow(std::shared_ptr<IDevice> pDevice, std::string_view name, std::shared_ptr<ImguiWorkspace> pWorkspace);
+    struct Config
+    {
+        std::string name;
+        std::optional<std::string> iniFilename{"imgui.ini"};
+    };
+    GlfwWindow(std::shared_ptr<IDevice> pDevice, Config config, std::shared_ptr<ImguiWorkspace> pWorkspace);
 
     void draw();
 
@@ -31,7 +36,7 @@ private:
     void _onWindowIconify(bool iconified);
 
     std::shared_ptr<IDevice> m_pDevice;
-    const std::string m_name;
+    const Config m_config;
     std::shared_ptr<ImguiWorkspace> m_pWorkspace;
     std::unique_ptr<ILogger> m_pLogger;
 

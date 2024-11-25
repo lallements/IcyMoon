@@ -4,11 +4,11 @@
 using namespace im3e;
 using namespace std;
 
-int main()
+int main([[maybe_unused]] int argc, char* argv[])
 {
     auto pLogger = createTerminalLogger();
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
-                                                          .name = "GLFW App",
+                                                          .name = argv[0],
                                                           .isDebugEnabled = true,
                                                       });
 

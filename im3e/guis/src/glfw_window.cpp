@@ -62,21 +62,22 @@ auto createVkSurface(const IDevice& rDevice, GLFWwindow* pWindow)
 
 }  // namespace
 
-GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, string_view name, shared_ptr<ImguiWorkspace> pWorkspace)
+GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, Config config, shared_ptr<ImguiWorkspace> pWorkspace)
   : m_pDevice(throwIfArgNull(move(pDevice), "Glfw window requires a device"))
-  , m_name(name)
+  , m_config(move(config))
   , m_pWorkspace(throwIfArgNull(move(pWorkspace), "Glfw window requires a workspace"))
-  , m_pLogger(m_pDevice->createLogger(m_name))
+  , m_pLogger(m_pDevice->createLogger(m_config.name))
   , m_pCallbacks([&] {
       auto pCallbacks = make_unique<GlfwWindowCallbacks>();
       pCallbacks->onWindowResized = [this](auto w, auto h) { this->_onWindowResized(w, h); };
       pCallbacks->onWindowIconify = [this](bool i) { this->_onWindowIconify(i); };
       return pCallbacks;
   }())
-  , m_pWindow(createWindow(*m_pLogger, m_name, m_pCallbacks.get()))
+  , m_pWindow(createWindow(*m_pLogger, m_config.name, m_pCallbacks.get()))
   , m_pVkSurface(createVkSurface(*m_pDevice, m_pWindow.get()))
-  , m_pPresenter(make_unique<Presenter>(m_pDevice, m_pVkSurface.get(),
-                                        make_unique<ImguiPipeline>(m_pDevice, m_pWindow.get(), m_pWorkspace)))
+  , m_pPresenter(make_unique<Presenter>(
+        m_pDevice, m_pVkSurface.get(),
+        make_unique<ImguiPipeline>(m_pDevice, m_pWindow.get(), m_pWorkspace, m_config.iniFilename)))
 {
 }
 
