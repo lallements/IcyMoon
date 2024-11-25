@@ -79,6 +79,7 @@ public:
                 (VkDevice device, uint32_t queueFamilyIndex, uint32_t queueIndex, VkQueue* pQueue));
     MOCK_METHOD(VkResult, vkQueueSubmit,
                 (VkQueue queue, uint32_t submitCount, const VkSubmitInfo* pSubmits, VkFence fence));
+    MOCK_METHOD(VkResult, vkQueueWaitIdle, (VkQueue queue));
     MOCK_METHOD(void, vkGetImageSubresourceLayout,
                 (VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout));
 

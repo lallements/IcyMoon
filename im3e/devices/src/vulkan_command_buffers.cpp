@@ -146,7 +146,7 @@ public:
             .signalSemaphoreCount = m_vkSignalSemaphore ? 1U : 0U,
             .pSignalSemaphores = m_vkSignalSemaphore ? &m_vkSignalSemaphore : nullptr,
         };
-        const VkPipelineStageFlags vkWaitDstMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        const VkPipelineStageFlags vkWaitDstMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
         if (m_vkWaitSemaphore)
         {
             vkSubmitInfo.waitSemaphoreCount = 1U;
@@ -241,19 +241,7 @@ public:
     auto startScopedCommand(string_view name, CommandExecutionType executionType)
         -> UniquePtrWithDeleter<ICommandBuffer> override
     {
-        // Release any in-flight buffer whose execution is complete:
-        auto itInFlight = m_pInFlight.begin();
-        while (itInFlight != m_pInFlight.end())
-        {
-            if (!(*itInFlight)->isExecutionComplete())
-            {
-                itInFlight++;
-                continue;
-            }
-            (*itInFlight)->reset();
-            m_pAvailable.emplace_back((*itInFlight));
-            itInFlight = m_pInFlight.erase(itInFlight);
-        }
+        this->_releaseCompletedCommands();
 
         // If no buffer is available, create a new one:
         VulkanCommandBuffer* pCommandBuffer{};
@@ -285,10 +273,33 @@ public:
             });
     }
 
+    void waitIdle() override
+    {
+        m_rDevice.getFcts().vkQueueWaitIdle(m_queueInfo.vkQueue);
+        this->_releaseCompletedCommands();
+    }
+
     auto getQueueFamilyIndex() const -> uint32_t override { return m_queueInfo.queueFamilyIndex; }
     auto getVkQueue() const -> VkQueue override { return m_queueInfo.vkQueue; }
 
 private:
+    void _releaseCompletedCommands()
+    {
+        // Release any in-flight buffer whose execution is complete:
+        auto itInFlight = m_pInFlight.begin();
+        while (itInFlight != m_pInFlight.end())
+        {
+            if (!(*itInFlight)->isExecutionComplete())
+            {
+                itInFlight++;
+                continue;
+            }
+            (*itInFlight)->reset();
+            m_pAvailable.emplace_back((*itInFlight));
+            itInFlight = m_pInFlight.erase(itInFlight);
+        }
+    }
+
     const IDevice& m_rDevice;
     const VulkanCommandQueueInfo m_queueInfo;
     const string m_name;

@@ -60,6 +60,11 @@ public:
     virtual auto startScopedCommand(std::string_view name, CommandExecutionType executionType)
         -> UniquePtrWithDeleter<ICommandBuffer> = 0;
 
+    /// @brief Wait for the queue to be idle.
+    /// This is a blocking function that will wait for all commands currently in the queue to be executed before
+    /// returning.
+    virtual void waitIdle() = 0;
+
     virtual auto getQueueFamilyIndex() const -> uint32_t = 0;
     virtual auto getVkQueue() const -> VkQueue = 0;
 };

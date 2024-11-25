@@ -124,12 +124,13 @@ auto getSwapchainImages(const IDevice& rDevice, VkSwapchainKHR vkSwapchain,
     vector<shared_ptr<IImage>> pImages;
     pImages.reserve(vkImages.size());
     ranges::transform(vkImages, back_inserter(pImages), [&, n = 0](auto& rVkImage) mutable {
-        return pImageFactory->createProxyImage(rVkImage, ImageConfig{
-                                                             .name = fmt::format("SwapchainImage{}", n++),
-                                                             .vkExtent = rVkCreateInfo.imageExtent,
-                                                             .vkFormat = rVkCreateInfo.imageFormat,
-                                                             .vkUsage = rVkCreateInfo.imageUsage,
-                                                         });
+        auto pImage = pImageFactory->createProxyImage(rVkImage, ImageConfig{
+                                                                    .name = fmt::format("SwapchainImage{}", n++),
+                                                                    .vkExtent = rVkCreateInfo.imageExtent,
+                                                                    .vkFormat = rVkCreateInfo.imageFormat,
+                                                                    .vkUsage = rVkCreateInfo.imageUsage,
+                                                                });
+        return pImage;
     });
     return pImages;
 }
@@ -159,13 +160,18 @@ Presenter::Presenter(shared_ptr<IDevice> pDevice, VkSurfaceKHR vkSurface, unique
     this->reset();
 }
 
-Presenter::~Presenter() = default;
+Presenter::~Presenter()
+{
+    // Wait for the queue to be idle as there might still be some pending vkQueuePresentKHR commands.
+    m_pDevice->getCommandQueue()->waitIdle();
+}
 
 void Presenter::present()
 {
     if (m_isOutOfDate)
     {
         m_pLogger->info("Swapchain currently out of date, a reset is needed");
+        return;
     }
 
     const auto& rFcts = m_pDevice->getFcts();
@@ -238,6 +244,11 @@ void Presenter::reset()
         }
     });
     m_pImageVkFences.clear();
+
+    // Wait for the queue to be idle as there might still be images being presented via vkQueuePresentKHR and we
+    // cannot have a fence for these calls:
+    m_pDevice->getCommandQueue()->waitIdle();
+
     m_pVkSwapchain.reset();
 
     const auto vkCreateInfo = createVkSwapchainCreateInfo(*m_pLogger, *m_pDevice, m_vkSurface);

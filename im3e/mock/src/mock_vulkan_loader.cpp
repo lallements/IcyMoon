@@ -192,6 +192,10 @@ MockVulkanLoader::MockVulkanLoader()
                 assertMockExists();
                 return g_pMock->getMockDeviceFcts().vkQueueSubmit(queue, submitCount, pSubmits, fence);
             },
+        .vkQueueWaitIdle = [](VkQueue queue) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkQueueWaitIdle(queue);
+        },
         .vkGetImageSubresourceLayout =
             [](VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout) {
                 assertMockExists();

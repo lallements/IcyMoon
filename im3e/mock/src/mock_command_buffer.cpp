@@ -90,6 +90,8 @@ public:
         return m_rMock.startScopedCommand(name, executionType);
     }
 
+    void waitIdle() override { m_rMock.waitIdle(); }
+
     auto getQueueFamilyIndex() const -> uint32_t override { return m_rMock.getQueueFamilyIndex(); }
     auto getVkQueue() const -> VkQueue override { return m_rMock.getVkQueue(); }
 

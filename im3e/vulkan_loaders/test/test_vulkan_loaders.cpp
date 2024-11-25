@@ -181,6 +181,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkDeviceWaitIdle");
     expectDeviceFctLoaded(vkDevice, "vkGetDeviceQueue");
     expectDeviceFctLoaded(vkDevice, "vkQueueSubmit");
+    expectDeviceFctLoaded(vkDevice, "vkQueueWaitIdle");
     expectDeviceFctLoaded(vkDevice, "vkGetImageSubresourceLayout");
 
     expectDeviceFctLoaded(vkDevice, "vkCreateCommandPool");
@@ -225,6 +226,7 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkDeviceWaitIdle, NotNull());
     EXPECT_THAT(deviceFcts.vkGetDeviceQueue, NotNull());
     EXPECT_THAT(deviceFcts.vkQueueSubmit, NotNull());
+    EXPECT_THAT(deviceFcts.vkQueueWaitIdle, NotNull());
     EXPECT_THAT(deviceFcts.vkGetImageSubresourceLayout, NotNull());
 
     EXPECT_THAT(deviceFcts.vkCreateCommandPool, NotNull());

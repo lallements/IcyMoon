@@ -75,6 +75,7 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkDeviceWaitIdle),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
         LOAD_DEVICE_FCT(vkQueueSubmit),
+        LOAD_DEVICE_FCT(vkQueueWaitIdle),
         LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
 
         LOAD_DEVICE_FCT(vkCreateCommandPool),
