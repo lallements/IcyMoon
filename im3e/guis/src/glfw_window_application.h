@@ -29,7 +29,8 @@ public:
 
     void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) override;
 
-    void run() override;
+    void run(std::function<void()> loopIterationFct) override;
+    void stop() override;
 
     auto getDevice() -> std::shared_ptr<IDevice> override { return m_pDevice; }
     auto getDevice() const -> std::shared_ptr<const IDevice> override { return m_pDevice; }

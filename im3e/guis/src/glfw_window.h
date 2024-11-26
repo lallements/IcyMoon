@@ -16,7 +16,7 @@ struct GlfwWindowCallbacks
     std::function<void(bool iconified)> onWindowIconify;
 };
 
-class GlfwWindow : public IWindow
+class GlfwWindow
 {
 public:
     struct Config

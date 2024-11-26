@@ -2,6 +2,7 @@ im3e_add_integration_tests_executable(
   TARGET
     integration_im3e_guis
   SOURCES
+    integration_glfw_window_application.cpp
     integration_imgui_pipeline.cpp
     integration_imgui_vulkan_backend.cpp
 )

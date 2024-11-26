@@ -65,10 +65,15 @@ void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
                                                     move(pImguiWorkspace)));
 }
 
-void GlfwWindowApplication::run()
+void GlfwWindowApplication::run(function<void()> loopIterationFct)
 {
     while (!m_pWindows.empty())
     {
+        if (loopIterationFct)
+        {
+            loopIterationFct();
+        }
+
         auto itWindow = m_pWindows.begin();
         while (itWindow != m_pWindows.end())
         {
@@ -91,6 +96,11 @@ void GlfwWindowApplication::run()
             glfwWaitEvents();
         }
     }
+}
+
+void GlfwWindowApplication::stop()
+{
+    m_pWindows.clear();
 }
 
 auto im3e::createGlfwWindowApplication(const ILogger& rLogger, WindowApplicationConfig config)
