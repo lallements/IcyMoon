@@ -8,6 +8,14 @@
 
 namespace im3e {
 
+class ICommandBufferFuture
+{
+public:
+    virtual ~ICommandBufferFuture() = default;
+
+    virtual void waitForCompletion() = 0;
+};
+
 struct ImageBarrierConfig
 {
     VkPipelineStageFlags2 vkDstStageMask = VK_PIPELINE_STAGE_2_NONE;
@@ -29,12 +37,12 @@ public:
     virtual ~ICommandBuffer() = default;
 
     virtual auto startScopedBarrier(std::string_view name) const -> std::unique_ptr<ICommandBarrierRecorder> = 0;
+    virtual auto createFuture() -> std::shared_ptr<ICommandBufferFuture> = 0;
 
     virtual void setVkSignalSemaphore(VkSemaphore vkSemaphore) = 0;
     virtual void setVkWaitSemaphore(VkSemaphore vkSemaphore) = 0;
 
     virtual auto getVkCommandBuffer() const -> VkCommandBuffer = 0;
-    virtual auto getVkFence() const -> VkSharedPtr<VkFence> = 0;
 };
 
 enum class CommandExecutionType : uint8_t

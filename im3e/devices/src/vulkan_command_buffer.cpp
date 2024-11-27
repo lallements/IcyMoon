@@ -1,0 +1,241 @@
+#include "vulkan_command_buffer.h"
+
+#include <algorithm>
+
+using namespace im3e;
+using namespace std;
+
+namespace im3e {
+
+class VulkanCommandBufferFuture : public ICommandBufferFuture
+{
+public:
+    VulkanCommandBufferFuture(weak_ptr<VulkanCommandBuffer> pCommandBuffer)
+      : m_pCommandBuffer(pCommandBuffer)
+    {
+    }
+
+    void waitForCompletion() override
+    {
+        auto pCommandBuffer = m_pCommandBuffer.lock();
+        if (m_isComplete || !pCommandBuffer)
+        {
+            m_isComplete = true;
+            return;
+        }
+        pCommandBuffer->waitForCompletion();
+        m_isComplete = true;
+    }
+
+    void markAsComplete() { m_isComplete = true; }
+
+private:
+    weak_ptr<VulkanCommandBuffer> m_pCommandBuffer;
+    bool m_isComplete = true;
+};
+
+}  // namespace im3e
+
+namespace {
+
+class VulkanCommandBarrierRecorder : public ICommandBarrierRecorder
+{
+public:
+    VulkanCommandBarrierRecorder(string_view name, shared_ptr<const ICommandBuffer> pCommandBuffer,
+                                 const VulkanDeviceFcts& rFcts)
+      : m_name(name)
+      , m_pCommandBuffer(throwIfArgNull(move(pCommandBuffer),
+                                        "Cannot create Vulkan command barrier recorder without a command buffer"))
+      , m_rFcts(rFcts)
+    {
+    }
+
+    ~VulkanCommandBarrierRecorder() override
+    {
+        if (m_vkImageBarriers.empty())
+        {
+            return;
+        }
+
+        VkDependencyInfo vkInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT,
+            .imageMemoryBarrierCount = static_cast<uint32_t>(m_vkImageBarriers.size()),
+            .pImageMemoryBarriers = m_vkImageBarriers.data(),
+        };
+        m_rFcts.vkCmdPipelineBarrier2(m_pCommandBuffer->getVkCommandBuffer(), &vkInfo);
+    }
+
+    void addImageBarrier(IImage& rImage, ImageBarrierConfig config) override
+    {
+        auto pMetadata = rImage.getMetadata();
+
+        m_vkImageBarriers.emplace_back(VkImageMemoryBarrier2{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = pMetadata->getLastStageMask(),
+            .srcAccessMask = pMetadata->getLastAccessMask(),
+            .dstStageMask = config.vkDstStageMask,
+            .dstAccessMask = config.vkDstAccessMask,
+            .oldLayout = pMetadata->getLayout(),
+            .newLayout = config.vkLayout.has_value() ? config.vkLayout.value() : pMetadata->getLayout(),
+            .srcQueueFamilyIndex = pMetadata->getQueueFamilyIndex(),
+            .dstQueueFamilyIndex = pMetadata->getQueueFamilyIndex(),
+            .image = rImage.getVkImage(),
+            .subresourceRange{
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .levelCount = 1U,
+                .layerCount = 1U,
+            },
+        });
+
+        if (config.vkLayout.has_value())
+        {
+            pMetadata->setLayout(config.vkLayout.value());
+        }
+        pMetadata->setLastStageMask(config.vkDstStageMask);
+        pMetadata->setLastAccessMask(config.vkDstAccessMask);
+    }
+
+private:
+    const string m_name;
+    shared_ptr<const ICommandBuffer> m_pCommandBuffer;
+    const VulkanDeviceFcts& m_rFcts;
+    vector<VkImageMemoryBarrier2> m_vkImageBarriers;
+};
+
+auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkCommandPool vkCommandPool)
+{
+    VkCommandBufferAllocateInfo vkAllocateInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = vkCommandPool,
+        .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1U,
+    };
+
+    VkCommandBuffer vkCommandBuffer{};
+    throwIfVkFailed(rFcts.vkAllocateCommandBuffers(vkDevice, &vkAllocateInfo, &vkCommandBuffer),
+                    "Failed to allocate command for command queue pool");
+
+    return VkUniquePtr<VkCommandBuffer>(vkCommandBuffer, [vkDevice, vkCommandPool, pFcts = &rFcts](auto* vkCmdBuffer) {
+        pFcts->vkFreeCommandBuffers(vkDevice, vkCommandPool, 1U, &vkCmdBuffer);
+    });
+}
+
+}  // namespace
+
+VulkanCommandBuffer::VulkanCommandBuffer(const ICommandQueue& rQueue, const IDevice& rDevice,
+                                         VkCommandPool vkCommandPool, string_view name)
+  : m_rQueue(rQueue)
+  , m_rDevice(rDevice)
+  , m_pLogger(m_rDevice.createLogger(name))
+  , m_name(name)
+  , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
+  , m_pVkFence(m_rDevice.createVkFence())
+{
+}
+
+VulkanCommandBuffer::~VulkanCommandBuffer()
+{
+    if (!this->isExecutionComplete())
+    {
+        this->waitForCompletion();
+        this->reset();
+    }
+}
+
+auto VulkanCommandBuffer::startScopedBarrier(string_view name) const -> unique_ptr<ICommandBarrierRecorder>
+{
+    return make_unique<VulkanCommandBarrierRecorder>(name, this->shared_from_this(), m_rDevice.getFcts());
+}
+
+auto VulkanCommandBuffer::createFuture() -> shared_ptr<ICommandBufferFuture>
+{
+    auto pFuture = make_shared<VulkanCommandBufferFuture>(this->shared_from_this());
+    m_pFutures.emplace_back(pFuture);
+    return pFuture;
+}
+
+void VulkanCommandBuffer::reset()
+{
+    throwIfVkFailed(m_rDevice.getFcts().vkResetCommandBuffer(m_pVkCommandBuffer.get(), 0U),
+                    "Failed to reset command buffer");
+
+    ranges::for_each(m_pFutures, [](auto& pFuture) { pFuture->markAsComplete(); });
+
+    const auto vkFence = m_pVkFence.get();
+    throwIfVkFailed(m_rDevice.getFcts().vkResetFences(m_rDevice.getVkDevice(), 1U, &vkFence),
+                    "Failed to reset command buffer fence");
+
+    m_vkSignalSemaphore = {};
+    m_vkWaitSemaphore = {};
+    m_pFutures.clear();
+}
+
+void VulkanCommandBuffer::beginRecording(string_view)
+{
+    VkCommandBufferBeginInfo vkBeginInfo{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    throwIfVkFailed(m_rDevice.getFcts().vkBeginCommandBuffer(m_pVkCommandBuffer.get(), &vkBeginInfo),
+                    "Could not begin command buffer recording");
+}
+
+void VulkanCommandBuffer::endRecording()
+{
+    throwIfVkFailed(m_rDevice.getFcts().vkEndCommandBuffer(m_pVkCommandBuffer.get()),
+                    "Failed to end command buffer recording");
+}
+
+void VulkanCommandBuffer::submitToQueue(CommandExecutionType executionType)
+{
+    const auto vkCommandBuffer = m_pVkCommandBuffer.get();
+    VkSubmitInfo vkSubmitInfo{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1U,
+        .pCommandBuffers = &vkCommandBuffer,
+        .signalSemaphoreCount = m_vkSignalSemaphore ? 1U : 0U,
+        .pSignalSemaphores = m_vkSignalSemaphore ? &m_vkSignalSemaphore : nullptr,
+    };
+    const VkPipelineStageFlags vkWaitDstMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    if (m_vkWaitSemaphore)
+    {
+        vkSubmitInfo.waitSemaphoreCount = 1U;
+        vkSubmitInfo.pWaitSemaphores = &m_vkWaitSemaphore;
+        vkSubmitInfo.pWaitDstStageMask = &vkWaitDstMask;
+    }
+    throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
+                    "Failed to execute command buffer");
+
+    if (executionType == CommandExecutionType::Sync)
+    {
+        this->waitForCompletion();
+        this->reset();
+    }
+}
+
+void VulkanCommandBuffer::waitForCompletion() const
+{
+    const auto vkFence = m_pVkFence.get();
+    logIfVkFailed(m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE,
+                                                      numeric_limits<uint64_t>::max()),
+                  *m_pLogger, "Failed to wait for fence while destroying command buffer");
+
+    ranges::for_each(m_pFutures, [](auto& pFuture) { pFuture->markAsComplete(); });
+}
+
+auto VulkanCommandBuffer::isExecutionComplete() const -> bool
+{
+    const auto vkFence = m_pVkFence.get();
+    const auto vkResult = m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE, 0U);
+    if (vkResult == VK_SUCCESS)
+    {
+        return true;
+    }
+    else if (vkResult == VK_TIMEOUT)
+    {
+        return false;
+    }
+    throwIfVkFailed(vkResult, "Failed to query state of command buffer fence");
+    return false;
+}

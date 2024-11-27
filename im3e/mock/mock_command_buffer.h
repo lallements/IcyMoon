@@ -5,6 +5,17 @@
 
 namespace im3e {
 
+class MockCommandBufferFuture : public ICommandBufferFuture
+{
+public:
+    MockCommandBufferFuture();
+    ~MockCommandBufferFuture() override;
+
+    MOCK_METHOD(void, waitForCompletion, (), (override));
+
+    auto createMockProxy() -> std::unique_ptr<ICommandBufferFuture>;
+};
+
 class MockCommandBarrierRecorder : public ICommandBarrierRecorder
 {
 public:
@@ -24,20 +35,22 @@ public:
 
     MOCK_METHOD(std::unique_ptr<ICommandBarrierRecorder>, startScopedBarrier, (std::string_view name),
                 (const, override));
+    MOCK_METHOD(std::shared_ptr<ICommandBufferFuture>, createFuture, (), (override));
 
     MOCK_METHOD(void, setVkSignalSemaphore, (VkSemaphore vkSemaphore), (override));
     MOCK_METHOD(void, setVkWaitSemaphore, (VkSemaphore vkSemaphore), (override));
 
     MOCK_METHOD(VkCommandBuffer, getVkCommandBuffer, (), (const, override));
-    MOCK_METHOD(VkSharedPtr<VkFence>, getVkFence, (), (const, override));
 
     auto createMockProxy() -> std::unique_ptr<ICommandBuffer>;
 
     auto getMockVkCommandBuffer() const -> VkCommandBuffer { return m_vkCommandBuffer; }
+    auto getMockFuture() -> MockCommandBufferFuture& { return m_mockFuture; }
     auto getMockBarrierRecorder() -> MockCommandBarrierRecorder& { return m_mockBarrierRecorder; }
 
 private:
     VkCommandBuffer m_vkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0x4f3eda3eb29);
+    NiceMock<MockCommandBufferFuture> m_mockFuture;
     NiceMock<MockCommandBarrierRecorder> m_mockBarrierRecorder;
 };
 

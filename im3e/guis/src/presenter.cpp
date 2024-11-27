@@ -202,16 +202,10 @@ void Presenter::present()
             throwIfVkFailed(vkResult, "Failed to acquire next swapchain image for presenter");
         }
     }
-    if (auto& pImageVkFence = m_pImageVkFences[imageIndex])
-    {
-        m_pDevice->waitForVkFence(pImageVkFence.get());
-        pImageVkFence.reset();
-    }
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
         pCommandBuffer->setVkWaitSemaphore(vkReadyToWriteSemaphore);
         pCommandBuffer->setVkSignalSemaphore(vkReadyToPresentSemaphore);
-        m_pImageVkFences[imageIndex] = pCommandBuffer->getVkFence();
 
         m_pFramePipeline->prepareExecution(*pCommandBuffer, m_pImages[imageIndex]);
         {
@@ -237,14 +231,6 @@ void Presenter::present()
 
 void Presenter::reset()
 {
-    ranges::for_each(m_pImageVkFences, [this](auto& pVkFence) {
-        if (pVkFence)
-        {
-            m_pDevice->waitForVkFence(pVkFence.get());
-        }
-    });
-    m_pImageVkFences.clear();
-
     // Wait for the queue to be idle as there might still be images being presented via vkQueuePresentKHR and we
     // cannot have a fence for these calls:
     m_pDevice->getCommandQueue()->waitIdle();
@@ -255,7 +241,6 @@ void Presenter::reset()
     m_pVkSwapchain = createVkSwapchain(*m_pDevice, vkCreateInfo);
     m_vkExtent = vkCreateInfo.imageExtent;
     m_pImages = getSwapchainImages(*m_pDevice, m_pVkSwapchain.get(), vkCreateInfo);
-    m_pImageVkFences.resize(m_pImages.size());
 
     // We add 1 one more set of sync objects than the total image count because we may try to acquire the next image
     // while all images have been queued. In this case, all sync object sets would also be used if we didn't have an

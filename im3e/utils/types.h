@@ -17,6 +17,9 @@ template <typename T>
 using VkSharedPtr = std::shared_ptr<typename std::remove_pointer<T>::type>;
 
 template <typename T>
+using VkWeakPtr = std::weak_ptr<typename std::remove_pointer<T>::type>;
+
+template <typename T>
 auto makeVkUniquePtr(VkDevice vkDevice, T pValue,
                      std::function<void(VkDevice, T, const VkAllocationCallbacks*)> destructor)
 {

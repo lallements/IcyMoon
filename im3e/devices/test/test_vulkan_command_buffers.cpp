@@ -1,4 +1,4 @@
-#include "src/vulkan_command_buffers.h"
+#include "src/vulkan_command_queue.h"
 
 #include <im3e/mock/mock_device.h>
 #include <im3e/mock/mock_image.h>
@@ -125,7 +125,6 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSync)
     expectBeginCommand(mockVkCommandBuffer);
     auto pCommandBuffer = pCommandQueue->startScopedCommand("testCommand", CommandExecutionType::Sync);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
-    EXPECT_THAT(pCommandBuffer->getVkFence().get(), Eq(mockVkFence));
     {
         InSequence s;
         expectEndCommand(mockVkCommandBuffer);
