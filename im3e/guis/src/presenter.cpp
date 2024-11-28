@@ -202,6 +202,11 @@ void Presenter::present()
             throwIfVkFailed(vkResult, "Failed to acquire next swapchain image for presenter");
         }
     }
+    if (m_pImageFutures[imageIndex])
+    {
+        m_pImageFutures[imageIndex]->waitForCompletion();
+        m_pImageFutures[imageIndex].reset();
+    }
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
         pCommandBuffer->setVkWaitSemaphore(vkReadyToWriteSemaphore);
@@ -214,6 +219,8 @@ void Presenter::present()
                                                                   .vkLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                                                               });
         }
+
+        m_pImageFutures[imageIndex] = pCommandBuffer->createFuture();
     }
     const auto vkSwapchain = m_pVkSwapchain.get();
     const auto vkPresentInfo = makeVkPresentInfo(&vkSwapchain, &imageIndex, &vkReadyToPresentSemaphore);
@@ -231,6 +238,15 @@ void Presenter::present()
 
 void Presenter::reset()
 {
+    // Wait for any future we have left to make sure our swapchain images have all been processed:
+    ranges::for_each(m_pImageFutures, [](auto& pFuture) {
+        if (pFuture)
+        {
+            pFuture->waitForCompletion();
+        }
+    });
+    m_pImageFutures.clear();
+
     // Wait for the queue to be idle as there might still be images being presented via vkQueuePresentKHR and we
     // cannot have a fence for these calls:
     m_pDevice->getCommandQueue()->waitIdle();
@@ -241,6 +257,7 @@ void Presenter::reset()
     m_pVkSwapchain = createVkSwapchain(*m_pDevice, vkCreateInfo);
     m_vkExtent = vkCreateInfo.imageExtent;
     m_pImages = getSwapchainImages(*m_pDevice, m_pVkSwapchain.get(), vkCreateInfo);
+    m_pImageFutures.resize(m_pImages.size());
 
     // We add 1 one more set of sync objects than the total image count because we may try to acquire the next image
     // while all images have been queued. In this case, all sync object sets would also be used if we didn't have an

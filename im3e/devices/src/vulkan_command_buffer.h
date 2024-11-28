@@ -30,7 +30,7 @@ public:
     void endRecording();
 
     void submitToQueue(CommandExecutionType executionType);
-    void waitForCompletion() const;
+    void waitForCompletion();
     auto isExecutionComplete() const -> bool;
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_pVkCommandBuffer.get(); }
@@ -44,6 +44,7 @@ private:
     VkUniquePtr<VkCommandBuffer> m_pVkCommandBuffer;
     VkUniquePtr<VkSemaphore> m_pVkSignalSemaphore;
     VkSharedPtr<VkFence> m_pVkFence;
+    bool m_inFlight = false;
 
     VkSemaphore m_vkSignalSemaphore{};
     VkSemaphore m_vkWaitSemaphore{};

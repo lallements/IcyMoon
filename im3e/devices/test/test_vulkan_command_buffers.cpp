@@ -52,6 +52,8 @@ struct VulkanCommandBuffersTest : public Test
 
     void expectQueueSubmit(VkCommandBuffer vkCommandBuffer, VkFence vkFence, VkSemaphore vkSignalSemaphore = nullptr)
     {
+        InSequence s;
+        EXPECT_CALL(m_rMockFcts, vkResetFences(m_mockVkDevice, 1U, Pointee(vkFence)));
         EXPECT_CALL(m_rMockFcts, vkQueueSubmit(m_mockVkQueue, 1U, NotNull(), vkFence))
             .WillOnce(Invoke([vkCommandBuffer, vkSignalSemaphore](Unused, Unused, auto* pVkSubmitInfo, Unused) {
                 EXPECT_THAT(pVkSubmitInfo->sType, Eq(VK_STRUCTURE_TYPE_SUBMIT_INFO));
@@ -73,15 +75,14 @@ struct VulkanCommandBuffersTest : public Test
 
     void expectFenceCreated(VkFence vkFence)
     {
-        EXPECT_CALL(m_mockDevice, createVkFence(0U)).WillOnce(Invoke([this, vkFence](Unused) {
+        EXPECT_CALL(m_mockDevice, createVkFence(VK_FENCE_CREATE_SIGNALED_BIT)).WillOnce(Invoke([this, vkFence](Unused) {
             return VkUniquePtr<VkFence>(vkFence, [](auto*) {});
         }));
     }
 
-    void expectCommandAndFenceReset(VkCommandBuffer vkCommandBuffer, VkFence vkFence)
+    void expectCommandReset(VkCommandBuffer vkCommandBuffer)
     {
         EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(vkCommandBuffer, 0U));
-        EXPECT_CALL(m_rMockFcts, vkResetFences(m_mockVkDevice, 1U, Pointee(vkFence)));
     }
 
     enum class WaitForFenceType
@@ -158,7 +159,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSyncReusesBuffers)
     }
 
     EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(_, _, _)).Times(0);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("command 2", CommandExecutionType::Sync);
         EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
@@ -205,13 +206,13 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandRecyclesAsyncCommandIfComplet
 
     // The previous command is still running, the queue should then check if it is now complete and reuse if so:
     expectWaitForFence(mockVkFence, WaitForFenceType::NoWait, VK_SUCCESS);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(_, _, _)).Times(0);
     pCommandBuffer = pCommandQueue->startScopedCommand("command2", CommandExecutionType::Sync);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
 
     expectWaitForFence(mockVkFence, WaitForFenceType::InfiniteWait);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     pCommandBuffer.reset();
 }
 
@@ -224,6 +225,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
     expectCommandBufferAllocated(mockVkCommandBuffer1);
     expectFenceCreated(mockVkFence1);
     auto pCommandBuffer = pCommandQueue->startScopedCommand("cmd1", CommandExecutionType::Async);
+    expectQueueSubmit(mockVkCommandBuffer1, mockVkFence1);
     pCommandBuffer.reset();
 
     // When the queue checks our first command's state, we return timeout to let it know it is still in progress:
@@ -231,7 +233,6 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
 
     // As a result, the command should be left alone:
     EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(_, _)).Times(0);
-    EXPECT_CALL(m_rMockFcts, vkResetFences(_, _, _)).Times(0);
 
     // And a new command should be allocated instead:
     const auto mockVkCommandBuffer2 = reinterpret_cast<VkCommandBuffer>(0xc46e2a8);
@@ -240,10 +241,15 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
     expectFenceCreated(mockVkFence2);
     pCommandBuffer = pCommandQueue->startScopedCommand("cmd2", CommandExecutionType::Async);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer2));
+    expectQueueSubmit(mockVkCommandBuffer2, mockVkFence2);
+    pCommandBuffer.reset();
 
     // The two commands are then waited for completion when the queue is deleted:
     expectWaitForFence(mockVkFence1, WaitForFenceType::InfiniteWait);
     expectWaitForFence(mockVkFence2, WaitForFenceType::InfiniteWait);
+
+    // We expect the commands to be reset once complete on queue deletion:
+    EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(_, _)).Times(2);
 }
 
 TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithNoBarrier)

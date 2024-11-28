@@ -130,16 +130,16 @@ VulkanCommandBuffer::VulkanCommandBuffer(const ICommandQueue& rQueue, const IDev
   , m_pLogger(m_rDevice.createLogger(name))
   , m_name(name)
   , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
-  , m_pVkFence(m_rDevice.createVkFence())
+  // Create the fence signalled so that we consider the command as complete until we actually submit work to the queue
+  , m_pVkFence(m_rDevice.createVkFence(VK_FENCE_CREATE_SIGNALED_BIT))
 {
 }
 
 VulkanCommandBuffer::~VulkanCommandBuffer()
 {
-    if (!this->isExecutionComplete())
+    if (m_inFlight)
     {
-        this->waitForCompletion();
-        this->reset();
+        waitForCompletion();
     }
 }
 
@@ -160,11 +160,11 @@ void VulkanCommandBuffer::reset()
     throwIfVkFailed(m_rDevice.getFcts().vkResetCommandBuffer(m_pVkCommandBuffer.get(), 0U),
                     "Failed to reset command buffer");
 
+    m_inFlight = false;
     ranges::for_each(m_pFutures, [](auto& pFuture) { pFuture->markAsComplete(); });
 
-    const auto vkFence = m_pVkFence.get();
-    throwIfVkFailed(m_rDevice.getFcts().vkResetFences(m_rDevice.getVkDevice(), 1U, &vkFence),
-                    "Failed to reset command buffer fence");
+    // Note: we do not reset the fence here is that it remains marked as complete until we actually submit something
+    // new to the queue. Otherwise, we risk waiting for the fence while nothing is executing.
 
     m_vkSignalSemaphore = {};
     m_vkWaitSemaphore = {};
@@ -189,6 +189,13 @@ void VulkanCommandBuffer::endRecording()
 
 void VulkanCommandBuffer::submitToQueue(CommandExecutionType executionType)
 {
+    // Reset the fence right before submitting to queue so that the fence is always set between the moment an execution
+    // is complete and the moment a new command is submitted. Otherwise, we risk waiting for a fence that will never
+    // be set.
+    const auto vkFence = m_pVkFence.get();
+    throwIfVkFailed(m_rDevice.getFcts().vkResetFences(m_rDevice.getVkDevice(), 1U, &vkFence),
+                    "Failed to reset command buffer fence");
+
     const auto vkCommandBuffer = m_pVkCommandBuffer.get();
     VkSubmitInfo vkSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -206,26 +213,39 @@ void VulkanCommandBuffer::submitToQueue(CommandExecutionType executionType)
     }
     throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),
                     "Failed to execute command buffer");
+    m_inFlight = true;
 
     if (executionType == CommandExecutionType::Sync)
     {
         this->waitForCompletion();
-        this->reset();
     }
 }
 
-void VulkanCommandBuffer::waitForCompletion() const
+void VulkanCommandBuffer::waitForCompletion()
 {
+    if (!m_inFlight)
+    {
+        return;
+    }
+
     const auto vkFence = m_pVkFence.get();
     logIfVkFailed(m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE,
                                                       numeric_limits<uint64_t>::max()),
                   *m_pLogger, "Failed to wait for fence while destroying command buffer");
 
+    m_inFlight = false;
     ranges::for_each(m_pFutures, [](auto& pFuture) { pFuture->markAsComplete(); });
+
+    this->reset();
 }
 
 auto VulkanCommandBuffer::isExecutionComplete() const -> bool
 {
+    if (!m_inFlight)
+    {
+        return false;
+    }
+
     const auto vkFence = m_pVkFence.get();
     const auto vkResult = m_rDevice.getFcts().vkWaitForFences(m_rDevice.getVkDevice(), 1U, &vkFence, VK_TRUE, 0U);
     if (vkResult == VK_SUCCESS)
