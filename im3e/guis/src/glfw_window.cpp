@@ -1,0 +1,99 @@
+#include "glfw_window.h"
+
+#include "guis.h"
+#include "imgui_pipeline.h"
+
+#include <fmt/format.h>
+
+using namespace im3e;
+using namespace std;
+
+namespace {
+
+GlfwWindowCallbacks& getWindowCallbacks(GLFWwindow* pGlfwWindow)
+{
+    return *reinterpret_cast<GlfwWindowCallbacks*>(glfwGetWindowUserPointer(pGlfwWindow));
+}
+
+void framebufferResizeCallback(GLFWwindow* pGlfwWindow, int width, int height)
+{
+    getWindowCallbacks(pGlfwWindow).onWindowResized(width, height);
+}
+
+void windowIconifyCallback(GLFWwindow* pGlfwWindow, int iconified)
+{
+    getWindowCallbacks(pGlfwWindow).onWindowIconify(iconified == GLFW_TRUE);
+}
+
+auto createWindow(const ILogger& rLogger, std::string_view name, GlfwWindowCallbacks* pCallbacks)
+{
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // for Vulkan
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+
+    constexpr int Width = 1200;
+    constexpr int Height = 800;
+
+    auto* pGlfwWindow = glfwCreateWindow(Width, Height, name.data(), nullptr, nullptr);
+    throwIfNull<runtime_error>(pGlfwWindow, "Could not create GLFW window");
+
+    glfwSetWindowUserPointer(pGlfwWindow, pCallbacks);
+    glfwSetFramebufferSizeCallback(pGlfwWindow, framebufferResizeCallback);
+    glfwSetWindowIconifyCallback(pGlfwWindow, windowIconifyCallback);
+
+    int width{}, height{};
+    glfwGetWindowSize(pGlfwWindow, &width, &height);
+    rLogger.info(fmt::format("Created window of size {}x{}", width, height));
+
+    return UniquePtrWithDeleter<GLFWwindow>(pGlfwWindow, [](auto* pW) { glfwDestroyWindow(pW); });
+}
+
+auto createVkSurface(const IDevice& rDevice, GLFWwindow* pWindow)
+{
+    const auto vkInstance = rDevice.getVkInstance();
+
+    VkSurfaceKHR surface{};
+    throwIfVkFailed(glfwCreateWindowSurface(vkInstance, pWindow, nullptr, &surface), "Could not create window surface");
+
+    return VkUniquePtr<VkSurfaceKHR>(surface, [fcts = rDevice.getInstanceFcts(), vkInstance](auto* s) {
+        fcts.vkDestroySurfaceKHR(vkInstance, s, nullptr);
+    });
+}
+
+}  // namespace
+
+GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, Config config, shared_ptr<ImguiWorkspace> pWorkspace)
+  : m_pDevice(throwIfArgNull(move(pDevice), "Glfw window requires a device"))
+  , m_config(move(config))
+  , m_pWorkspace(throwIfArgNull(move(pWorkspace), "Glfw window requires a workspace"))
+  , m_pLogger(m_pDevice->createLogger(m_config.name))
+  , m_pCallbacks([&] {
+      auto pCallbacks = make_unique<GlfwWindowCallbacks>();
+      pCallbacks->onWindowResized = [this](auto w, auto h) { this->_onWindowResized(w, h); };
+      pCallbacks->onWindowIconify = [this](bool i) { this->_onWindowIconify(i); };
+      return pCallbacks;
+  }())
+  , m_pWindow(createWindow(*m_pLogger, m_config.name, m_pCallbacks.get()))
+  , m_pVkSurface(createVkSurface(*m_pDevice, m_pWindow.get()))
+  , m_pPresenter(make_unique<Presenter>(
+        m_pDevice, m_pVkSurface.get(),
+        make_unique<ImguiPipeline>(m_pDevice, m_pWindow.get(), m_pWorkspace, m_config.iniFilename)))
+{
+}
+
+void GlfwWindow::draw()
+{
+    m_pPresenter->present();
+}
+
+void GlfwWindow::_onWindowResized(int width, int height)
+{
+    m_pPresenter->reset();
+    m_pLogger->info(fmt::format("Resized to {}x{}", width, height));
+}
+
+void GlfwWindow::_onWindowIconify(bool iconify)
+{
+    m_iconified = iconify;
+    m_pLogger->info(fmt::format("Window iconify set to {}", iconify));
+}

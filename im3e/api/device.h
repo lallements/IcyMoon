@@ -12,6 +12,10 @@ class IDevice
 public:
     virtual ~IDevice() = default;
 
+    virtual auto createVkSemaphore() const -> VkUniquePtr<VkSemaphore> = 0;
+    virtual auto createVkFence(VkFenceCreateFlags vkFlags = 0U) const -> VkUniquePtr<VkFence> = 0;
+    virtual void waitForVkFence(VkFence vkFence) const = 0;
+
     virtual auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> = 0;
 
     virtual auto getVkInstance() const -> VkInstance = 0;

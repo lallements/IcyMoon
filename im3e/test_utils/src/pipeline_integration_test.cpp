@@ -13,6 +13,7 @@ void PipelineIntegrationTest::TearDown()
     if (Test::HasFailure())
     {
         const auto outputFilePath = generateFilePath(getName(), "png");
+        if (m_pHostVisibleOutputImage)
         {
             auto pImageMapping = m_pHostVisibleOutputImage->mapReadOnly();
             pImageMapping->save(outputFilePath);

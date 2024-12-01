@@ -1,10 +1,13 @@
 add_library(im3e_devices STATIC
     devices.h
-    src/vulkan_command_buffers.cpp
-    src/vulkan_command_buffers.h
+    src/vulkan_command_buffer.cpp
+    src/vulkan_command_buffer.h
+    src/vulkan_command_queue.cpp
+    src/vulkan_command_queue.h
     src/vulkan_debug_message_handler.cpp
     src/vulkan_debug_message_handler.h
     src/vulkan_device.cpp
+    src/vulkan_device.h
     src/vulkan_extensions.cpp
     src/vulkan_extensions.h
     src/vulkan_images.cpp

@@ -5,6 +5,32 @@ using namespace std;
 
 namespace {
 
+class MockProxyCommandBufferFuture : public ICommandBufferFuture
+{
+public:
+    MockProxyCommandBufferFuture(MockCommandBufferFuture& rMock)
+      : m_rMock(rMock)
+    {
+    }
+
+    void waitForCompletion() override { m_rMock.waitForCompletion(); }
+
+private:
+    MockCommandBufferFuture& m_rMock;
+};
+
+}  // namespace
+
+MockCommandBufferFuture::MockCommandBufferFuture() = default;
+MockCommandBufferFuture::~MockCommandBufferFuture() = default;
+
+auto MockCommandBufferFuture::createMockProxy() -> unique_ptr<ICommandBufferFuture>
+{
+    return make_unique<MockProxyCommandBufferFuture>(*this);
+}
+
+namespace {
+
 class MockProxyCommandBarrierRecorder : public ICommandBarrierRecorder
 {
 public:
@@ -46,6 +72,13 @@ public:
     {
         return m_rMock.startScopedBarrier(name);
     }
+    auto createFuture() -> shared_ptr<ICommandBufferFuture> override { return m_rMock.createFuture(); }
+
+    void setVkSignalSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) override
+    {
+        m_rMock.setVkSignalSemaphore(vkSemaphore);
+    }
+    void setVkWaitSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) override { m_rMock.setVkWaitSemaphore(vkSemaphore); }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_rMock.getVkCommandBuffer(); }
 
@@ -60,6 +93,7 @@ MockCommandBuffer::MockCommandBuffer()
     ON_CALL(*this, startScopedBarrier(_)).WillByDefault(Invoke([this](Unused) {
         return m_mockBarrierRecorder.createMockProxy();
     }));
+    ON_CALL(*this, createFuture()).WillByDefault(Invoke([this] { return m_mockFuture.createMockProxy(); }));
     ON_CALL(*this, getVkCommandBuffer()).WillByDefault(Return(m_vkCommandBuffer));
 }
 
@@ -85,6 +119,8 @@ public:
     {
         return m_rMock.startScopedCommand(name, executionType);
     }
+
+    void waitIdle() override { m_rMock.waitIdle(); }
 
     auto getQueueFamilyIndex() const -> uint32_t override { return m_rMock.getQueueFamilyIndex(); }
     auto getVkQueue() const -> VkQueue override { return m_rMock.getVkQueue(); }

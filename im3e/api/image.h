@@ -87,6 +87,7 @@ public:
 
     virtual auto createImage(ImageConfig config) const -> std::unique_ptr<IImage> = 0;
     virtual auto createHostVisibleImage(ImageConfig config) const -> std::unique_ptr<IHostVisibleImage> = 0;
+    virtual auto createProxyImage(VkImage vkImage, ImageConfig config) const -> std::unique_ptr<IImage> = 0;
 };
 
 }  // namespace im3e

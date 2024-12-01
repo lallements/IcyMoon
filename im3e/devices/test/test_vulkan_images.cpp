@@ -11,15 +11,15 @@ using namespace std;
 
 struct ImageFactoryTest : public Test
 {
-    auto createFactory() { return createVulkanImageFactory(m_mockDevice, m_pMockAllocator); }
+    auto createFactory() { return createVulkanImageFactory(m_pMockDevice, m_pMockAllocator); }
 
-    NiceMock<MockDevice> m_mockDevice;
+    shared_ptr<MockDevice> m_pMockDevice = make_shared<NiceMock<MockDevice>>();
     shared_ptr<MockVulkanMemoryAllocator> m_pMockAllocator = make_shared<MockVulkanMemoryAllocator>();
 };
 
 TEST_F(ImageFactoryTest, createVulkanImageFactoryThrowsIfAllocatorNull)
 {
-    EXPECT_THROW(auto pFactory = createVulkanImageFactory(m_mockDevice, nullptr), invalid_argument);
+    EXPECT_THROW(auto pFactory = createVulkanImageFactory(m_pMockDevice, nullptr), invalid_argument);
 }
 
 TEST_F(ImageFactoryTest, createVulkanImageFactory)
@@ -122,8 +122,8 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
             pVmaAllocationInfo->size = memSize;
             return VK_SUCCESS;
         }));
-    EXPECT_CALL(m_mockDevice.getMockDeviceFcts(),
-                vkGetImageSubresourceLayout(m_mockDevice.getMockVkDevice(), vkImage, NotNull(), NotNull()))
+    EXPECT_CALL(m_pMockDevice->getMockDeviceFcts(),
+                vkGetImageSubresourceLayout(m_pMockDevice->getMockVkDevice(), vkImage, NotNull(), NotNull()))
         .WillOnce(Invoke([&](Unused, Unused, const VkImageSubresource* pVkSubresource, VkSubresourceLayout* pVkLayout) {
             EXPECT_THAT(pVkSubresource->aspectMask, Eq(VK_IMAGE_ASPECT_COLOR_BIT));
             pVkLayout->rowPitch = rowPitch;

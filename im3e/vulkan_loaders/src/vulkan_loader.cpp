@@ -46,6 +46,7 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstan
         LOAD_INST_FCT(vkGetInstanceProcAddr),
         LOAD_INST_FCT(vkDestroyInstance),
         LOAD_INST_FCT(vkCreateDevice),
+        LOAD_INST_FCT(vkDestroySurfaceKHR),
 
         LOAD_INST_FCT(vkEnumeratePhysicalDevices),
         LOAD_INST_FCT(vkGetPhysicalDeviceProperties),
@@ -53,6 +54,10 @@ auto VulkanLoader::loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstan
         LOAD_INST_FCT(vkEnumerateDeviceExtensionProperties),
         LOAD_INST_FCT(vkGetPhysicalDeviceQueueFamilyProperties),
         LOAD_INST_FCT(vkGetPhysicalDeviceMemoryProperties),
+
+        LOAD_INST_FCT(vkGetPhysicalDeviceSurfaceCapabilitiesKHR),
+        LOAD_INST_FCT(vkGetPhysicalDeviceSurfaceFormatsKHR),
+        LOAD_INST_FCT(vkGetPhysicalDeviceSurfacePresentModesKHR),
     };
     if (m_config.isDebugEnabled)
     {
@@ -70,6 +75,7 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkDeviceWaitIdle),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
         LOAD_DEVICE_FCT(vkQueueSubmit),
+        LOAD_DEVICE_FCT(vkQueueWaitIdle),
         LOAD_DEVICE_FCT(vkGetImageSubresourceLayout),
 
         LOAD_DEVICE_FCT(vkCreateCommandPool),
@@ -90,6 +96,15 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkDestroyFence),
         LOAD_DEVICE_FCT(vkWaitForFences),
         LOAD_DEVICE_FCT(vkResetFences),
+
+        LOAD_DEVICE_FCT(vkCreateSemaphore),
+        LOAD_DEVICE_FCT(vkDestroySemaphore),
+
+        LOAD_DEVICE_FCT(vkCreateSwapchainKHR),
+        LOAD_DEVICE_FCT(vkDestroySwapchainKHR),
+        LOAD_DEVICE_FCT(vkGetSwapchainImagesKHR),
+        LOAD_DEVICE_FCT(vkAcquireNextImageKHR),
+        LOAD_DEVICE_FCT(vkQueuePresentKHR),
 
         LOAD_DEVICE_FCT(vkCreateFramebuffer),
         LOAD_DEVICE_FCT(vkDestroyFramebuffer),

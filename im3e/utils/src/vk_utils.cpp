@@ -37,7 +37,7 @@ auto im3e::getFormatProperties(VkFormat vkFormat) -> FormatProperties
         case VK_FORMAT_BC1_RGB_SRGB_BLOCK:
             return FormatProperties{.sizeInBytes = 0U, .componentSizeInBytes = 0U, .componentCount = 0U};
         default:
-            throw logic_error(
+            throw invalid_argument(
                 fmt::format("Could not get VkFormat properties for {}: not supported", static_cast<int>(vkFormat)));
     }
 }

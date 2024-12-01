@@ -7,7 +7,8 @@
 
 namespace im3e {
 
-auto createVulkanImageFactory(const IDevice& rDevice, std::shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
+auto createVulkanImageFactory(std::weak_ptr<const IDevice> pDevice,
+                              std::shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator)
     -> std::unique_ptr<IImageFactory>;
 
 }  // namespace im3e

@@ -1,5 +1,9 @@
 add_library(im3e_guis
     guis.h
+    src/glfw_window.cpp
+    src/glfw_window.h
+    src/glfw_window_application.cpp
+    src/glfw_window_application.h
     src/imgui_context.cpp
     src/imgui_context.h
     src/imgui_pipeline.cpp
@@ -8,6 +12,8 @@ add_library(im3e_guis
     src/imgui_vulkan_backend.h
     src/imgui_workspace.cpp
     src/imgui_workspace.h
+    src/presenter.cpp
+    src/presenter.h
 )
 
 target_include_directories(im3e_guis
@@ -24,6 +30,7 @@ target_link_libraries(im3e_guis
     im3e_utils
   PRIVATE
     glfw
+    im3e_devices
     im3e_resources
     imgui
 )

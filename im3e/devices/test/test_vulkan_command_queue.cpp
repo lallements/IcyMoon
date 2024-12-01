@@ -1,4 +1,4 @@
-#include "src/vulkan_command_buffers.h"
+#include "src/vulkan_command_queue.h"
 
 #include <im3e/mock/mock_device.h>
 #include <im3e/mock/mock_image.h>
@@ -7,7 +7,7 @@
 using namespace im3e;
 using namespace std;
 
-struct VulkanCommandBuffersTest : public Test
+struct VulkanCommandQueueTest : public Test
 {
     auto createCommandQueue()
     {
@@ -50,13 +50,20 @@ struct VulkanCommandBuffersTest : public Test
             }));
     }
 
-    void expectQueueSubmit(VkCommandBuffer vkCommandBuffer, VkFence vkFence)
+    void expectQueueSubmit(VkCommandBuffer vkCommandBuffer, VkFence vkFence, VkSemaphore vkSignalSemaphore = nullptr)
     {
+        InSequence s;
+        EXPECT_CALL(m_rMockFcts, vkResetFences(m_mockVkDevice, 1U, Pointee(vkFence)));
         EXPECT_CALL(m_rMockFcts, vkQueueSubmit(m_mockVkQueue, 1U, NotNull(), vkFence))
-            .WillOnce(Invoke([vkCommandBuffer](Unused, Unused, auto* pVkSubmitInfo, Unused) {
+            .WillOnce(Invoke([vkCommandBuffer, vkSignalSemaphore](Unused, Unused, auto* pVkSubmitInfo, Unused) {
                 EXPECT_THAT(pVkSubmitInfo->sType, Eq(VK_STRUCTURE_TYPE_SUBMIT_INFO));
                 EXPECT_THAT(pVkSubmitInfo->commandBufferCount, Eq(1U));
                 EXPECT_THAT(*pVkSubmitInfo->pCommandBuffers, Eq(vkCommandBuffer));
+                if (vkSignalSemaphore)
+                {
+                    EXPECT_THAT(pVkSubmitInfo->signalSemaphoreCount, Eq(1U));
+                    EXPECT_THAT(*pVkSubmitInfo->pSignalSemaphores, Eq(vkSignalSemaphore));
+                }
                 return VK_SUCCESS;
             }));
     }
@@ -68,18 +75,14 @@ struct VulkanCommandBuffersTest : public Test
 
     void expectFenceCreated(VkFence vkFence)
     {
-        EXPECT_CALL(m_rMockFcts, vkCreateFence(m_mockVkDevice, NotNull(), IsNull(), NotNull()))
-            .WillOnce(Invoke([this, vkFence](Unused, auto* pVkCreateInfo, Unused, auto* pVkFence) {
-                EXPECT_THAT(pVkCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_FENCE_CREATE_INFO));
-                *pVkFence = vkFence;
-                return VK_SUCCESS;
-            }));
+        EXPECT_CALL(m_mockDevice, createVkFence(VK_FENCE_CREATE_SIGNALED_BIT)).WillOnce(Invoke([this, vkFence](Unused) {
+            return VkUniquePtr<VkFence>(vkFence, [](auto*) {});
+        }));
     }
 
-    void expectCommandAndFenceReset(VkCommandBuffer vkCommandBuffer, VkFence vkFence)
+    void expectCommandReset(VkCommandBuffer vkCommandBuffer)
     {
         EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(vkCommandBuffer, 0U));
-        EXPECT_CALL(m_rMockFcts, vkResetFences(m_mockVkDevice, 1U, Pointee(vkFence)));
     }
 
     enum class WaitForFenceType
@@ -102,17 +105,18 @@ struct VulkanCommandBuffersTest : public Test
     const VkCommandPool m_mockVkCommandPool = reinterpret_cast<VkCommandPool>(0x493ead23);
 };
 
-TEST_F(VulkanCommandBuffersTest, createCommandQueue)
+TEST_F(VulkanCommandQueueTest, createCommandQueue)
 {
     auto pCommandQueue = createCommandQueue();
     ASSERT_THAT(pCommandQueue, NotNull());
+    EXPECT_THAT(pCommandQueue->getQueueFamilyIndex(), Eq(m_queueFamilyIndex));
     EXPECT_THAT(pCommandQueue->getVkQueue(), Eq(m_mockVkQueue));
 
     EXPECT_CALL(m_rMockFcts, vkDestroyCommandPool(m_mockVkDevice, m_mockVkCommandPool, IsNull()));
     pCommandQueue.reset();
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedCommandSync)
+TEST_F(VulkanCommandQueueTest, startScopedCommandSync)
 {
     const auto mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0xaf3e56);
     const auto mockVkFence = reinterpret_cast<VkFence>(0x418e4a);
@@ -123,7 +127,6 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSync)
     expectBeginCommand(mockVkCommandBuffer);
     auto pCommandBuffer = pCommandQueue->startScopedCommand("testCommand", CommandExecutionType::Sync);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
-
     {
         InSequence s;
         expectEndCommand(mockVkCommandBuffer);
@@ -134,11 +137,10 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSync)
 
     EXPECT_CALL(m_rMockFcts,
                 vkFreeCommandBuffers(m_mockVkDevice, m_mockVkCommandPool, 1U, Pointee(mockVkCommandBuffer)));
-    EXPECT_CALL(m_rMockFcts, vkDestroyFence(m_mockVkDevice, mockVkFence, IsNull()));
     pCommandQueue.reset();
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedCommandSyncReusesBuffers)
+TEST_F(VulkanCommandQueueTest, startScopedCommandSyncReusesBuffers)
 {
     const auto mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0xa3bec);
     const auto mockVkFence = reinterpret_cast<VkFence>(0x53e6);
@@ -158,7 +160,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSyncReusesBuffers)
     }
 
     EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(_, _, _)).Times(0);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("command 2", CommandExecutionType::Sync);
         EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
@@ -171,7 +173,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandSyncReusesBuffers)
     }
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedCommandAsync)
+TEST_F(VulkanCommandQueueTest, startScopedCommandAsync)
 {
     const auto mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0xfe43a);
     const auto mockVkFence = reinterpret_cast<VkFence>(0xa32e1f);
@@ -192,7 +194,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandAsync)
     pCommandQueue.reset();
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedCommandRecyclesAsyncCommandIfComplete)
+TEST_F(VulkanCommandQueueTest, startScopedCommandRecyclesAsyncCommandIfComplete)
 {
     const auto mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0x2a5e);
     const auto mockVkFence = reinterpret_cast<VkFence>(0x8f3a);
@@ -205,17 +207,17 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandRecyclesAsyncCommandIfComplet
 
     // The previous command is still running, the queue should then check if it is now complete and reuse if so:
     expectWaitForFence(mockVkFence, WaitForFenceType::NoWait, VK_SUCCESS);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(_, _, _)).Times(0);
     pCommandBuffer = pCommandQueue->startScopedCommand("command2", CommandExecutionType::Sync);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer));
 
     expectWaitForFence(mockVkFence, WaitForFenceType::InfiniteWait);
-    expectCommandAndFenceReset(mockVkCommandBuffer, mockVkFence);
+    expectCommandReset(mockVkCommandBuffer);
     pCommandBuffer.reset();
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComplete)
+TEST_F(VulkanCommandQueueTest, startScopedCommandCreatesNewCommandIfAllNotComplete)
 {
     auto pCommandQueue = createCommandQueue();
 
@@ -224,6 +226,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
     expectCommandBufferAllocated(mockVkCommandBuffer1);
     expectFenceCreated(mockVkFence1);
     auto pCommandBuffer = pCommandQueue->startScopedCommand("cmd1", CommandExecutionType::Async);
+    expectQueueSubmit(mockVkCommandBuffer1, mockVkFence1);
     pCommandBuffer.reset();
 
     // When the queue checks our first command's state, we return timeout to let it know it is still in progress:
@@ -231,7 +234,6 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
 
     // As a result, the command should be left alone:
     EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(_, _)).Times(0);
-    EXPECT_CALL(m_rMockFcts, vkResetFences(_, _, _)).Times(0);
 
     // And a new command should be allocated instead:
     const auto mockVkCommandBuffer2 = reinterpret_cast<VkCommandBuffer>(0xc46e2a8);
@@ -240,13 +242,18 @@ TEST_F(VulkanCommandBuffersTest, startScopedCommandCreatesNewCommandIfAllNotComp
     expectFenceCreated(mockVkFence2);
     pCommandBuffer = pCommandQueue->startScopedCommand("cmd2", CommandExecutionType::Async);
     EXPECT_THAT(pCommandBuffer->getVkCommandBuffer(), Eq(mockVkCommandBuffer2));
+    expectQueueSubmit(mockVkCommandBuffer2, mockVkFence2);
+    pCommandBuffer.reset();
 
     // The two commands are then waited for completion when the queue is deleted:
     expectWaitForFence(mockVkFence1, WaitForFenceType::InfiniteWait);
     expectWaitForFence(mockVkFence2, WaitForFenceType::InfiniteWait);
+
+    // We expect the commands to be reset once complete on queue deletion:
+    EXPECT_CALL(m_rMockFcts, vkResetCommandBuffer(_, _)).Times(2);
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithNoBarrier)
+TEST_F(VulkanCommandQueueTest, startScopedBarrierWithNoBarrier)
 {
     auto pCommandQueue = createCommandQueue();
     auto pCommandBuffer = pCommandQueue->startScopedCommand("test", CommandExecutionType::Sync);
@@ -257,7 +264,7 @@ TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithNoBarrier)
     pBarrierRecorder.reset();
 }
 
-TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithImageBarrier)
+TEST_F(VulkanCommandQueueTest, startScopedBarrierWithImageBarrier)
 {
     MockImage mockImage;
     const auto mockVkImage = reinterpret_cast<VkImage>(0xb43ea);
@@ -316,4 +323,12 @@ TEST_F(VulkanCommandBuffersTest, startScopedBarrierWithImageBarrier)
             EXPECT_THAT(pImageBarrier->subresourceRange.layerCount, Eq(1U));
         }));
     pBarrierRecorder.reset();
+}
+
+TEST_F(VulkanCommandQueueTest, waitIdle)
+{
+    auto pCommandQueue = createCommandQueue();
+
+    EXPECT_CALL(m_rMockFcts, vkQueueWaitIdle(m_mockVkQueue));
+    pCommandQueue->waitIdle();
 }

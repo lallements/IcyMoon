@@ -20,6 +20,7 @@ struct VulkanInstanceFcts
     PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr{};
     PFN_vkDestroyInstance vkDestroyInstance{};
     PFN_vkCreateDevice vkCreateDevice{};
+    PFN_vkDestroySurfaceKHR vkDestroySurfaceKHR{};
 
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT{};
     PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT{};
@@ -30,6 +31,10 @@ struct VulkanInstanceFcts
     PFN_vkEnumerateDeviceExtensionProperties vkEnumerateDeviceExtensionProperties{};
     PFN_vkGetPhysicalDeviceQueueFamilyProperties vkGetPhysicalDeviceQueueFamilyProperties{};
     PFN_vkGetPhysicalDeviceMemoryProperties vkGetPhysicalDeviceMemoryProperties{};
+
+    PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR vkGetPhysicalDeviceSurfaceCapabilitiesKHR{};
+    PFN_vkGetPhysicalDeviceSurfaceFormatsKHR vkGetPhysicalDeviceSurfaceFormatsKHR{};
+    PFN_vkGetPhysicalDeviceSurfacePresentModesKHR vkGetPhysicalDeviceSurfacePresentModesKHR{};
 };
 
 struct VulkanDeviceFcts
@@ -38,6 +43,7 @@ struct VulkanDeviceFcts
     PFN_vkDeviceWaitIdle vkDeviceWaitIdle{};
     PFN_vkGetDeviceQueue vkGetDeviceQueue{};
     PFN_vkQueueSubmit vkQueueSubmit{};
+    PFN_vkQueueWaitIdle vkQueueWaitIdle{};
     PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
 
     PFN_vkCreateCommandPool vkCreateCommandPool{};
@@ -58,6 +64,15 @@ struct VulkanDeviceFcts
     PFN_vkDestroyFence vkDestroyFence{};
     PFN_vkWaitForFences vkWaitForFences{};
     PFN_vkResetFences vkResetFences{};
+
+    PFN_vkCreateSemaphore vkCreateSemaphore{};
+    PFN_vkDestroySemaphore vkDestroySemaphore{};
+
+    PFN_vkCreateSwapchainKHR vkCreateSwapchainKHR{};
+    PFN_vkDestroySwapchainKHR vkDestroySwapchainKHR{};
+    PFN_vkGetSwapchainImagesKHR vkGetSwapchainImagesKHR{};
+    PFN_vkAcquireNextImageKHR vkAcquireNextImageKHR{};
+    PFN_vkQueuePresentKHR vkQueuePresentKHR{};
 
     PFN_vkCreateFramebuffer vkCreateFramebuffer{};
     PFN_vkDestroyFramebuffer vkDestroyFramebuffer{};

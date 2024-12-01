@@ -89,11 +89,12 @@ inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, VkCommandBuffer vkC
 }  // namespace
 
 ImguiPipeline::ImguiPipeline(shared_ptr<const IDevice> pDevice, GLFWwindow* pGlfwWindow,
-                             shared_ptr<ImguiWorkspace> pWorkspace)
+                             shared_ptr<ImguiWorkspace> pWorkspace, optional<string> iniFilename)
   : m_pDevice(throwIfArgNull(move(pDevice), "ImGui Pipeline requires a device"))
   , m_pLogger(m_pDevice->createLogger("ImGui Pipeline"))
   , m_pGlfwWindow(pGlfwWindow)
   , m_pWorkspace(throwIfArgNull(move(pWorkspace), "ImGui Pipeline requires a workspace"))
+  , m_iniFilename(iniFilename)
 
   , m_pContext(make_unique<ImguiContext>())
 {
@@ -102,6 +103,8 @@ ImguiPipeline::ImguiPipeline(shared_ptr<const IDevice> pDevice, GLFWwindow* pGlf
     auto& rIo = ImGui::GetIO();
     rIo.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
     rIo.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    rIo.IniFilename = iniFilename.has_value() ? m_iniFilename.value().c_str() : nullptr;
 
     const auto uiScale = getUiScale(*m_pLogger, m_pGlfwWindow);
     loadFont(rIo, uiScale);

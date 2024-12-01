@@ -5,6 +5,7 @@
 namespace im3e {
 
 using ::testing::_;
+using ::testing::AnyNumber;
 using ::testing::ByRef;
 using ::testing::Const;
 using ::testing::ContainerEq;

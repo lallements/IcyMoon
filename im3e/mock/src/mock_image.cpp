@@ -130,6 +130,11 @@ public:
         return m_rMock.createHostVisibleImage(move(config));
     }
 
+    auto createProxyImage(VkImage vkImage, ImageConfig config) const -> unique_ptr<IImage> override
+    {
+        return m_rMock.createProxyImage(vkImage, move(config));
+    }
+
 private:
     MockImageFactory& m_rMock;
 };

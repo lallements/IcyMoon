@@ -8,6 +8,14 @@
 
 namespace im3e {
 
+class ICommandBufferFuture
+{
+public:
+    virtual ~ICommandBufferFuture() = default;
+
+    virtual void waitForCompletion() = 0;
+};
+
 struct ImageBarrierConfig
 {
     VkPipelineStageFlags2 vkDstStageMask = VK_PIPELINE_STAGE_2_NONE;
@@ -29,6 +37,10 @@ public:
     virtual ~ICommandBuffer() = default;
 
     virtual auto startScopedBarrier(std::string_view name) const -> std::unique_ptr<ICommandBarrierRecorder> = 0;
+    virtual auto createFuture() -> std::shared_ptr<ICommandBufferFuture> = 0;
+
+    virtual void setVkSignalSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) = 0;
+    virtual void setVkWaitSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) = 0;
 
     virtual auto getVkCommandBuffer() const -> VkCommandBuffer = 0;
 };
@@ -55,6 +67,11 @@ public:
     /// as the returned object is destroyed.
     virtual auto startScopedCommand(std::string_view name, CommandExecutionType executionType)
         -> UniquePtrWithDeleter<ICommandBuffer> = 0;
+
+    /// @brief Wait for the queue to be idle.
+    /// This is a blocking function that will wait for all commands currently in the queue to be executed before
+    /// returning.
+    virtual void waitIdle() = 0;
 
     virtual auto getQueueFamilyIndex() const -> uint32_t = 0;
     virtual auto getVkQueue() const -> VkQueue = 0;

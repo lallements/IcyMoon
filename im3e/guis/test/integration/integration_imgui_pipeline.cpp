@@ -50,18 +50,28 @@ private:
     std::string m_content;
 };
 
+class TestImguiPanelWithDemo : public IGuiPanel
+{
+public:
+    void draw(const ICommandBuffer&) override { ImGui::ShowDemoWindow(); }
+
+    auto getName() const -> string override { return "ImGui Demo"; }
+};
+
 struct ImguiPipelineIntegration : public PipelineIntegrationTest
 {
-    ImguiPipelineIntegration()
+    auto createImguiPipeline()
     {
-        m_pWorkspace->addPanel(IGuiWorkspace::Location::Left, make_shared<TestImguiPanel>("Left Panel"));
-        m_pWorkspace->addPanel(IGuiWorkspace::Location::Top, make_shared<TestImguiPanel>("Top Panel"));
-        m_pWorkspace->addPanel(IGuiWorkspace::Location::Bottom, make_shared<TestImguiPanel>("Bottom Panel"));
-        m_pWorkspace->addPanel(IGuiWorkspace::Location::Right, make_shared<TestImguiPanel>("Right Panel"));
-        m_pWorkspace->addPanel(IGuiWorkspace::Location::Center, make_shared<TestImguiPanel>("Center Panel"));
+        return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace,
+                                          fmt::format("{}.{}.ini", getSuiteName(), getName()));
     }
 
-    auto createImguiPipeline() { return make_unique<ImguiPipeline>(getDevice(), nullptr, m_pWorkspace); }
+    auto expectRgbaPixel(const IHostVisibleImage::IMapping& rMapping, uint32_t x, uint32_t y,
+                         array<uint8_t, 4U> expected)
+    {
+        const auto& rRgbaPixel = *reinterpret_cast<const array<uint8_t, 4U>*>(rMapping.getPixel(x, y));
+        EXPECT_THAT(rRgbaPixel, ContainerEq(expected)) << fmt::format("Pixel at [{}; {}]", x, y);
+    };
 
     shared_ptr<ImguiWorkspace> m_pWorkspace = make_shared<ImguiWorkspace>("Test Workspace");
 };
@@ -70,19 +80,9 @@ struct ImguiPipelineIntegration : public PipelineIntegrationTest
 
 TEST_F(ImguiPipelineIntegration, emptyWorkspace)
 {
-    constexpr VkExtent2D TestOutputExtent{800U, 600U};
-    constexpr auto TestOutputFormat = VK_FORMAT_R8G8B8A8_UNORM;
-
-    shared_ptr<IImage> pGuiImage = getDevice()->getImageFactory()->createImage(ImageConfig{
-        .name = "ImguiBackendImage",
-        .vkExtent = TestOutputExtent,
-        .vkFormat = TestOutputFormat,
-        .vkUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-    });
-
     initialize(
         PipelineIntegrationTest::Config{
-            .vkOutputExtent = TestOutputExtent,
+            .vkOutputExtent = VkExtent2D{800U, 600U},
             .vkOutputFormat = VK_FORMAT_R8G8B8A8_SRGB,
             .frameInFlightCount = 2U,
         },
@@ -90,18 +90,59 @@ TEST_F(ImguiPipelineIntegration, emptyWorkspace)
     runTest(3U);
 
     auto pImageMapping = mapOutputImage();
-    pImageMapping->save(generateFilePath("output", "bmp"));
-    auto expectRgbaPixel = [&](uint32_t x, uint32_t y, array<uint8_t, 4U> expected) {
-        const auto& rRgbaPixel = *reinterpret_cast<const array<uint8_t, 4U>*>(pImageMapping->getPixel(x, y));
-        EXPECT_THAT(rRgbaPixel, ContainerEq(expected)) << fmt::format("Pixel at [{}; {}]", x, y);
-    };
-    expectRgbaPixel(768U, 160U, {46U, 105U, 175U, 255U});
-    expectRgbaPixel(60U, 10U, {28U, 28U, 28U, 255U});
-    expectRgbaPixel(379U, 23U, {82U, 82U, 95U, 255U});
-    expectRgbaPixel(55U, 238U, {0U, 13U, 28U, 254U});
-    expectRgbaPixel(200U, 288U, {79U, 80U, 95U, 255U});
-    expectRgbaPixel(290U, 192U, {208U, 209U, 209U, 255U});
-    expectRgbaPixel(550U, 167U, {0U, 0U, 0U, 255U});
-    expectRgbaPixel(531U, 511U, {28U, 64U, 109U, 255U});
-    expectRgbaPixel(272U, 595U, {0U, 13U, 28U, 254U});
+    expectRgbaPixel(*pImageMapping, 137U, 158U, {0U, 0U, 0U, 0U});
+    expectRgbaPixel(*pImageMapping, 376U, 253U, {0U, 0U, 0U, 0U});
+    expectRgbaPixel(*pImageMapping, 766U, 22U, {62U, 62U, 71U, 255U});
+    expectRgbaPixel(*pImageMapping, 745U, 24U, {88U, 88U, 103U, 160U});
+    expectRgbaPixel(*pImageMapping, 589, 5U, {28U, 28U, 28U, 255U});
+}
+
+TEST_F(ImguiPipelineIntegration, withTestPanels)
+{
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Left, make_shared<TestImguiPanel>("Left Panel"));
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Top, make_shared<TestImguiPanel>("Top Panel"));
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Bottom, make_shared<TestImguiPanel>("Bottom Panel"));
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Right, make_shared<TestImguiPanel>("Right Panel"));
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Center, make_shared<TestImguiPanel>("Center Panel"));
+
+    initialize(
+        PipelineIntegrationTest::Config{
+            .vkOutputExtent = VkExtent2D{800U, 600U},
+            .vkOutputFormat = VK_FORMAT_R8G8B8A8_SRGB,
+            .frameInFlightCount = 2U,
+        },
+        createImguiPipeline());
+    runTest(3U);
+
+    auto pImageMapping = mapOutputImage();
+    expectRgbaPixel(*pImageMapping, 768U, 160U, {0U, 13U, 28U, 254U});
+    expectRgbaPixel(*pImageMapping, 60U, 10U, {28U, 28U, 28U, 255U});
+    expectRgbaPixel(*pImageMapping, 379U, 23U, {82U, 82U, 95U, 255U});
+    expectRgbaPixel(*pImageMapping, 55U, 238U, {0U, 13U, 28U, 254U});
+    expectRgbaPixel(*pImageMapping, 200U, 288U, {79U, 80U, 95U, 255U});
+    expectRgbaPixel(*pImageMapping, 290U, 192U, {28U, 64U, 109U, 255U});
+    expectRgbaPixel(*pImageMapping, 550U, 167U, {0U, 13U, 28U, 254U});
+    expectRgbaPixel(*pImageMapping, 531U, 511U, {28U, 64U, 109U, 255U});
+    expectRgbaPixel(*pImageMapping, 272U, 595U, {0U, 13U, 28U, 254U});
+}
+
+TEST_F(ImguiPipelineIntegration, withImguiDemo)
+{
+    m_pWorkspace->addPanel(IGuiWorkspace::Location::Center, make_shared<TestImguiPanelWithDemo>());
+
+    initialize(
+        PipelineIntegrationTest::Config{
+            .vkOutputExtent = VkExtent2D{1280U, 800U},
+            .vkOutputFormat = VK_FORMAT_R8G8B8A8_SRGB,
+            .frameInFlightCount = 2U,
+        },
+        createImguiPipeline());
+    runTest(3U);
+
+    auto pImageMapping = mapOutputImage();
+    expectRgbaPixel(*pImageMapping, 664U, 28U, {255U, 255U, 255U, 255U});
+    expectRgbaPixel(*pImageMapping, 804U, 29U, {38U, 73U, 124U, 255U});
+    expectRgbaPixel(*pImageMapping, 650U, 341U, {79U, 80U, 95U, 255U});
+    expectRgbaPixel(*pImageMapping, 1193U, 695U, {26U, 73U, 124U, 255U});
+    expectRgbaPixel(*pImageMapping, 1182U, 226U, {34U, 89U, 150U, 255U});
 }
