@@ -39,8 +39,8 @@ public:
     virtual auto startScopedBarrier(std::string_view name) const -> std::unique_ptr<ICommandBarrierRecorder> = 0;
     virtual auto createFuture() -> std::shared_ptr<ICommandBufferFuture> = 0;
 
-    virtual void setVkSignalSemaphore(VkSemaphore vkSemaphore) = 0;
-    virtual void setVkWaitSemaphore(VkSemaphore vkSemaphore) = 0;
+    virtual void setVkSignalSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) = 0;
+    virtual void setVkWaitSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) = 0;
 
     virtual auto getVkCommandBuffer() const -> VkCommandBuffer = 0;
 };

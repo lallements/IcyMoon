@@ -37,8 +37,8 @@ public:
                 (const, override));
     MOCK_METHOD(std::shared_ptr<ICommandBufferFuture>, createFuture, (), (override));
 
-    MOCK_METHOD(void, setVkSignalSemaphore, (VkSemaphore vkSemaphore), (override));
-    MOCK_METHOD(void, setVkWaitSemaphore, (VkSemaphore vkSemaphore), (override));
+    MOCK_METHOD(void, setVkSignalSemaphore, (VkSharedPtr<VkSemaphore> vkSemaphore), (override));
+    MOCK_METHOD(void, setVkWaitSemaphore, (VkSharedPtr<VkSemaphore> vkSemaphore), (override));
 
     MOCK_METHOD(VkCommandBuffer, getVkCommandBuffer, (), (const, override));
 

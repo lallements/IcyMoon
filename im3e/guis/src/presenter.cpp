@@ -136,7 +136,7 @@ auto getSwapchainImages(const IDevice& rDevice, VkSwapchainKHR vkSwapchain,
 }
 
 VkPresentInfoKHR makeVkPresentInfo(const VkSwapchainKHR* ppSwapchain, uint32_t* pImageIndex,
-                                   VkSemaphore* ppFinalSemaphore)
+                                   const VkSemaphore* ppFinalSemaphore)
 {
     return VkPresentInfoKHR{
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -178,13 +178,13 @@ void Presenter::present()
     auto pCommandQueue = m_pDevice->getCommandQueue();
 
     m_semaphoreIndex = (m_semaphoreIndex + 1U) % m_pReadyToWriteSemaphores.size();
-    auto vkReadyToWriteSemaphore = m_pReadyToWriteSemaphores[m_semaphoreIndex].get();
-    auto vkReadyToPresentSemaphore = m_pReadyToPresentSemaphores[m_semaphoreIndex].get();
+    auto pVkReadyToWriteSemaphore = m_pReadyToWriteSemaphores[m_semaphoreIndex];
+    auto pVkReadyToPresentSemaphore = m_pReadyToPresentSemaphores[m_semaphoreIndex];
     uint32_t imageIndex{};
     {
         auto vkResult = rFcts.vkAcquireNextImageKHR(m_pDevice->getVkDevice(), m_pVkSwapchain.get(),
-                                                    numeric_limits<uint64_t>::max(), vkReadyToWriteSemaphore, nullptr,
-                                                    &imageIndex);
+                                                    numeric_limits<uint64_t>::max(), pVkReadyToWriteSemaphore.get(),
+                                                    nullptr, &imageIndex);
         if (vkResult == VK_ERROR_OUT_OF_DATE_KHR)
         {
             m_isOutOfDate = true;
@@ -209,8 +209,8 @@ void Presenter::present()
     }
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
-        pCommandBuffer->setVkWaitSemaphore(vkReadyToWriteSemaphore);
-        pCommandBuffer->setVkSignalSemaphore(vkReadyToPresentSemaphore);
+        pCommandBuffer->setVkWaitSemaphore(pVkReadyToWriteSemaphore);
+        pCommandBuffer->setVkSignalSemaphore(pVkReadyToPresentSemaphore);
 
         m_pFramePipeline->prepareExecution(*pCommandBuffer, m_pImages[imageIndex]);
         {
@@ -223,6 +223,7 @@ void Presenter::present()
         m_pImageFutures[imageIndex] = pCommandBuffer->createFuture();
     }
     const auto vkSwapchain = m_pVkSwapchain.get();
+    const auto vkReadyToPresentSemaphore = pVkReadyToPresentSemaphore.get();
     const auto vkPresentInfo = makeVkPresentInfo(&vkSwapchain, &imageIndex, &vkReadyToPresentSemaphore);
     auto vkPresentResult = rFcts.vkQueuePresentKHR(pCommandQueue->getVkQueue(), &vkPresentInfo);
     if (vkPresentResult == VK_ERROR_OUT_OF_DATE_KHR || vkPresentResult == VK_SUBOPTIMAL_KHR)

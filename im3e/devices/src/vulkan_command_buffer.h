@@ -22,8 +22,8 @@ public:
     auto startScopedBarrier(std::string_view name) const -> std::unique_ptr<ICommandBarrierRecorder> override;
     auto createFuture() -> std::shared_ptr<ICommandBufferFuture> override;
 
-    void setVkSignalSemaphore(VkSemaphore vkSemaphore) override { m_vkSignalSemaphore = vkSemaphore; }
-    void setVkWaitSemaphore(VkSemaphore vkSemaphore) override { m_vkWaitSemaphore = vkSemaphore; }
+    void setVkSignalSemaphore(VkSharedPtr<VkSemaphore> pVkSemaphore) override { m_pVkSignalSemaphore = pVkSemaphore; }
+    void setVkWaitSemaphore(VkSharedPtr<VkSemaphore> pVkSemaphore) override { m_pVkWaitSemaphore = pVkSemaphore; }
 
     void reset();
     void beginRecording(std::string_view);
@@ -42,12 +42,11 @@ private:
     const std::string m_name;
 
     VkUniquePtr<VkCommandBuffer> m_pVkCommandBuffer;
-    VkUniquePtr<VkSemaphore> m_pVkSignalSemaphore;
     VkSharedPtr<VkFence> m_pVkFence;
     bool m_inFlight = false;
 
-    VkSemaphore m_vkSignalSemaphore{};
-    VkSemaphore m_vkWaitSemaphore{};
+    VkSharedPtr<VkSemaphore> m_pVkSignalSemaphore;
+    VkSharedPtr<VkSemaphore> m_pVkWaitSemaphore;
     std::vector<std::shared_ptr<VulkanCommandBufferFuture>> m_pFutures;
 };
 

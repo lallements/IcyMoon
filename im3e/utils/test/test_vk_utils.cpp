@@ -2,6 +2,8 @@
 
 #include <im3e/test_utils/test_utils.h>
 
+#include <fmt/format.h>
+
 using namespace im3e;
 using namespace std;
 
@@ -63,4 +65,57 @@ TEST(VkUtilsTest, vkFlagsContain)
     EXPECT_THAT(
         vkFlagsContain(VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT),
         IsFalse());
+}
+
+TEST(VkUtilsTest, getFormatProperties)
+{
+    auto testFormatProperties = [](VkFormat vkFormat, const FormatProperties& rExpected) {
+        const auto properties = getFormatProperties(vkFormat);
+        const string errorMessage = fmt::format("VkFormat = {}", static_cast<uint32_t>(vkFormat));
+        EXPECT_THAT(properties.sizeInBytes, Eq(rExpected.sizeInBytes)) << errorMessage;
+        EXPECT_THAT(properties.componentSizeInBytes, Eq(rExpected.componentSizeInBytes)) << errorMessage;
+        EXPECT_THAT(properties.componentCount, Eq(rExpected.componentCount)) << errorMessage;
+    };
+
+    const FormatProperties props3Ch1B{.sizeInBytes = 3U, .componentSizeInBytes = 1U, .componentCount = 3U};
+    testFormatProperties(VK_FORMAT_B8G8R8_SRGB, props3Ch1B);
+    testFormatProperties(VK_FORMAT_B8G8R8_UNORM, props3Ch1B);
+    testFormatProperties(VK_FORMAT_B8G8R8_SNORM, props3Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8_SRGB, props3Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8_UNORM, props3Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8_SNORM, props3Ch1B);
+
+    const FormatProperties props4Ch1B{.sizeInBytes = 4U, .componentSizeInBytes = 1U, .componentCount = 4U};
+    testFormatProperties(VK_FORMAT_B8G8R8A8_SRGB, props4Ch1B);
+    testFormatProperties(VK_FORMAT_B8G8R8A8_UNORM, props4Ch1B);
+    testFormatProperties(VK_FORMAT_B8G8R8A8_SNORM, props4Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8A8_SRGB, props4Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8A8_UNORM, props4Ch1B);
+    testFormatProperties(VK_FORMAT_R8G8B8A8_SNORM, props4Ch1B);
+
+    const FormatProperties props2Ch4B{.sizeInBytes = 8U, .componentSizeInBytes = 4U, .componentCount = 2U};
+    testFormatProperties(VK_FORMAT_R32G32_SFLOAT, props2Ch4B);
+
+    const FormatProperties props3Ch4B{.sizeInBytes = 12U, .componentSizeInBytes = 4U, .componentCount = 3U};
+    testFormatProperties(VK_FORMAT_R32G32B32_SFLOAT, props3Ch4B);
+
+    const FormatProperties props4Ch4B{.sizeInBytes = 16U, .componentSizeInBytes = 4U, .componentCount = 4U};
+    testFormatProperties(VK_FORMAT_R32G32B32A32_SFLOAT, props4Ch4B);
+
+    const FormatProperties propsCompressed{.sizeInBytes = 0U, .componentSizeInBytes = 0U, .componentCount = 0U};
+    testFormatProperties(VK_FORMAT_BC1_RGB_SRGB_BLOCK, propsCompressed);
+}
+
+TEST(VkUtilsTest, getFormatPropertiesThrowsWhenNotSupported)
+{
+    EXPECT_THROW(getFormatProperties(VK_FORMAT_UNDEFINED), invalid_argument);
+}
+
+TEST(VkUtilsTest, toVkExtent3D)
+{
+    VkExtent2D vkExtent2d{.width = 800U, .height = 600U};
+    const auto vkExtent3d = toVkExtent3D(vkExtent2d);
+    EXPECT_THAT(vkExtent3d.width, Eq(vkExtent2d.width));
+    EXPECT_THAT(vkExtent3d.height, Eq(vkExtent2d.height));
+    EXPECT_THAT(vkExtent3d.depth, Eq(1U));
 }

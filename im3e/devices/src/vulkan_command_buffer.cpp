@@ -166,8 +166,8 @@ void VulkanCommandBuffer::reset()
     // Note: we do not reset the fence here is that it remains marked as complete until we actually submit something
     // new to the queue. Otherwise, we risk waiting for the fence while nothing is executing.
 
-    m_vkSignalSemaphore = {};
-    m_vkWaitSemaphore = {};
+    m_pVkSignalSemaphore.reset();
+    m_pVkWaitSemaphore.reset();
     m_pFutures.clear();
 }
 
@@ -197,18 +197,20 @@ void VulkanCommandBuffer::submitToQueue(CommandExecutionType executionType)
                     "Failed to reset command buffer fence");
 
     const auto vkCommandBuffer = m_pVkCommandBuffer.get();
+    const auto vkSignalSemaphore = m_pVkSignalSemaphore.get();
     VkSubmitInfo vkSubmitInfo{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .commandBufferCount = 1U,
         .pCommandBuffers = &vkCommandBuffer,
-        .signalSemaphoreCount = m_vkSignalSemaphore ? 1U : 0U,
-        .pSignalSemaphores = m_vkSignalSemaphore ? &m_vkSignalSemaphore : nullptr,
+        .signalSemaphoreCount = vkSignalSemaphore ? 1U : 0U,
+        .pSignalSemaphores = vkSignalSemaphore ? &vkSignalSemaphore : nullptr,
     };
     const VkPipelineStageFlags vkWaitDstMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-    if (m_vkWaitSemaphore)
+    const auto vkWaitSemaphore = m_pVkWaitSemaphore.get();
+    if (m_pVkWaitSemaphore)
     {
         vkSubmitInfo.waitSemaphoreCount = 1U;
-        vkSubmitInfo.pWaitSemaphores = &m_vkWaitSemaphore;
+        vkSubmitInfo.pWaitSemaphores = &vkWaitSemaphore;
         vkSubmitInfo.pWaitDstStageMask = &vkWaitDstMask;
     }
     throwIfVkFailed(m_rDevice.getFcts().vkQueueSubmit(m_rQueue.getVkQueue(), 1U, &vkSubmitInfo, m_pVkFence.get()),

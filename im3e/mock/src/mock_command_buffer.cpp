@@ -74,8 +74,11 @@ public:
     }
     auto createFuture() -> shared_ptr<ICommandBufferFuture> override { return m_rMock.createFuture(); }
 
-    void setVkSignalSemaphore(VkSemaphore vkSemaphore) override { m_rMock.setVkSignalSemaphore(vkSemaphore); }
-    void setVkWaitSemaphore(VkSemaphore vkSemaphore) override { m_rMock.setVkWaitSemaphore(vkSemaphore); }
+    void setVkSignalSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) override
+    {
+        m_rMock.setVkSignalSemaphore(vkSemaphore);
+    }
+    void setVkWaitSemaphore(VkSharedPtr<VkSemaphore> vkSemaphore) override { m_rMock.setVkWaitSemaphore(vkSemaphore); }
 
     auto getVkCommandBuffer() const -> VkCommandBuffer override { return m_rMock.getVkCommandBuffer(); }
 
