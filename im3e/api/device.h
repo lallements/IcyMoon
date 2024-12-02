@@ -3,7 +3,7 @@
 #include "command_buffer.h"
 #include "image.h"
 #include "logger.h"
-#include "vulkan_loader.h"
+#include "vulkan_functions.h"
 
 namespace im3e {
 

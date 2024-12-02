@@ -4,7 +4,7 @@
 #include "vulkan_extensions.h"
 
 #include <im3e/api/logger.h>
-#include <im3e/api/vulkan_loader.h>
+#include <im3e/api/vulkan_functions.h>
 
 #include <functional>
 #include <map>

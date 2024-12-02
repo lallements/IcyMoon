@@ -1,4 +1,4 @@
-#include "mock_vulkan_loader.h"
+#include "mock_vulkan_functions.h"
 
 #include <im3e/test_utils/test_utils.h>
 #include <im3e/utils/throw_utils.h>
@@ -8,38 +8,12 @@ using namespace std;
 
 namespace {
 
-MockVulkanLoader* g_pMock{};
+MockVulkanFunctions* g_pMock{};
 
 void assertMockExists()
 {
-    throwIfNull<logic_error>(g_pMock, "An instance of MockVulkanLoader is required");
+    throwIfNull<logic_error>(g_pMock, "An instance of MockVulkanFunctions is required");
 }
-
-class MockProxyVulkanLoader : public IVulkanLoader
-{
-public:
-    MockProxyVulkanLoader(MockVulkanLoader& rMock)
-      : m_rMock(rMock)
-    {
-    }
-
-    auto loadGlobalFcts() const -> VulkanGlobalFcts override { return m_rMock.loadGlobalFcts(); }
-    auto loadInstanceFcts(VkInstance vkInstance) const -> VulkanInstanceFcts override
-    {
-        return m_rMock.loadInstanceFcts(vkInstance);
-    }
-    auto loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts override
-    {
-        return m_rMock.loadDeviceFcts(vkDevice);
-    }
-    auto loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions override
-    {
-        return m_rMock.loadVmaFcts(vkInstance, vkDevice);
-    }
-
-private:
-    MockVulkanLoader& m_rMock;
-};
 
 }  // namespace
 
@@ -55,7 +29,7 @@ MockVulkanDeviceFcts::~MockVulkanDeviceFcts() = default;
 MockVmaVulkanFunctions::MockVmaVulkanFunctions() = default;
 MockVmaVulkanFunctions::~MockVmaVulkanFunctions() = default;
 
-MockVulkanLoader::MockVulkanLoader()
+MockVulkanFunctions::MockVulkanFunctions()
   : m_gFcts(VulkanGlobalFcts{
         .vkEnumerateInstanceVersion =
             [](uint32_t* pApiVersion) {
@@ -515,22 +489,12 @@ MockVulkanLoader::MockVulkanLoader()
 {
     if (g_pMock)
     {
-        throw logic_error("Cannot have more than one instance of MockVulkanLoader");
+        throw logic_error("Cannot have more than one instance of MockVulkanFunctions");
     }
     g_pMock = this;
-
-    ON_CALL(*this, loadGlobalFcts()).WillByDefault(Return(m_gFcts));
-    ON_CALL(*this, loadInstanceFcts(_)).WillByDefault(Return(m_iFcts));
-    ON_CALL(*this, loadDeviceFcts(_)).WillByDefault(Return(m_dFcts));
-    ON_CALL(*this, loadVmaFcts(_, _)).WillByDefault(Return(m_vmaFcts));
 }
 
-MockVulkanLoader::~MockVulkanLoader()
+MockVulkanFunctions::~MockVulkanFunctions()
 {
     g_pMock = nullptr;
-}
-
-auto MockVulkanLoader::createMockProxy() -> unique_ptr<IVulkanLoader>
-{
-    return make_unique<MockProxyVulkanLoader>(*this);
 }

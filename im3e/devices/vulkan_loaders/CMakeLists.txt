@@ -1,4 +1,4 @@
-add_library(im3e_vulkan_loaders STATIC
+add_library(im3e_vulkan_loaders OBJECT
     vulkan_loaders.h
     src/vulkan_loader.cpp
     src/vulkan_loader.h
@@ -21,4 +21,5 @@ target_link_libraries(im3e_vulkan_loaders
     fmt::fmt
 )
 
+add_subdirectory(mock)
 add_subdirectory(test)

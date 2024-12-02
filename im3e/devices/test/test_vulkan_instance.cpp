@@ -2,8 +2,8 @@
 
 #include "mock_vulkan_helper.h"
 
+#include <im3e/devices/vulkan_loaders/mock/mock_vulkan_loader.h>
 #include <im3e/mock/mock_logger.h>
-#include <im3e/mock/mock_vulkan_loader.h>
 #include <im3e/test_utils/test_utils.h>
 
 using namespace im3e;
@@ -20,7 +20,7 @@ struct VulkanInstanceTest : public Test
 {
     auto createInstance(bool isDebugEnabled = false)
     {
-        expectInstanceExtensionsEnumerated(m_mockVkLoader, isDebugEnabled);
+        expectInstanceExtensionsEnumerated(m_mockVkLoader.getMockGlobalFcts(), isDebugEnabled);
         return VulkanInstance(m_mockLogger, isDebugEnabled, {}, m_mockVkLoader.createMockProxy());
     }
 

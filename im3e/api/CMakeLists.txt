@@ -5,7 +5,7 @@ add_library(im3e_api INTERFACE
     gui.h
     image.h
     logger.h
-    vulkan_loader.h
+    vulkan_functions.h
     window.h
 )
 

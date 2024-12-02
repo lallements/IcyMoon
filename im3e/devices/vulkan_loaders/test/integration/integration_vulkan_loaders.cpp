@@ -1,5 +1,5 @@
+#include <im3e/devices/vulkan_loaders/vulkan_loaders.h>
 #include <im3e/test_utils/test_utils.h>
-#include <im3e/vulkan_loaders/vulkan_loaders.h>
 
 #include <gmock/gmock.h>
 

@@ -5,9 +5,8 @@
 #include "vulkan_physical_devices.h"
 
 #include <im3e/api/logger.h>
-#include <im3e/api/vulkan_loader.h>
+#include <im3e/devices/vulkan_loaders/vulkan_loaders.h>
 #include <im3e/utils/types.h>
-#include <im3e/vulkan_loaders/vulkan_loaders.h>
 
 namespace im3e {
 
