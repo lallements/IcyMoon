@@ -24,6 +24,7 @@ target_link_libraries(test_im3e_devices
     im3e_devices
     im3e_test_utils
     mock_im3e
+    mock_im3e_vulkan_loaders
 )
 
 add_subdirectory(integration)

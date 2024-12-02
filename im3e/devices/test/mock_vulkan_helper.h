@@ -1,13 +1,12 @@
 #pragma once
 
-#include <im3e/mock/mock_vulkan_loader.h>
+#include <im3e/mock/mock_vulkan_functions.h>
 #include <im3e/test_utils/test_utils.h>
 
 namespace im3e {
 
-inline void expectInstanceExtensionsEnumerated(MockVulkanLoader& rMockVkLoader, bool isDebugEnabled)
+inline void expectInstanceExtensionsEnumerated(MockVulkanGlobalFcts& rMockFcts, bool isDebugEnabled)
 {
-    auto& rMockFcts = rMockVkLoader.getMockGlobalFcts();
     std::vector<VkExtensionProperties> extensions{VkExtensionProperties{
         .extensionName = VK_KHR_SURFACE_EXTENSION_NAME,
         .specVersion = 1U,

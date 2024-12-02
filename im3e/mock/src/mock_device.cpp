@@ -53,7 +53,7 @@ MockDevice::MockDevice()
     ON_CALL(*this, getVkInstance()).WillByDefault(Return(m_vkInstance));
     ON_CALL(*this, getVkPhysicalDevice()).WillByDefault(Return(m_vkPhysicalDevice));
     ON_CALL(*this, getVkDevice()).WillByDefault(Return(m_vkDevice));
-    ON_CALL(*this, getFcts()).WillByDefault(ReturnRef(m_mockVulkanLoader.getDeviceFcts()));
+    ON_CALL(*this, getFcts()).WillByDefault(ReturnRef(m_mockFcts.getDeviceFcts()));
     ON_CALL(*this, getImageFactory()).WillByDefault(Invoke([this] { return m_mockImageFactory.createMockProxy(); }));
     ON_CALL(*this, getCommandQueue()).WillByDefault(Invoke([this] { return m_mockCommandQueue.createMockProxy(); }));
 }

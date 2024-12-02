@@ -2,7 +2,6 @@
 
 #include <im3e/api/command_buffer.h>
 #include <im3e/api/device.h>
-#include <im3e/api/vulkan_loader.h>
 
 #include <memory>
 #include <string>

@@ -6,12 +6,12 @@ im3e_add_mock_library(
     src/mock_device.cpp
     src/mock_image.cpp
     src/mock_logger.cpp
-    src/mock_vulkan_loader.cpp
+    src/mock_vulkan_functions.cpp
     mock_command_buffer.h
     mock_device.h
     mock_image.h
     mock_logger.h
-    mock_vulkan_loader.h
+    mock_vulkan_functions.h
 )
 
 target_include_directories(mock_im3e

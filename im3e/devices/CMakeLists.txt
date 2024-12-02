@@ -37,4 +37,5 @@ target_link_libraries(im3e_devices
     im3e_vulkan_loaders
 )
 
+add_subdirectory(vulkan_loaders)
 add_subdirectory(test)

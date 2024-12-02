@@ -2,8 +2,8 @@
 
 #include "mock_vulkan_helper.h"
 
+#include <im3e/devices/vulkan_loaders/mock/mock_vulkan_loader.h>
 #include <im3e/mock/mock_logger.h>
-#include <im3e/mock/mock_vulkan_loader.h>
 #include <im3e/test_utils/test_utils.h>
 
 using namespace im3e;
@@ -19,7 +19,7 @@ struct VulkanExtensionsTest : public Test
 TEST_F(VulkanExtensionsTest, constructor)
 {
     constexpr bool DebubDisabled = false;
-    expectInstanceExtensionsEnumerated(m_mockVk, DebubDisabled);
+    expectInstanceExtensionsEnumerated(m_mockVk.getMockGlobalFcts(), DebubDisabled);
 
     VulkanExtensions extensions(m_mockLogger, m_globalFcts, DebubDisabled);
     EXPECT_THAT(extensions.getInstanceExtensions(), IsSupersetOf(vector<string>{

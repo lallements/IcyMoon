@@ -3,7 +3,7 @@
 #include "mock_command_buffer.h"
 #include "mock_image.h"
 #include "mock_logger.h"
-#include "mock_vulkan_loader.h"
+#include "mock_vulkan_functions.h"
 
 #include <im3e/api/device.h>
 
@@ -40,8 +40,7 @@ public:
     auto getMockVkInstance() const -> VkInstance { return m_vkInstance; }
     auto getMockVkPhysicalDevice() const -> VkPhysicalDevice { return m_vkPhysicalDevice; }
     auto getMockVkDevice() const -> VkDevice { return m_vkDevice; }
-    auto getMockVulkanLoader() -> MockVulkanLoader& { return m_mockVulkanLoader; }
-    auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockVulkanLoader.getMockDeviceFcts(); }
+    auto getMockDeviceFcts() -> MockVulkanDeviceFcts& { return m_mockFcts.getMockDeviceFcts(); }
     auto getMockImageFactory() -> MockImageFactory& { return m_mockImageFactory; }
     auto getMockCommandQueue() -> MockCommandQueue& { return m_mockCommandQueue; }
 
@@ -53,7 +52,7 @@ private:
     const VkFence m_vkFence = reinterpret_cast<VkFence>(0xf52e6a);
 
     ::testing::NiceMock<MockLogger> m_mockLogger;
-    ::testing::NiceMock<MockVulkanLoader> m_mockVulkanLoader;
+    ::testing::NiceMock<MockVulkanFunctions> m_mockFcts;
     ::testing::NiceMock<MockImageFactory> m_mockImageFactory;
     ::testing::NiceMock<MockCommandQueue> m_mockCommandQueue;
 };

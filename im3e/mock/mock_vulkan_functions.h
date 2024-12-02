@@ -1,6 +1,6 @@
 #pragma once
 
-#include <im3e/api/vulkan_loader.h>
+#include <im3e/api/vulkan_functions.h>
 #include <im3e/test_utils/test_utils.h>
 
 namespace im3e {
@@ -221,18 +221,11 @@ public:
                  VkMemoryRequirements2* pMemoryRequirements));
 };
 
-class MockVulkanLoader : public IVulkanLoader
+class MockVulkanFunctions
 {
 public:
-    MockVulkanLoader();
-    ~MockVulkanLoader() override;
-
-    MOCK_METHOD(VulkanGlobalFcts, loadGlobalFcts, (), (const, override));
-    MOCK_METHOD(VulkanInstanceFcts, loadInstanceFcts, (VkInstance vkInstance), (const, override));
-    MOCK_METHOD(VulkanDeviceFcts, loadDeviceFcts, (VkDevice vkDevice), (const, override));
-    MOCK_METHOD(VmaVulkanFunctions, loadVmaFcts, (VkInstance vkInstance, VkDevice vkDevice), (const, override));
-
-    auto createMockProxy() -> std::unique_ptr<IVulkanLoader>;
+    MockVulkanFunctions();
+    virtual ~MockVulkanFunctions();
 
     auto getGlobalFcts() const -> const VulkanGlobalFcts& { return m_gFcts; }
     auto getInstanceFcts() const -> const VulkanInstanceFcts& { return m_iFcts; }
