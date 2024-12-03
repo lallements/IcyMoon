@@ -1,9 +1,10 @@
 #pragma once
 
-#include <im3e/utils/types.h>
+#include "types.h"
 
 #include <fmt/format.h>
 
+#include <filesystem>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -48,12 +49,7 @@ public:
     virtual auto createGlobalTracker() -> UniquePtrWithDeleter<ILoggerTracker> = 0;
 };
 
-inline void logIfVkFailed(VkResult vkResult, const ILogger& rLogger, std::string_view errorMessage)
-{
-    if (vkResult != VK_SUCCESS)
-    {
-        rLogger.error(fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
-    }
-}
+std::unique_ptr<ILogger> createTerminalLogger();
+std::unique_ptr<ILogger> createFileLogger(const std::filesystem::path& rFilePath);
 
 }  // namespace im3e

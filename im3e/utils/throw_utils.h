@@ -1,5 +1,7 @@
 #pragma once
 
+#include "loggers.h"
+
 #include <fmt/format.h>
 #include <vulkan/vulkan.h>
 
@@ -42,6 +44,14 @@ inline void throwIfVkFailed(VkResult vkResult, std::string_view errorMessage)
 {
     throwIfFalse<std::runtime_error>(vkResult == VK_SUCCESS,
                                      fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
+}
+
+inline void logIfVkFailed(VkResult vkResult, const ILogger& rLogger, std::string_view errorMessage)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        rLogger.error(fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
+    }
 }
 
 }  // namespace im3e

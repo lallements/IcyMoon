@@ -4,8 +4,8 @@
 #include "vulkan_extensions.h"
 #include "vulkan_physical_devices.h"
 
-#include <im3e/api/logger.h>
 #include <im3e/devices/vulkan_loaders/vulkan_loaders.h>
+#include <im3e/utils/loggers.h>
 #include <im3e/utils/types.h>
 
 namespace im3e {

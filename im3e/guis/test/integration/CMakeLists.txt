@@ -18,6 +18,5 @@ target_link_libraries(integration_im3e_guis
     imgui
     im3e_devices
     im3e_guis
-    im3e_loggers
     im3e_test_utils
 )

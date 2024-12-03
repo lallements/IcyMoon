@@ -3,8 +3,8 @@
 #include "devices.h"
 #include "vulkan_extensions.h"
 
-#include <im3e/api/logger.h>
 #include <im3e/api/vulkan_functions.h>
+#include <im3e/utils/loggers.h>
 
 #include <functional>
 #include <map>

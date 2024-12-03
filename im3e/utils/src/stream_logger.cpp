@@ -5,13 +5,16 @@
 #include <fmt/format.h>
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 
-using namespace fmt::literals;
 using namespace im3e;
 using namespace std;
+using namespace std::filesystem;
 
 namespace {
+
+constexpr auto RootName = "Root"sv;
 
 auto addErrorToTrackers(StreamLoggerContext& rContext, string_view message)
 {
@@ -87,4 +90,14 @@ void StreamLogger::_log(char type, LogLevel level, string_view message) const
         lock_guard<mutex> lg(m_pContext->streamMutex);
         *(m_pContext->pStream) << fmt::format("[{}][{}] {}", type, m_name, message) << endl;
     }
+}
+
+unique_ptr<ILogger> im3e::createTerminalLogger()
+{
+    return make_unique<StreamLogger>(RootName, shared_ptr<ostream>(&cout, [](auto*) {}));
+}
+
+unique_ptr<ILogger> im3e::createFileLogger(const path& rFilePath)
+{
+    return make_unique<StreamLogger>(RootName, make_shared<ofstream>(rFilePath, ios::trunc));
 }

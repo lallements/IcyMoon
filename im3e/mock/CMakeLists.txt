@@ -5,12 +5,10 @@ im3e_add_mock_library(
     src/mock_command_buffer.cpp
     src/mock_device.cpp
     src/mock_image.cpp
-    src/mock_logger.cpp
     src/mock_vulkan_functions.cpp
     mock_command_buffer.h
     mock_device.h
     mock_image.h
-    mock_logger.h
     mock_vulkan_functions.h
 )
 
@@ -26,6 +24,7 @@ target_link_libraries(mock_im3e
   PUBLIC
     GTest::gmock
     im3e_api
+    mock_im3e_utils
   PRIVATE
     im3e_utils
 )

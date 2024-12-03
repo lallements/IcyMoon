@@ -1,4 +1,4 @@
-#include "src/logger_tracker.h"
+#include "src/stream_logger.h"
 
 #include <im3e/test_utils/test_utils.h>
 

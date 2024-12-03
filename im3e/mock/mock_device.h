@@ -2,10 +2,10 @@
 
 #include "mock_command_buffer.h"
 #include "mock_image.h"
-#include "mock_logger.h"
 #include "mock_vulkan_functions.h"
 
 #include <im3e/api/device.h>
+#include <im3e/utils/mock/mock_logger.h>
 
 #include <gmock/gmock.h>
 
