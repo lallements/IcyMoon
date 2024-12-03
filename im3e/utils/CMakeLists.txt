@@ -1,11 +1,14 @@
 add_library(im3e_utils STATIC
+    src/platform_utils.cpp
+    src/stream_logger.cpp
+    src/stream_logger.h
+    src/vk_utils.cpp
     imgui_utils.h
+    loggers.h
     throw_utils.h
     platform_utils.h
     types.h
     vk_utils.h
-    src/platform_utils.cpp
-    src/vk_utils.cpp
 )
 
 target_include_directories(im3e_utils
@@ -25,4 +28,5 @@ target_link_libraries(im3e_utils
     whereami::whereami
 )
 
+add_subdirectory(mock)
 add_subdirectory(test)

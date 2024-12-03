@@ -1,6 +1,6 @@
 #include <im3e/devices/devices.h>
-#include <im3e/loggers/loggers.h>
 #include <im3e/test_utils/test_utils.h>
+#include <im3e/utils/loggers.h>
 
 #include <filesystem>
 

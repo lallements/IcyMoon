@@ -1,8 +1,6 @@
 #pragma once
 
-#include "logger_tracker.h"
-
-#include <im3e/api/logger.h>
+#include <im3e/utils/loggers.h>
 #include <im3e/utils/types.h>
 
 #include <atomic>
@@ -10,6 +8,19 @@
 #include <vector>
 
 namespace im3e {
+
+class LoggerTracker : public ILoggerTracker
+{
+public:
+    void addError(std::string_view message) { m_errors.emplace_back(message); }
+
+    void clearErrors() override { m_errors.clear(); }
+
+    auto getErrors() const -> std::vector<std::string> { return m_errors; }
+
+private:
+    std::vector<std::string> m_errors;
+};
 
 struct StreamLoggerContext
 {

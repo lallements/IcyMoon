@@ -3,8 +3,8 @@
 #include <im3e/api/device.h>
 #include <im3e/api/frame_pipeline.h>
 #include <im3e/api/gui.h>
-#include <im3e/api/logger.h>
 #include <im3e/api/window.h>
+#include <im3e/utils/loggers.h>
 
 namespace im3e {
 
