@@ -1,6 +1,7 @@
 name: CMake on multiple platforms
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main"]
   pull_request:
@@ -16,11 +17,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         build_type: [release]
         c_compiler: [gcc]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: gcc
             cpp_compiler: g++
 
