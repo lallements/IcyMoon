@@ -3,6 +3,7 @@
 - [How to Build](#how-to-build)
   - [Dependencies](#dependencies)
   - [Conan](#conan)
+  - [OpenUSD](#openusd)
   - [Compiling](#compiling)
   - [Running tests](#running-tests)
   - [Test Coverage with GCC](#test-coverage-with-gcc)
@@ -14,8 +15,9 @@
 
 The following must be installed manually:
 
-- [Conan](https://conan.io/downloads.html) (tested with v2.7.1)
+- [Conan](https://conan.io/downloads.html) (tested with 2.9.2)
 - [Vulkan SDK](https://vulkan.lunarg.com/) (tested with 1.3.290.0)
+- [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) (tested with 24.11)
 
 ### Conan
 
@@ -52,6 +54,33 @@ Available configure presets:
   "gcc-debug"   - 'gcc-debug' config
   "gcc-release" - 'gcc-release' config
 ```
+
+### OpenUSD
+
+OpenUSD needs to be downloaded and built manually. Make sure that conan is properly setup as indicated above before proceeding.
+
+Clone the git repository from [GitHub](https://github.com/PixarAnimationStudios/OpenUSD):
+
+```bash
+git clone https://github.com/PixarAnimationStudios/OpenUSD.git
+cd OpenUSD
+git checkout v24.11
+```
+
+From the `OpenUSD` folder, create a `build` folder.
+Start the conan environment we set up ealier (see `conanbuild.sh`). This is needed to get access to a more recent version of cmake.
+
+Start compilation using the python script `build_usd.py` from the root folder `OpenUSD`:
+
+```bash
+python ./build_scripts/build_usd.py --use-cxx11-abi 1 ./build
+```
+
+Once complete, you may add the `bin` folder of OpenUSD to get easy access to tools such as usdview:
+| Environment Variable | Value to add                         |
+|----------------------|--------------------------------------|
+| `PYTHONPATH`         | `<path_to_OpenUSD>/build/lib/python` |
+| `PATH`               | `<path_to_OpenUSD>/build/bin`        |
 
 ### Compiling
 
