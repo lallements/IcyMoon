@@ -62,7 +62,7 @@ find_package(fmt REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenGL REQUIRED) # required by OpenUSD
-find_package(pxr CONFIG REQUIRED)
+find_package(open_usd REQUIRED)
 find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
 find_package(whereami REQUIRED)
