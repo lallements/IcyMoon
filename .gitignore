@@ -1,4 +1,4 @@
 .vscode
 build
 CMakeUserPresets.json
-recipes/**/src
+recipes/open_usd/src
