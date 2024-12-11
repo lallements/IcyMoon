@@ -55,9 +55,19 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - name: Install Python dependencies for OpenUSD
+        run: pip install PySide6 PyOpenGL
+
+      - name: Conan Create OpenUSD
+        working-directory: ${{ github.workspace }}/recipes/open_usd
+        run: conan create . -pr:a ${{ github.workspace }}/profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
       - name: Conan Install
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         run: conan install .. -pr:a ../profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
+      - name: Conan Clean Cache # clean the Conan cache before saving it to reduce its size
+        run: conan cache clean
 
       - name: Save Conan Cache
         id: conan-cache-save
