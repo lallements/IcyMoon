@@ -30,6 +30,9 @@ add_definitions(
     # Vulkan Memory Allocator
     -DVMA_STATIC_VULKAN_FUNCTIONS=0
     -DVMA_DYNAMIC_VULKAN_FUNCTIONS=0
+
+    # To suppress a warning caused by TBB in OpenUSD:
+    -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1
 )
 
 if (MSVC)
@@ -43,6 +46,10 @@ else()
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         add_compile_options(
             -Wno-missing-field-initializers
+
+            # OpenUSD causes warnings because of its use of <ext/hash_set>
+            # See this issue for more details: https://github.com/PixarAnimationStudios/OpenUSD/issues/1057
+            -Wno-deprecated 
         )
     endif()
 endif()
@@ -54,10 +61,11 @@ find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(GTest REQUIRED)
+find_package(OpenGL REQUIRED) # required by OpenUSD
+find_package(pxr REQUIRED CONFIG)
 find_package(vulkan-memory-allocator REQUIRED)
 find_package(VulkanHeaders REQUIRED)
 find_package(whereami REQUIRED)
-
 
 add_subdirectory(applications)
 add_subdirectory(external)

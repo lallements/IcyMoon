@@ -1,6 +1,7 @@
 name: CMake on multiple platforms
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main"]
   pull_request:
@@ -16,11 +17,11 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         build_type: [release]
         c_compiler: [gcc]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: gcc
             cpp_compiler: g++
 
@@ -43,9 +44,37 @@ jobs:
         id: conan
         uses: turtlebrowser/get-conan@main
 
+      - name: Restore Conan Cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-build-conan-cache-${{ hashFiles('**/conanfile.py') }}
+          restore-keys: |
+            ${{ runner.os }}-build-conan-cache-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install Python dependencies for OpenUSD
+        run: pip install PySide6 PyOpenGL
+
+      - name: Conan Create OpenUSD
+        working-directory: ${{ github.workspace }}/recipes/open_usd
+        run: conan create . -pr:a ${{ github.workspace }}/profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
       - name: Conan Install
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         run: conan install .. -pr:a ../profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
+      - name: Conan Clean Cache # clean the Conan cache before saving it to reduce its size
+        run: conan cache clean
+
+      - name: Save Conan Cache
+        id: conan-cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-build-conan-cache-${{ hashFiles('**/conanfile.py') }}
 
       - name: Conan Virtual Environment
         working-directory: ${{ github.workspace }}
