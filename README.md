@@ -2,6 +2,7 @@
 
 - [How to Build](#how-to-build)
   - [Dependencies](#dependencies)
+  - [OpenUSD](#openusd)
   - [Conan](#conan)
   - [Compiling](#compiling)
   - [Running tests](#running-tests)
@@ -14,8 +15,26 @@
 
 The following must be installed manually:
 
-- [Conan](https://conan.io/downloads.html) (tested with v2.7.1)
+- [Conan](https://conan.io/downloads.html) (tested with 2.9.2)
 - [Vulkan SDK](https://vulkan.lunarg.com/) (tested with 1.3.290.0)
+- [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) (tested with 24.11)
+
+### OpenUSD
+
+OpenUSD needs to be manually added to your Conan local cache. To do so, from the root folder of this project, run:
+
+```bash
+conan create ./recipes/open_usd --build=missing
+```
+
+Once complete, the following environment variables will be appended to get easy access to tools such as usdview:
+
+| Environment Variable | Value to add                         |
+|----------------------|--------------------------------------|
+| `PYTHONPATH`         | `<path_to_OpenUSD>/build/lib/python` |
+| `PATH`               | `<path_to_OpenUSD>/build/bin`        |
+
+These variables will be available when using the Conan virtual environment (see `conanbuild.sh` below).
 
 ### Conan
 
