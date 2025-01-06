@@ -1,0 +1,24 @@
+#include <im3e/guis/guis.h>
+#include <im3e/utils/loggers.h>
+
+#include <filesystem>
+
+using namespace im3e;
+using namespace std;
+
+int main([[maybe_unused]] int argc, char* argv[])
+{
+    filesystem::path appPath{argv[0]};
+
+    auto pLogger = createTerminalLogger();
+    auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
+                                                          .name = appPath.filename(),
+                                                          .isDebugEnabled = true,
+                                                      });
+
+    auto pWorkspace = createImguiWorkspace("Workspace");
+    pApp->createWindow(pWorkspace);
+
+    pApp->run();
+    return 0;
+}
