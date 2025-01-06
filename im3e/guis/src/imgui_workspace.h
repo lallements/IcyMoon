@@ -26,6 +26,8 @@ public:
 
     void addPanel(Location location, std::shared_ptr<IGuiPanel> pPanel, float fraction = 0.25F) override;
 
+    void setImguiDemoVisible(bool visible) { m_imguiDemoVisible = visible; }
+
     auto getName() const -> std::string override { return m_name; }
 
 private:

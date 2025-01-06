@@ -31,6 +31,8 @@ public:
     auto shouldClose() const -> bool { return glfwWindowShouldClose(m_pWindow.get()) != 0; }
     auto isIconified() const -> bool { return m_iconified; }
 
+    auto getHandle() -> GLFWwindow* { return m_pWindow.get(); }
+
 private:
     void _onWindowResized(int width, int height);
     void _onWindowIconify(bool iconified);
