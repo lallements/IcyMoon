@@ -23,13 +23,15 @@ private:
 
     VkUniquePtr<VkSwapchainKHR> m_pVkSwapchain;
     std::vector<std::shared_ptr<IImage>> m_pImages;
-    std::vector<std::shared_ptr<ICommandBufferFuture>> m_pImageFutures;
     VkExtent2D m_vkExtent{};
     bool m_isOutOfDate = true;
 
     std::vector<VkSharedPtr<VkSemaphore>> m_pReadyToWriteSemaphores;
+    size_t m_readyToWriteSemaphoreIndex{};
+
     std::vector<VkSharedPtr<VkSemaphore>> m_pReadyToPresentSemaphores;
-    size_t m_semaphoreIndex{};
+    std::vector<std::shared_ptr<ICommandBufferFuture>> m_pCommandFutures;
+    size_t m_commandIndex{};
 };
 
 }  // namespace im3e

@@ -31,7 +31,7 @@ public:
 
 private:
     weak_ptr<VulkanCommandBuffer> m_pCommandBuffer;
-    bool m_isComplete = true;
+    bool m_isComplete = false;
 };
 
 }  // namespace im3e
