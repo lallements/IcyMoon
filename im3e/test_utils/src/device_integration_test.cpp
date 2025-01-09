@@ -87,7 +87,7 @@ void DeviceIntegrationTest::TearDownTestSuite()
     // If s_pDevice has more than one use_count at this point, it means a resource was not properly released and the
     // device will not be properly destroyed.
     throwIfFalse<logic_error>(
-        s_pDevice.use_count() == 1U,
+        s_pDevice.use_count() <= 1U,
         fmt::format("The integration test device's use_count is higher than 1 ({}) on test suite tear down",
                     s_pDevice.use_count()));
 

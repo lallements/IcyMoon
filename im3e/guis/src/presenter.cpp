@@ -177,9 +177,8 @@ void Presenter::present()
     const auto& rFcts = m_pDevice->getFcts();
     auto pCommandQueue = m_pDevice->getCommandQueue();
 
-    m_semaphoreIndex = (m_semaphoreIndex + 1U) % m_pReadyToWriteSemaphores.size();
-    auto pVkReadyToWriteSemaphore = m_pReadyToWriteSemaphores[m_semaphoreIndex];
-    auto pVkReadyToPresentSemaphore = m_pReadyToPresentSemaphores[m_semaphoreIndex];
+    m_readyToWriteSemaphoreIndex = (m_readyToWriteSemaphoreIndex + 1U) % m_pReadyToWriteSemaphores.size();
+    auto pVkReadyToWriteSemaphore = m_pReadyToWriteSemaphores[m_readyToWriteSemaphoreIndex];
     uint32_t imageIndex{};
     {
         auto vkResult = rFcts.vkAcquireNextImageKHR(m_pDevice->getVkDevice(), m_pVkSwapchain.get(),
@@ -202,10 +201,12 @@ void Presenter::present()
             throwIfVkFailed(vkResult, "Failed to acquire next swapchain image for presenter");
         }
     }
-    if (m_pImageFutures[imageIndex])
+    m_commandIndex = (m_commandIndex + 1U) % m_pCommandFutures.size();
+    auto pVkReadyToPresentSemaphore = m_pReadyToPresentSemaphores[m_commandIndex];
+    if (m_pCommandFutures[m_commandIndex])
     {
-        m_pImageFutures[imageIndex]->waitForCompletion();
-        m_pImageFutures[imageIndex].reset();
+        m_pCommandFutures[m_commandIndex]->waitForCompletion();
+        m_pCommandFutures[m_commandIndex].reset();
     }
     {
         auto pCommandBuffer = pCommandQueue->startScopedCommand("present", CommandExecutionType::Async);
@@ -220,7 +221,7 @@ void Presenter::present()
                                                               });
         }
 
-        m_pImageFutures[imageIndex] = pCommandBuffer->createFuture();
+        m_pCommandFutures[m_commandIndex] = pCommandBuffer->createFuture();
     }
     const auto vkSwapchain = m_pVkSwapchain.get();
     const auto vkReadyToPresentSemaphore = pVkReadyToPresentSemaphore.get();
@@ -240,13 +241,13 @@ void Presenter::present()
 void Presenter::reset()
 {
     // Wait for any future we have left to make sure our swapchain images have all been processed:
-    ranges::for_each(m_pImageFutures, [](auto& pFuture) {
+    ranges::for_each(m_pCommandFutures, [](auto& pFuture) {
         if (pFuture)
         {
             pFuture->waitForCompletion();
         }
     });
-    m_pImageFutures.clear();
+    m_pCommandFutures.clear();
 
     // Wait for the queue to be idle as there might still be images being presented via vkQueuePresentKHR and we
     // cannot have a fence for these calls:
@@ -258,18 +259,19 @@ void Presenter::reset()
     m_pVkSwapchain = createVkSwapchain(*m_pDevice, vkCreateInfo);
     m_vkExtent = vkCreateInfo.imageExtent;
     m_pImages = getSwapchainImages(*m_pDevice, m_pVkSwapchain.get(), vkCreateInfo);
-    m_pImageFutures.resize(m_pImages.size());
 
-    // We add 1 one more set of sync objects than the total image count because we may try to acquire the next image
-    // while all images have been queued. In this case, all sync object sets would also be used if we didn't have an
-    // extra set.
-    const auto syncObjectCount = m_pImages.size() + 1U;
-    m_pReadyToWriteSemaphores.resize(syncObjectCount);
-    m_pReadyToPresentSemaphores.resize(syncObjectCount);
     auto createVkSemaphore = [&](auto& pSemaphore) { pSemaphore = m_pDevice->createVkSemaphore(); };
+
+    // We add 1 one more ready to write semaphore because we could start acquiring the next image while all images
+    // are currently in flight.
+    m_pReadyToWriteSemaphores.resize(m_pImages.size() + 1U);
     ranges::for_each(m_pReadyToWriteSemaphores, createVkSemaphore);
+    m_readyToWriteSemaphoreIndex = {};
+
+    m_pReadyToPresentSemaphores.resize(m_pImages.size());
     ranges::for_each(m_pReadyToPresentSemaphores, createVkSemaphore);
-    m_semaphoreIndex = {};
+    m_pCommandFutures.resize(m_pImages.size());
+    m_commandIndex = {};
 
     m_pFramePipeline->resize(m_vkExtent, static_cast<uint32_t>(m_pImages.size()));
 
