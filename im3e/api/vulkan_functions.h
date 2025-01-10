@@ -82,6 +82,8 @@ struct VulkanDeviceFcts
     PFN_vkDestroyDescriptorPool vkDestroyDescriptorPool{};
     PFN_vkCreateImageView vkCreateImageView{};
     PFN_vkDestroyImageView vkDestroyImageView{};
+    PFN_vkCreateSampler vkCreateSampler{};
+    PFN_vkDestroySampler vkDestroySampler{};
 };
 
 }  // namespace im3e

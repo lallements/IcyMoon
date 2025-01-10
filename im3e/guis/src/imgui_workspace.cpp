@@ -7,6 +7,8 @@
 #include <fmt/format.h>
 #include <imgui_internal.h>
 
+#include <algorithm>
+
 using namespace im3e;
 using namespace std;
 
@@ -138,6 +140,11 @@ void ImguiWorkspace::addPanel(Location location, std::shared_ptr<IGuiPanel> pPan
         .fraction = fraction,
     };
 
+    if (m_windowSize.width != 0U || m_windowSize.height != 0U)
+    {
+        panelInfo.pPanel->onWindowResized(m_windowSize, m_windowFormat, m_frameInFlightCount);
+    }
+
     if (location == Location::Center)
     {
         m_centerPanel = move(panelInfo);
@@ -148,6 +155,20 @@ void ImguiWorkspace::addPanel(Location location, std::shared_ptr<IGuiPanel> pPan
     }
 
     m_workspaceInitialized = false;  // need to reset the workspace to add the new panel
+}
+
+void ImguiWorkspace::onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat vkFormat, uint32_t frameInFlightCount)
+{
+    m_windowSize = rVkWindowSize;
+    m_windowFormat = vkFormat;
+    m_frameInFlightCount = frameInFlightCount;
+    if (m_centerPanel.pPanel)
+    {
+        m_centerPanel.pPanel->onWindowResized(m_windowSize, m_windowFormat, m_frameInFlightCount);
+    }
+    ranges::for_each(m_panelInfos, [this](auto& rPanelInfo) {
+        rPanelInfo.pPanel->onWindowResized(m_windowSize, m_windowFormat, m_frameInFlightCount);
+    });
 }
 
 auto im3e::createImguiWorkspace(string_view name) -> shared_ptr<IGuiWorkspace>

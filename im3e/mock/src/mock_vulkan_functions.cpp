@@ -353,6 +353,16 @@ MockVulkanFunctions::MockVulkanFunctions()
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkDestroyImageView(device, imageView, pAllocator);
             },
+        .vkCreateSampler = [](VkDevice device, const VkSamplerCreateInfo* pCreateInfo,
+                              const VkAllocationCallbacks* pAllocator, VkSampler* pSampler) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkCreateSampler(device, pCreateInfo, pAllocator, pSampler);
+        },
+        .vkDestroySampler =
+            [](VkDevice device, VkSampler sampler, const VkAllocationCallbacks* pAllocator) {
+                assertMockExists();
+                g_pMock->getMockDeviceFcts().vkDestroySampler(device, sampler, pAllocator);
+            },
     })
   , m_vmaFcts(VmaVulkanFunctions{
         .vkGetPhysicalDeviceProperties =

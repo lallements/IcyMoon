@@ -26,6 +26,8 @@ public:
 
     void addPanel(Location location, std::shared_ptr<IGuiPanel> pPanel, float fraction = 0.25F) override;
 
+    void onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat vkFormat, uint32_t frameInFlightCount);
+
     void setImguiDemoVisible(bool visible) { m_imguiDemoVisible = visible; }
 
     auto getName() const -> std::string override { return m_name; }
@@ -34,6 +36,10 @@ private:
     const std::string m_name;
     bool m_workspaceInitialized = false;
     bool m_imguiDemoVisible = false;
+
+    VkExtent2D m_windowSize{};
+    VkFormat m_windowFormat{};
+    uint32_t m_frameInFlightCount{};
 
     ImguiWorkspacePanelInfo m_centerPanel;
     std::vector<ImguiWorkspacePanelInfo> m_panelInfos;

@@ -114,6 +114,8 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkDestroyDescriptorPool),
         LOAD_DEVICE_FCT(vkCreateImageView),
         LOAD_DEVICE_FCT(vkDestroyImageView),
+        LOAD_DEVICE_FCT(vkCreateSampler),
+        LOAD_DEVICE_FCT(vkDestroySampler),
     };
 }
 

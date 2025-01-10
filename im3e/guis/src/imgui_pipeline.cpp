@@ -119,7 +119,7 @@ ImguiPipeline::~ImguiPipeline()
     m_pBackend.reset();
 }
 
-void ImguiPipeline::prepareExecution(ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage)
+void ImguiPipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage)
 {
     auto pContextGuard = m_pContext->makeCurrent();
 
@@ -162,13 +162,17 @@ void ImguiPipeline::resize(const VkExtent2D& rVkExtent, uint32_t frameInFlightCo
 {
     auto pContextGuard = m_pContext->makeCurrent();
 
+    constexpr VkFormat OutputFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+
     m_pFrame = m_pDevice->getImageFactory()->createImage(ImageConfig{
         .name = "ImguiPipelineImage",
         .vkExtent = rVkExtent,
-        .vkFormat = VK_FORMAT_R32G32B32A32_SFLOAT,
+        .vkFormat = OutputFormat,
         .vkUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     });
 
     m_pBackend.reset();  // reset first, to avoid having more than one backend at a time
     m_pBackend = make_unique<ImguiVulkanBackend>(m_pDevice, m_pFrame, frameInFlightCount, m_pGlfwWindow);
+
+    m_pWorkspace->onWindowResized(rVkExtent, OutputFormat, frameInFlightCount);
 }
