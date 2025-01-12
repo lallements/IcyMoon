@@ -220,6 +220,8 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     expectDeviceFctLoaded(vkDevice, "vkDestroyDescriptorPool");
     expectDeviceFctLoaded(vkDevice, "vkCreateImageView");
     expectDeviceFctLoaded(vkDevice, "vkDestroyImageView");
+    expectDeviceFctLoaded(vkDevice, "vkCreateSampler");
+    expectDeviceFctLoaded(vkDevice, "vkDestroySampler");
 
     auto deviceFcts = pLoader->loadDeviceFcts(vkDevice);
     EXPECT_THAT(deviceFcts.vkDestroyDevice, NotNull());
@@ -265,6 +267,8 @@ TEST_F(VulkanLoaderTest, loadDeviceFcts)
     EXPECT_THAT(deviceFcts.vkDestroyDescriptorPool, NotNull());
     EXPECT_THAT(deviceFcts.vkCreateImageView, NotNull());
     EXPECT_THAT(deviceFcts.vkDestroyImageView, NotNull());
+    EXPECT_THAT(deviceFcts.vkCreateSampler, NotNull());
+    EXPECT_THAT(deviceFcts.vkDestroySampler, NotNull());
 }
 
 TEST_F(VulkanLoaderTest, loadDeviceFctsThrowsWithoutDevice)

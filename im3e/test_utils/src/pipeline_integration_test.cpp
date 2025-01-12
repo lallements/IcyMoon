@@ -29,6 +29,29 @@ auto PipelineIntegrationTest::mapOutputImage() const -> unique_ptr<const IHostVi
     return m_pHostVisibleOutputImage->mapReadOnly();
 }
 
+void PipelineIntegrationTest::expectRgbaPixel(const IHostVisibleImage::IMapping& rMapping,
+                                              const array<uint32_t, 2U>& rPos, const array<uint8_t, 4U>& rExpected)
+{
+    const auto& rRgbaPixel = *reinterpret_cast<const array<uint8_t, 4U>*>(rMapping.getPixel(rPos[0], rPos[1]));
+    EXPECT_THAT(rRgbaPixel, ContainerEq(rExpected)) << fmt::format("Pixel at [{}; {}]", rPos[0], rPos[1]);
+}
+
+void PipelineIntegrationTest::expectRgbaPixelRegion(const IHostVisibleImage::IMapping& rMapping,
+                                                    const std::array<uint32_t, 2U>& rMinPos,
+                                                    const std::array<uint32_t, 2U>& rMaxPos,
+                                                    const std::array<uint8_t, 4U>& rExpected)
+{
+    for (uint32_t y = rMinPos[1]; y < rMaxPos[1]; y++)
+    {
+        auto* pIt = reinterpret_cast<const array<uint8_t, 4U>*>(rMapping.getPixel(rMinPos[0], y));
+        for (uint32_t x = rMinPos[0]; x < rMaxPos[0]; x++)
+        {
+            EXPECT_THAT(*pIt, ContainerEq(rExpected)) << fmt::format("Pixel at [{}; {}]", x, y);
+            pIt++;
+        }
+    }
+}
+
 void PipelineIntegrationTest::initialize(Config config, unique_ptr<IFramePipeline> pFramePipeline)
 {
     throwIfArgNull(pFramePipeline.get(), "Cannot initialize pipeline integration test without a pipeline");

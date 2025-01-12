@@ -158,6 +158,10 @@ public:
                  VkImageView* pView));
     MOCK_METHOD(void, vkDestroyImageView,
                 (VkDevice device, VkImageView imageView, const VkAllocationCallbacks* pAllocator));
+    MOCK_METHOD(VkResult, vkCreateSampler,
+                (VkDevice device, const VkSamplerCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
+                 VkSampler* pSampler));
+    MOCK_METHOD(void, vkDestroySampler, (VkDevice device, VkSampler sampler, const VkAllocationCallbacks* pAllocator));
 };
 
 class MockVmaVulkanFunctions

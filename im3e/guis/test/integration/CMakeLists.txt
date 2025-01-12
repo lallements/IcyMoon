@@ -5,6 +5,7 @@ im3e_add_integration_tests_executable(
     integration_glfw_window_application.cpp
     integration_glfw_window.cpp
     integration_imgui_pipeline.cpp
+    integration_imgui_render_panel.cpp
     integration_imgui_vulkan_backend.cpp
 )
 
