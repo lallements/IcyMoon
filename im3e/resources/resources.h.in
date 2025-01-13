@@ -6,11 +6,6 @@
 
 namespace im3e {
 
-inline auto getAssetsPath()
-{
-    return std::filesystem::path("@IM3E_RESOURCES_PATH@/assets");
-}
-
 inline auto getGuiFontPath()
 {
     return getCurrentExecutableFolder() / "fonts" / "SourceCodePro-Regular.ttf";
@@ -19,6 +14,11 @@ inline auto getGuiFontPath()
 inline auto getImagesPath()
 {
     return std::filesystem::path("@IM3E_RESOURCES_PATH@/images");
+}
+
+inline auto getTestAssetsPath()
+{
+    return std::filesystem::path("@IM3E_RESOURCES_PATH@/test_assets");
 }
 
 }  // namespace im3e

@@ -1,3 +1,6 @@
 [submodule "external/imgui/imgui"]
 	path = external/imgui/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "im3e/resources/test_assets/usd_wg_assets"]
+	path = im3e/resources/test_assets/usd_wg_assets
+	url = https://github.com/usd-wg/assets.git
