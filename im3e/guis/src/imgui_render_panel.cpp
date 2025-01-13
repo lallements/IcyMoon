@@ -108,7 +108,7 @@ void ImguiRenderPanel::onWindowResized(const VkExtent2D&, VkFormat vkFormat, uin
     m_needsResize = true;
 }
 
-auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline) -> unique_ptr<IGuiPanel>
+auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline) -> shared_ptr<IGuiPanel>
 {
-    return make_unique<ImguiRenderPanel>(name, move(pFramePipeline));
+    return make_shared<ImguiRenderPanel>(name, move(pFramePipeline));
 }
