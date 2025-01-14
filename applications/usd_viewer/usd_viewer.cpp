@@ -19,7 +19,13 @@ int main([[maybe_unused]] int argc, char* argv[])
     auto pDevice = pApp->getDevice();
 
     auto pWorkspace = createImguiWorkspace("Workspace");
-    auto pRenderPanel = createImguiRenderPanel("Render", createUsdFramePipeline(pDevice));
+
+    shared_ptr<IGuiPanel> pRenderPanel;
+    {
+        auto pRenderDelegate = createUsdRenderDelegate(pDevice);
+        auto pHydraFramePipeline = createHydraFramePipeline(pDevice, move(pRenderDelegate));
+        pRenderPanel = createImguiRenderPanel("Render", move(pHydraFramePipeline));
+    }
     pWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel, 0.5F);
     pApp->createWindow(pWorkspace);
 

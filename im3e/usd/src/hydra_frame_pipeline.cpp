@@ -10,8 +10,9 @@ namespace {
 class HydraFramePipeline : public IFramePipeline
 {
 public:
-    HydraFramePipeline(std::shared_ptr<const IDevice> pDevice)
+    HydraFramePipeline(std::shared_ptr<const IDevice> pDevice, unique_ptr<pxr::HdRenderDelegate> pRenderDelegate)
       : m_pDevice(throwIfArgNull(move(pDevice), "Hydra Frame Pipeline requires a device"))
+      , m_pRenderDelegate(throwIfArgNull(move(pRenderDelegate), "Hydra Frame Pipeline requires a render delegate"))
     {
     }
 
@@ -23,11 +24,13 @@ public:
 
 private:
     shared_ptr<const IDevice> m_pDevice;
+    unique_ptr<pxr::HdRenderDelegate> m_pRenderDelegate;
 };
 
 }  // namespace
 
-auto im3e::createUsdFramePipeline(shared_ptr<const IDevice> pDevice) -> unique_ptr<IFramePipeline>
+auto im3e::createHydraFramePipeline(shared_ptr<const IDevice> pDevice,
+                                    unique_ptr<pxr::HdRenderDelegate> pRenderDelegate) -> unique_ptr<IFramePipeline>
 {
-    return make_unique<HydraFramePipeline>(move(pDevice));
+    return make_unique<HydraFramePipeline>(move(pDevice), move(pRenderDelegate));
 }
