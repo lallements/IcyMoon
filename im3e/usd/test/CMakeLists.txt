@@ -13,6 +13,7 @@ target_include_directories(test_im3e_usd
 target_link_libraries(test_im3e_usd
   PRIVATE
     hdx
+    im3e_resources
     im3e_test_utils
     usdImaging
     usdImagingGL

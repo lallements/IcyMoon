@@ -2,6 +2,7 @@ add_library(im3e_usd
     usd.h
     src/hydra_frame_pipeline.cpp
     src/hydra_render_delegate.cpp
+    src/hydra_scene_delegate.cpp
 )
 
 target_include_directories(im3e_usd
@@ -18,6 +19,7 @@ target_link_libraries(im3e_usd
     hdx
   PRIVATE
     im3e_utils
+    usdImaging
 )
 
 add_subdirectory(test)
