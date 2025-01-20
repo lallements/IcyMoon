@@ -14,6 +14,8 @@ add_library(im3e_guis
     src/imgui_vulkan_backend.h
     src/imgui_workspace.cpp
     src/imgui_workspace.h
+    src/offscreen_opengl_context.cpp
+    src/offscreen_opengl_context.h
     src/presenter.cpp
     src/presenter.h
 )
@@ -31,6 +33,7 @@ target_link_libraries(im3e_guis
     im3e_api
     im3e_utils
   PRIVATE
+    GLEW::glew_s
     glfw
     im3e_devices
     im3e_resources

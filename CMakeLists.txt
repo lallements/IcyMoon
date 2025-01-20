@@ -59,6 +59,7 @@ im3e_set_coverage_flags()
 
 find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
+find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenGL REQUIRED) # required by OpenUSD

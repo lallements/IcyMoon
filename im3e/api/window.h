@@ -8,12 +8,28 @@
 
 namespace im3e {
 
+class IGlContext
+{
+public:
+    virtual ~IGlContext() = default;
+
+    class IGuard
+    {
+    public:
+        virtual ~IGuard() = default;
+    };
+    [[nodiscard]] virtual auto makeCurrent() -> std::unique_ptr<IGuard> = 0;
+};
+
 class IWindowApplication
 {
 public:
     virtual ~IWindowApplication() = default;
 
     virtual void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) = 0;
+
+    /// @brief Create an invisible window to perform offscreen rendering with OpenGL.
+    virtual auto createOffscreenOpenGlContext() -> std::shared_ptr<IGlContext> = 0;
 
     /// @brief Starts execution of the application.
     /// This includes running the execution loop that listens to input events (keyboard, mouse) and refreshes windows

@@ -30,6 +30,7 @@ auto createWindow(const ILogger& rLogger, std::string_view name, GlfwWindowCallb
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // for Vulkan
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 
     constexpr int Width = 1200;
     constexpr int Height = 800;

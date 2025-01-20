@@ -1,6 +1,7 @@
 #include "glfw_window_application.h"
 
 #include "guis.h"
+#include "offscreen_opengl_context.h"
 
 #include <im3e/devices/devices.h>
 
@@ -63,6 +64,11 @@ void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
                                                         .iniFilename = iniFilename,
                                                     },
                                                     move(pImguiWorkspace)));
+}
+
+auto GlfwWindowApplication::createOffscreenOpenGlContext() -> shared_ptr<IGlContext>
+{
+    return make_shared<OffscreenOpenGlContext>();
 }
 
 void GlfwWindowApplication::run(function<void()> loopIterationFct)

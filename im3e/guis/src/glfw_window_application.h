@@ -28,6 +28,7 @@ public:
     GlfwWindowApplication(const ILogger& rLogger, WindowApplicationConfig config);
 
     void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) override;
+    auto createOffscreenOpenGlContext() -> std::shared_ptr<IGlContext> override;
 
     void run(std::function<void()> loopIterationFct) override;
     void stop() override;

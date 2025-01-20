@@ -21,14 +21,16 @@ int main([[maybe_unused]] int argc, char* argv[])
 
     auto pWorkspace = createImguiWorkspace("Workspace");
 
+    auto pGlContext = pApp->createOffscreenOpenGlContext();
+    auto pRenderer = createHdStormRenderer(pDevice, pGlContext);
+
     shared_ptr<IGuiPanel> pRenderPanel;
     {
         const auto usdStagePath = getTestAssetsPath() / "usd_wg_assets" / "full_assets" / "CarbonFrameBike" /
                                   "CarbonFrameBike.usdz";
         auto pUsdStage = openUsdStage(usdStagePath);
 
-        auto pRenderDelegate = createUsdRenderDelegate(pDevice);
-        auto pHydraFramePipeline = createHydraFramePipeline(pDevice, move(pRenderDelegate), move(pUsdStage));
+        auto pHydraFramePipeline = createHydraFramePipeline(pDevice, pRenderer, move(pUsdStage));
         pRenderPanel = createImguiRenderPanel("Render", move(pHydraFramePipeline));
     }
     pWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel, 0.5F);
