@@ -62,6 +62,7 @@ public:
 
     auto getRenderIndex() -> pxr::HdRenderIndex& override { return *m_pRenderIndex; }
     auto getRenderIndex() const -> const pxr::HdRenderIndex& override { return *m_pRenderIndex; }
+    auto getTasks() const -> pxr::HdTaskSharedPtrVector override { return m_pTasks; }
 
 private:
     shared_ptr<const IDevice> m_pDevice;
@@ -73,6 +74,8 @@ private:
     pxr::HgiUniquePtr m_pHgi;
     pxr::HdDriver m_hdDriver;
     unique_ptr<pxr::HdRenderIndex> m_pRenderIndex;
+
+    pxr::HdTaskSharedPtrVector m_pTasks;
 };
 
 }  // namespace

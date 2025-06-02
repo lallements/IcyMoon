@@ -3,6 +3,7 @@
 #include <im3e/utils/throw_utils.h>
 
 #include <fmt/format.h>
+#include <pxr/imaging/hd/engine.h>
 #include <pxr/imaging/hd/sceneIndexAdapterSceneDelegate.h>
 #include <pxr/imaging/hdx/renderTask.h>
 #include <pxr/usd/usd/prim.h>
@@ -41,11 +42,17 @@ public:
       , m_sceneDelegateId(pxr::SdfPath::AbsoluteRootPath())
       , m_pSceneDelegateAdapter(make_unique<pxr::HdSceneIndexAdapterSceneDelegate>(
             m_pSceneIndex, &m_pRenderer->getRenderIndex(), m_sceneDelegateId))
+
+      , m_pEngine(make_shared<pxr::HdEngine>())
     {
         m_pRenderer->getRenderIndex().InsertTask<pxr::HdxRenderTask>(m_pSceneDelegateAdapter.get(), m_renderTaskId);
     }
 
-    void prepareExecution(const ICommandBuffer&, std::shared_ptr<IImage>) override {}
+    void prepareExecution(const ICommandBuffer&, std::shared_ptr<IImage>) override
+    {
+        auto tasks = m_pRenderer->getTasks();
+        m_pEngine->Execute(&m_pRenderer->getRenderIndex(), &tasks);
+    }
 
     void resize(const VkExtent2D&, uint32_t) override {}
 
@@ -62,6 +69,8 @@ private:
     pxr::HdSceneIndexBaseRefPtr m_pSceneIndex;
     pxr::SdfPath m_sceneDelegateId;
     unique_ptr<pxr::HdSceneIndexAdapterSceneDelegate> m_pSceneDelegateAdapter;
+
+    shared_ptr<pxr::HdEngine> m_pEngine;
 };
 
 }  // namespace

@@ -23,6 +23,7 @@ public:
 
     virtual auto getRenderIndex() -> pxr::HdRenderIndex& = 0;
     virtual auto getRenderIndex() const -> const pxr::HdRenderIndex& = 0;
+    virtual auto getTasks() const -> pxr::HdTaskSharedPtrVector = 0;
 };
 auto createHdStormRenderer(std::shared_ptr<const IDevice> pDevice, std::shared_ptr<IGlContext> pGlContext)
     -> std::shared_ptr<IHydraRenderer>;
