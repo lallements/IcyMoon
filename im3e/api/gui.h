@@ -2,6 +2,8 @@
 
 #include "command_buffer.h"
 
+#include <string>
+
 namespace im3e {
 
 class IGuiPanel

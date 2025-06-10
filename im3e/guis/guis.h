@@ -12,7 +12,7 @@ auto createImguiPipeline(std::shared_ptr<const IDevice> pDevice, std::shared_ptr
     -> std::unique_ptr<IFramePipeline>;
 
 auto createImguiRenderPanel(std::string_view name, std::unique_ptr<IFramePipeline> pFramePipeline)
-    -> std::unique_ptr<IGuiPanel>;
+    -> std::shared_ptr<IGuiPanel>;
 
 auto createImguiWorkspace(std::string_view name) -> std::shared_ptr<IGuiWorkspace>;
 

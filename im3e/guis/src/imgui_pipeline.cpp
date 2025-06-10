@@ -162,7 +162,7 @@ void ImguiPipeline::resize(const VkExtent2D& rVkExtent, uint32_t frameInFlightCo
 {
     auto pContextGuard = m_pContext->makeCurrent();
 
-    constexpr VkFormat OutputFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+    constexpr VkFormat OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
     m_pFrame = m_pDevice->getImageFactory()->createImage(ImageConfig{
         .name = "ImguiPipelineImage",
