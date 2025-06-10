@@ -1,4 +1,7 @@
+#include "anari_frame_pipeline.h"
+
 #include <im3e/devices/devices.h>
+#include <im3e/guis/guis.h>
 #include <im3e/utils/loggers.h>
 #include <im3e/utils/throw_utils.h>
 
@@ -17,7 +20,6 @@ using namespace std;
 namespace {
 
 constexpr auto AnariImplementationName = "helide";
-constexpr array<uint32_t, 2U> WindowSize{1920U, 1080U};
 
 void statusFct([[maybe_unused]] const void* pUserData, [[maybe_unused]] ANARIDevice anariDevice,
                [[maybe_unused]] ANARIObject anariObject, [[maybe_unused]] ANARIDataType anariSourceType,
@@ -300,73 +302,6 @@ auto createRenderer(const ILogger& rLogger, ANARIDevice anDevice, string_view re
     });
 }
 
-auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
-{
-    auto anCamera = anariNewCamera(anDevice, "perspective");
-
-    const auto aspectRatio = static_cast<float>(WindowSize[0]) / static_cast<float>(WindowSize[1]);
-    anariSetParameter(anDevice, anCamera, "aspect", ANARI_FLOAT32, &aspectRatio);
-
-    const array<float, 3U> position{};
-    anariSetParameter(anDevice, anCamera, "position", ANARI_FLOAT32_VEC3, position.data());
-
-    const array<float, 3U> up{0.0F, 1.0F, 0.0F};
-    anariSetParameter(anDevice, anCamera, "up", ANARI_FLOAT32_VEC3, up.data());
-
-    const array<float, 3U> direction{0.1F, 0.0F, 1.0F};
-    anariSetParameter(anDevice, anCamera, "direction", ANARI_FLOAT32_VEC3, direction.data());
-
-    anariCommitParameters(anDevice, anCamera);
-
-    return shared_ptr<anari::api::Camera>(anCamera, [anDevice, pLogger = &rLogger](auto* anCamera) {
-        anariRelease(anDevice, anCamera);
-        pLogger->debug("Released camera");
-    });
-}
-
-auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anRenderer, ANARICamera anCamera,
-                 ANARIWorld anWorld)
-{
-    auto anFrame = anariNewFrame(anDevice);
-    auto pFrame = shared_ptr<anari::api::Frame>(anFrame, [anDevice, pLogger = &rLogger](auto* anFrame) {
-        anariRelease(anDevice, anFrame);
-        pLogger->debug("Released frame");
-    });
-
-    const ANARIDataType format = ANARI_UFIXED8_RGBA_SRGB;
-    anariSetParameter(anDevice, anFrame, "size", ANARI_UINT32_VEC2, WindowSize.data());
-    anariSetParameter(anDevice, anFrame, "channel.color", ANARI_DATA_TYPE, &format);
-    anariSetParameter(anDevice, anFrame, "renderer", ANARI_RENDERER, &anRenderer);
-    anariSetParameter(anDevice, anFrame, "camera", ANARI_CAMERA, &anCamera);
-    anariSetParameter(anDevice, anFrame, "world", ANARI_WORLD, &anWorld);
-
-    anariCommitParameters(anDevice, anFrame);
-
-    rLogger.debug("Created frame");
-    return pFrame;
-}
-
-void copyFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIFrame anFrame, IHostVisibleImage& dstImage)
-{
-    array<uint32_t, 2U> size{};
-    ANARIDataType type = ANARI_UNKNOWN;
-    auto* pSrcPixels = reinterpret_cast<const uint32_t*>(
-        anariMapFrame(anDevice, anFrame, "channel.color", &size[0], &size[1], &type));
-    {
-        auto pVkImageMapping = dstImage.map();
-        auto* pDstPixels = reinterpret_cast<uint32_t*>(pVkImageMapping->getData());
-        for (auto row = 0U; row < size[1]; row++)
-        {
-            auto* pSrcRow = pSrcPixels + (size[1] - 1 - row) * size[0];
-            auto* pDstRow = pDstPixels + row * size[0];
-            copy(pSrcRow, pSrcRow + size[0], pDstRow);
-        }
-        pVkImageMapping->save("anari_output.png");
-    }
-    anariUnmapFrame(anDevice, anFrame, "channel.color");
-    rLogger.info("Copied frame and saved to anari_output.png");
-}
-
 }  // namespace
 
 int main()
@@ -375,31 +310,30 @@ int main()
     pLogger->setLevelFilter(LogLevel::Verbose);
     pLogger->debug("ANARI App");
 
-    auto pLib = loadLibrary(*pLogger);
-    const auto deviceSubtype = chooseDeviceSubtype(*pLogger, pLib.get());
-    [[maybe_unused]] const auto deviceExtensions = detectDeviceExtensions(*pLogger, pLib.get(), deviceSubtype);
-    auto pDevice = createDevice(*pLogger, pLib.get(), deviceSubtype);
+    auto pAnLib = loadLibrary(*pLogger);
+    const auto anDeviceSubtype = chooseDeviceSubtype(*pLogger, pAnLib.get());
+    [[maybe_unused]] const auto anDeviceExtensions = detectDeviceExtensions(*pLogger, pAnLib.get(), anDeviceSubtype);
+    auto pAnDevice = createDevice(*pLogger, pAnLib.get(), anDeviceSubtype);
 
-    const auto rendererSubtype = chooseRendererSubtype(*pLogger, pDevice.get());
-    logRendererParameters(*pLogger, pDevice.get(), rendererSubtype);
+    const auto anRendererSubtype = chooseRendererSubtype(*pLogger, pAnDevice.get());
+    logRendererParameters(*pLogger, pAnDevice.get(), anRendererSubtype);
 
-    auto pRenderer = createRenderer(*pLogger, pDevice.get(), rendererSubtype);
-    auto pWorld = createWorld(*pLogger, pDevice.get());
-    auto pCamera = createCamera(*pLogger, pDevice.get());
-    auto pFrame = createFrame(*pLogger, pDevice.get(), pRenderer.get(), pCamera.get(), pWorld.get());
+    auto pAnRenderer = createRenderer(*pLogger, pAnDevice.get(), anRendererSubtype);
+    auto pAnWorld = createWorld(*pLogger, pAnDevice.get());
 
-    anariRenderFrame(pDevice.get(), pFrame.get());
-    anariFrameReady(pDevice.get(), pFrame.get(), ANARI_WAIT);
-    pLogger->info("rendered first frame");
+    auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
+                                                          .name = "ANARI",
+                                                          .isDebugEnabled = true,
+                                                      });
+    auto pDevice = pApp->getDevice();
 
-    auto pVkDevice = im3e::createDevice(*pLogger, DeviceConfig{});
-    auto pVkImage = pVkDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
-        .name = "anari_output",
-        .vkExtent{.width = WindowSize[0], .height = WindowSize[1]},
-        .vkFormat = VK_FORMAT_R8G8B8A8_SRGB,
-    });
+    auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
+    auto pRenderPanel = createImguiRenderPanel("Renderer", std::move(pFramePipeline));
 
-    copyFrame(*pLogger, pDevice.get(), pFrame.get(), *pVkImage);
+    auto pGuiWorkspace = createImguiWorkspace("ANARI");
+    pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
+    pApp->createWindow(pGuiWorkspace);
 
+    pApp->run();
     return 0;
 }
