@@ -1,6 +1,7 @@
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
 
+
 class IcyMoonEngineRecipe(ConanFile):
     name = "icy_moon_engine"
     version = "0.1"
@@ -15,8 +16,7 @@ class IcyMoonEngineRecipe(ConanFile):
         "fmt/11.0.2",
         "glfw/3.4",
         "gtest/1.15.0",
-        "open_usd/24.11",
-        "vulkan-headers/1.3.243.0", # version depended on by vulkan-memory-allocator
+        "vulkan-headers/1.3.243.0",  # version depended on by vulkan-memory-allocator
         "vulkan-memory-allocator/cci.20231120",
         "whereami/cci.20220112",
     }
