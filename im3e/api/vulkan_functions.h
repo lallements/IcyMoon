@@ -46,6 +46,8 @@ struct VulkanDeviceFcts
     PFN_vkQueueWaitIdle vkQueueWaitIdle{};
     PFN_vkGetImageSubresourceLayout vkGetImageSubresourceLayout{};
 
+    PFN_vkSetDebugUtilsObjectNameEXT vkSetDebugUtilsObjectNameEXT{};
+
     PFN_vkCreateCommandPool vkCreateCommandPool{};
     PFN_vkDestroyCommandPool vkDestroyCommandPool{};
     PFN_vkAllocateCommandBuffers vkAllocateCommandBuffers{};

@@ -175,6 +175,11 @@ MockVulkanFunctions::MockVulkanFunctions()
                 assertMockExists();
                 g_pMock->getMockDeviceFcts().vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
             },
+        .vkSetDebugUtilsObjectNameEXT = [](VkDevice device,
+                                           const VkDebugUtilsObjectNameInfoEXT* pNameInfo) -> VkResult {
+            assertMockExists();
+            return g_pMock->getMockDeviceFcts().vkSetDebugUtilsObjectNameEXT(device, pNameInfo);
+        },
         .vkCreateCommandPool =
             [](VkDevice device, const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
                VkCommandPool* pCommandPool) {

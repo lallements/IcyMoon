@@ -83,6 +83,9 @@ public:
     MOCK_METHOD(void, vkGetImageSubresourceLayout,
                 (VkDevice device, VkImage image, const VkImageSubresource* pSubresource, VkSubresourceLayout* pLayout));
 
+    MOCK_METHOD(VkResult, vkSetDebugUtilsObjectNameEXT,
+                (VkDevice device, const VkDebugUtilsObjectNameInfoEXT* pNameInfo));
+
     MOCK_METHOD(VkResult, vkCreateCommandPool,
                 (VkDevice device, const VkCommandPoolCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator,
                  VkCommandPool* pCommandPool));
