@@ -13,8 +13,23 @@ struct ImageFactoryTest : public Test
 {
     auto createFactory() { return createVulkanImageFactory(m_pMockDevice, m_pMockAllocator); }
 
+    void expectDebugNameSet(VkObjectType vkExpectedType, void* pVkExpectedObject, string expectedName)
+    {
+        EXPECT_CALL(m_rMockFcts, vkSetDebugUtilsObjectNameEXT(m_mockVkDevice, NotNull()))
+            .WillOnce(Invoke([vkExpectedType, pVkExpectedObject, expectedName](Unused, auto* pDebugInfo) {
+                EXPECT_THAT(pDebugInfo->sType, Eq(VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT));
+                EXPECT_THAT(pDebugInfo->objectType, Eq(vkExpectedType));
+                EXPECT_THAT(pDebugInfo->objectHandle, Eq(reinterpret_cast<uint64_t>(pVkExpectedObject)));
+                EXPECT_THAT(pDebugInfo->pObjectName, StrEq(expectedName));
+                return VK_SUCCESS;
+            }));
+    }
+
     shared_ptr<MockDevice> m_pMockDevice = make_shared<NiceMock<MockDevice>>();
     shared_ptr<MockVulkanMemoryAllocator> m_pMockAllocator = make_shared<MockVulkanMemoryAllocator>();
+
+    VkDevice m_mockVkDevice = m_pMockDevice->getMockVkDevice();
+    MockVulkanDeviceFcts& m_rMockFcts = m_pMockDevice->getMockDeviceFcts();
 };
 
 TEST_F(ImageFactoryTest, createVulkanImageFactoryThrowsIfAllocatorNull)
@@ -66,6 +81,7 @@ TEST_F(ImageFactoryTest, createImage)
             *pVmaAllocation = vmaAllocation;
             return VK_SUCCESS;
         }));
+    expectDebugNameSet(VK_OBJECT_TYPE_IMAGE, vkImage, "Im3eImage.testImage");
 
     auto pImage = pFactory->createImage(imageConfig);
     ASSERT_THAT(pImage, NotNull());
@@ -122,12 +138,12 @@ TEST_F(ImageFactoryTest, createHostVisibleImage)
             pVmaAllocationInfo->size = memSize;
             return VK_SUCCESS;
         }));
-    EXPECT_CALL(m_pMockDevice->getMockDeviceFcts(),
-                vkGetImageSubresourceLayout(m_pMockDevice->getMockVkDevice(), vkImage, NotNull(), NotNull()))
+    EXPECT_CALL(m_rMockFcts, vkGetImageSubresourceLayout(m_mockVkDevice, vkImage, NotNull(), NotNull()))
         .WillOnce(Invoke([&](Unused, Unused, const VkImageSubresource* pVkSubresource, VkSubresourceLayout* pVkLayout) {
             EXPECT_THAT(pVkSubresource->aspectMask, Eq(VK_IMAGE_ASPECT_COLOR_BIT));
             pVkLayout->rowPitch = rowPitch;
         }));
+    expectDebugNameSet(VK_OBJECT_TYPE_IMAGE, vkImage, "Im3eImage.testImage");
 
     auto pImage = pFactory->createHostVisibleImage(imageConfig);
     ASSERT_THAT(pImage, NotNull());

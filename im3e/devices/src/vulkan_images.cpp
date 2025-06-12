@@ -13,6 +13,24 @@ using namespace std::filesystem;
 
 namespace {
 
+void setVkObjectDebugName(const IDevice& rDevice, VkObjectType vkObjectType, void* pVkHandle, string_view name)
+{
+    auto& rFcts = rDevice.getFcts();
+    if (!rFcts.vkSetDebugUtilsObjectNameEXT)
+    {
+        return;
+    }
+
+    VkDebugUtilsObjectNameInfoEXT vkDebugInfo{
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .objectType = vkObjectType,
+        .objectHandle = reinterpret_cast<uint64_t>(pVkHandle),
+        .pObjectName = name.data(),
+    };
+    throwIfVkFailed(rFcts.vkSetDebugUtilsObjectNameEXT(rDevice.getVkDevice(), &vkDebugInfo),
+                    fmt::format("Failed to set debug name to image \"{}\"", name));
+}
+
 struct VulkanImageBuffer
 {
     VulkanImageBuffer(shared_ptr<const IDevice> pDevice, VkImage vkImage, ImageConfig config)
@@ -20,6 +38,7 @@ struct VulkanImageBuffer
       , m_config(move(config))
       , m_vkImage(throwIfArgNull(vkImage, "Cannot create Vulkan proxy image without an image"))
     {
+        setVkObjectDebugName(*m_pDevice, VK_OBJECT_TYPE_IMAGE, m_vkImage, fmt::format("Im3eImage.{}", m_config.name));
     }
 
     VulkanImageBuffer(shared_ptr<const IDevice> pDevice, shared_ptr<IVulkanMemoryAllocator> pMemoryAllocator,
@@ -62,6 +81,8 @@ struct VulkanImageBuffer
         throwIfVkFailed(m_pMemoryAllocator->createImage(&vkCreateInfo, &vmaCreateInfo, &m_vkImage, &m_vmaAllocation,
                                                         &m_vmaAllocationInfo),
                         fmt::format("Failed to create image \"{}\" with VMA", m_config.name));
+
+        setVkObjectDebugName(*m_pDevice, VK_OBJECT_TYPE_IMAGE, m_vkImage, fmt::format("Im3eImage.{}", m_config.name));
     }
 
     ~VulkanImageBuffer()
@@ -123,6 +144,9 @@ public:
         throwIfVkFailed(rFcts.vkCreateImageView(vkDevice, &vkCreateInfo, nullptr, &vkImageView),
                         "Could not create image buffer view");
         m_pVkImageView = makeVkUniquePtr<VkImageView>(vkDevice, vkImageView, rFcts.vkDestroyImageView);
+
+        setVkObjectDebugName(*m_pImageBuffer->m_pDevice, VK_OBJECT_TYPE_IMAGE_VIEW, m_pVkImageView.get(),
+                             fmt::format("Im3eImageView.{}", m_pImageBuffer->m_config.name));
     }
 
     auto getVkImageView() const -> VkImageView override { return m_pVkImageView.get(); }

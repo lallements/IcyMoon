@@ -70,7 +70,7 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
 {
     throwIfArgNull(vkDevice, "Cannot load Vulkan device functions without a device");
 
-    return VulkanDeviceFcts{
+    VulkanDeviceFcts fcts{
         LOAD_DEVICE_FCT(vkDestroyDevice),
         LOAD_DEVICE_FCT(vkDeviceWaitIdle),
         LOAD_DEVICE_FCT(vkGetDeviceQueue),
@@ -117,6 +117,11 @@ auto VulkanLoader::loadDeviceFcts(VkDevice vkDevice) const -> VulkanDeviceFcts
         LOAD_DEVICE_FCT(vkCreateSampler),
         LOAD_DEVICE_FCT(vkDestroySampler),
     };
+    if (m_config.isDebugEnabled)
+    {
+        fcts LOAD_DEVICE_FCT(vkSetDebugUtilsObjectNameEXT);
+    }
+    return fcts;
 }
 
 auto VulkanLoader::loadVmaFcts(VkInstance vkInstance, VkDevice vkDevice) const -> VmaVulkanFunctions
