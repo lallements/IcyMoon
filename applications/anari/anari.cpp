@@ -290,7 +290,7 @@ auto createRenderer(const ILogger& rLogger, ANARIDevice anDevice, string_view re
 {
     auto anRenderer = anariNewRenderer(anDevice, rendererSubtype.data());
 
-    array<float, 4U> backgroundColor{1.0F, 1.0F, 1.0F, 1.0F};
+    array<float, 4U> backgroundColor{1.0F, 0.0F, 0.0F, 1.0F};
     anariSetParameter(anDevice, anRenderer, "background", ANARI_FLOAT32_VEC4, backgroundColor.data());
 
     anariCommitParameters(anDevice, anRenderer);

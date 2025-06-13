@@ -18,7 +18,9 @@ public:
     ///
     /// @param rCommandBuffer Object used to record commands that will be executed.
     /// @param pOutputImage Image that the pipeline should write the final results to.
-    virtual void prepareExecution(const ICommandBuffer& rCommandBuffer, std::shared_ptr<IImage> pOutputImage) = 0;
+    /// @param rVkViewportSize
+    virtual void prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
+                                  std::shared_ptr<IImage> pOutputImage) = 0;
 
     /// @brief Resize the frame
     virtual void resize(const VkExtent2D& rVkExtent, uint32_t frameInFlightCount) = 0;

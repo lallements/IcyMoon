@@ -213,7 +213,7 @@ void Presenter::present()
         pCommandBuffer->setVkWaitSemaphore(pVkReadyToWriteSemaphore);
         pCommandBuffer->setVkSignalSemaphore(pVkReadyToPresentSemaphore);
 
-        m_pFramePipeline->prepareExecution(*pCommandBuffer, m_pImages[imageIndex]);
+        m_pFramePipeline->prepareExecution(*pCommandBuffer, m_vkExtent, m_pImages[imageIndex]);
         {
             auto pBarrier = pCommandBuffer->startScopedBarrier("BeforePresentation");
             pBarrier->addImageBarrier(*m_pImages[imageIndex], ImageBarrierConfig{

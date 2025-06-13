@@ -19,7 +19,8 @@ public:
     {
     }
 
-    void prepareExecution(const ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage) override
+    void prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D&,
+                          shared_ptr<IImage> pOutputImage) override
     {
         {
             auto pBarrierRecorder = rCommandBuffer.startScopedBarrier("beforeClearColor");

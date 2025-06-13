@@ -119,7 +119,8 @@ ImguiPipeline::~ImguiPipeline()
     m_pBackend.reset();
 }
 
-void ImguiPipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage)
+void ImguiPipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
+                                     shared_ptr<IImage> pOutputImage)
 {
     auto pContextGuard = m_pContext->makeCurrent();
 
@@ -132,9 +133,8 @@ void ImguiPipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, share
     {
         // When there is no Glfw window, we must initialize the display size ourselves
         auto& rIo = ImGui::GetIO();
-        const auto vkExtent = m_pFrame->getVkExtent();
-        rIo.DisplaySize.x = vkExtent.width;
-        rIo.DisplaySize.y = vkExtent.height;
+        rIo.DisplaySize.x = rVkViewportSize.width;
+        rIo.DisplaySize.y = rVkViewportSize.height;
     }
     ImGui::NewFrame();
 

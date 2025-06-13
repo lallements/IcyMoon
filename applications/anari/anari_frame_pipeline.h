@@ -18,7 +18,8 @@ public:
                        std::shared_ptr<anari::api::Device> pAnDevice, std::shared_ptr<anari::api::Renderer> pAnRenderer,
                        std::shared_ptr<anari::api::World> pWorld);
 
-    void prepareExecution(const ICommandBuffer& rCommandBuffer, std::shared_ptr<IImage> pOutputImage) override;
+    void prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
+                          std::shared_ptr<IImage> pOutputImage) override;
 
     void resize(const VkExtent2D& rWindowSize, uint32_t frameInFlightCount) override;
 

@@ -56,10 +56,12 @@ void PipelineIntegrationTest::initialize(Config config, unique_ptr<IFramePipelin
 {
     throwIfArgNull(pFramePipeline.get(), "Cannot initialize pipeline integration test without a pipeline");
 
+    const auto vkViewportSize = config.vkOutputExtent;
+
     shared_ptr<IFramePipeline> pSharedPipeline(move(pFramePipeline));
     pSharedPipeline->resize(config.vkOutputExtent, config.frameInFlightCount);
-    initialize(move(config), [pSharedPipeline](auto& rCommandBuffer, auto pImage) {
-        pSharedPipeline->prepareExecution(rCommandBuffer, move(pImage));
+    initialize(move(config), [pSharedPipeline, vkViewportSize](auto& rCommandBuffer, auto pImage) {
+        pSharedPipeline->prepareExecution(rCommandBuffer, vkViewportSize, move(pImage));
     });
 }
 
