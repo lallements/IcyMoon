@@ -34,6 +34,8 @@ private:
     UniquePtrWithDeleter<anari::api::Camera> m_pAnCamera;
     UniquePtrWithDeleter<anari::api::Frame> m_pAnFrame;
     std::unique_ptr<IHostVisibleImage> m_pImage;
+
+    VkExtent2D m_currentViewportSize{};
 };
 
 }  // namespace im3e

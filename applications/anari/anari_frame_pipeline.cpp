@@ -68,7 +68,6 @@ void copyFrame(const ILogger&, ANARIDevice anDevice, ANARIFrame anFrame, IHostVi
         // pVkImageMapping->save("anari_output.png");
     }
     anariUnmapFrame(anDevice, anFrame, "channel.color");
-    // rLogger.debug("Copied frame and saved to anari_output.png");
 }
 
 inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, VkCommandBuffer vkCommandBuffer, const IImage& rSrcImage,
@@ -121,6 +120,18 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
         return;
     }
 
+    if (m_currentViewportSize != rVkViewportSize)
+    {
+        const auto aspectRatio = static_cast<float>(rVkViewportSize.width) / static_cast<float>(rVkViewportSize.height);
+        anariSetParameter(m_pAnDevice.get(), m_pAnCamera.get(), "aspect", ANARI_FLOAT32, &aspectRatio);
+        anariCommitParameters(m_pAnDevice.get(), m_pAnCamera.get());
+
+        anariSetParameter(m_pAnDevice.get(), m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
+        anariCommitParameters(m_pAnDevice.get(), m_pAnFrame.get());
+
+        m_currentViewportSize = rVkViewportSize;
+    }
+
     anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
     anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
 
@@ -169,4 +180,6 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
         .vkFormat = VK_FORMAT_R8G8B8A8_SRGB,
         .vkUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     });
+
+    m_currentViewportSize = {};
 }
