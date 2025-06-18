@@ -43,7 +43,7 @@ GlfwWindowApplication::GlfwWindowApplication(const ILogger& rLogger, WindowAppli
   , m_pLogger(rLogger.createChild(m_config.name))
   , m_pGlfwInstance(make_unique<GlfwInstance>(*m_pLogger))
   , m_pDevice(createDevice(*m_pLogger, DeviceConfig{
-                                           .isDebugEnabled = false,
+                                           .isDebugEnabled = config.isDebugEnabled,
                                            .isPresentationSupported = glfwGetPhysicalDevicePresentationSupport,
                                            .requiredInstanceExtensions = m_pGlfwInstance->getRequiredExtensions(),
                                        }))
