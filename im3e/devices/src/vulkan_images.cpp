@@ -240,9 +240,27 @@ public:
 
     void save(const filesystem::path& rFileName) const override
     {
-        cimg_library::cimg::exception_mode(0U);  // disable log messages from cimg
-        cimg_library::CImg<uint8_t> image(m_pData.get(), m_formatProperties.componentCount, m_vkExtent.width,
-                                          m_vkExtent.height, 1U, false);
+        // Disable log messages from CImg:
+        cimg_library::cimg::exception_mode(0U);
+
+        // CImg memory is not interleaved i.e. each channel is stored separately one after the other.
+        // To go around that, we allocate the image with swapped components to which we can save our data and permute
+        // axes afterwards to make it readable from CImg:
+        cimg_library::CImg<uint8_t> image(m_formatProperties.componentCount, m_vkExtent.width, m_vkExtent.height, 1U,
+                                          false);
+
+        // There is no concept of memory padding in CImg so we have to copy per row in case our current image has any
+        // padding at the end of each row:
+        auto* pSrcData = m_pData.get();
+        auto* pDstData = image.data();
+        const auto dstRowSize = m_vkExtent.width * m_formatProperties.sizeInBytes;
+        for (auto row = 0U; row < m_vkExtent.height; row++)
+        {
+            copy(pSrcData, pSrcData + dstRowSize, pDstData);
+            pSrcData += m_rowPitch;
+            pDstData += dstRowSize;
+        }
+
         image.permute_axes("yzcx");
         image.save(rFileName.string().c_str());
     }
