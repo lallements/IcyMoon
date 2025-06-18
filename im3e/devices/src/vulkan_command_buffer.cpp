@@ -103,7 +103,26 @@ private:
     vector<VkImageMemoryBarrier2> m_vkImageBarriers;
 };
 
-auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkCommandPool vkCommandPool)
+void setVkObjectDebugName(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkObjectType vkObjectType, void* pVkObject,
+                          string_view name)
+{
+    if (!rFcts.vkSetDebugUtilsObjectNameEXT)
+    {
+        return;
+    }
+
+    VkDebugUtilsObjectNameInfoEXT vkDebugInfo{
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        .objectType = vkObjectType,
+        .objectHandle = reinterpret_cast<uint64_t>(pVkObject),
+        .pObjectName = name.data(),
+    };
+    throwIfVkFailed(rFcts.vkSetDebugUtilsObjectNameEXT(vkDevice, &vkDebugInfo),
+                    fmt::format("Failed to set debug name to object \"{}\"", name));
+}
+
+auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkCommandPool vkCommandPool,
+                           string_view name)
 {
     VkCommandBufferAllocateInfo vkAllocateInfo{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -116,9 +135,12 @@ auto createVkCommandBuffer(VkDevice vkDevice, const VulkanDeviceFcts& rFcts, VkC
     throwIfVkFailed(rFcts.vkAllocateCommandBuffers(vkDevice, &vkAllocateInfo, &vkCommandBuffer),
                     "Failed to allocate command for command queue pool");
 
-    return VkUniquePtr<VkCommandBuffer>(vkCommandBuffer, [vkDevice, vkCommandPool, pFcts = &rFcts](auto* vkCmdBuffer) {
-        pFcts->vkFreeCommandBuffers(vkDevice, vkCommandPool, 1U, &vkCmdBuffer);
-    });
+    VkUniquePtr<VkCommandBuffer> pCommandBuffer(
+        vkCommandBuffer, [vkDevice, vkCommandPool, pFcts = &rFcts](auto* vkCmdBuffer) {
+            pFcts->vkFreeCommandBuffers(vkDevice, vkCommandPool, 1U, &vkCmdBuffer);
+        });
+    setVkObjectDebugName(vkDevice, rFcts, VK_OBJECT_TYPE_COMMAND_BUFFER, vkCommandBuffer, name);
+    return pCommandBuffer;
 }
 
 }  // namespace
@@ -129,7 +151,8 @@ VulkanCommandBuffer::VulkanCommandBuffer(const ICommandQueue& rQueue, const IDev
   , m_rDevice(rDevice)
   , m_pLogger(m_rDevice.createLogger(name))
   , m_name(name)
-  , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool))
+  , m_pVkCommandBuffer(createVkCommandBuffer(m_rDevice.getVkDevice(), m_rDevice.getFcts(), vkCommandPool,
+                                             fmt::format("Im3eCommandBuffer.{}", name)))
   // Create the fence signalled so that we consider the command as complete until we actually submit work to the queue
   , m_pVkFence(m_rDevice.createVkFence(VK_FENCE_CREATE_SIGNALED_BIT))
 {

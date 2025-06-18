@@ -11,7 +11,7 @@ struct VulkanCommandBufferTest : public Test
 {
     auto createCommandBuffer()
     {
-        ON_CALL(m_rMockFcts, vkAllocateCommandBuffers(m_mockDevice.getMockVkDevice(), NotNull(), NotNull()))
+        ON_CALL(m_rMockFcts, vkAllocateCommandBuffers(m_mockVkDevice, NotNull(), NotNull()))
             .WillByDefault(Invoke([this](Unused, Unused, auto* pVkCommandBuffer) {
                 *pVkCommandBuffer = m_mockVkCommandBuffer;
                 return VK_SUCCESS;
@@ -25,6 +25,7 @@ struct VulkanCommandBufferTest : public Test
     NiceMock<MockDevice> m_mockDevice;
     MockVulkanDeviceFcts& m_rMockFcts = m_mockDevice.getMockDeviceFcts();
     NiceMock<MockCommandQueue> m_mockQueue;
+    VkDevice m_mockVkDevice = m_mockDevice.getMockVkDevice();
     VkCommandPool m_mockVkPool = reinterpret_cast<VkCommandPool>(0xf7ea9eb);
     VkCommandBuffer m_mockVkCommandBuffer = reinterpret_cast<VkCommandBuffer>(0x637e2a4b);
     VkFence m_mockVkFence = reinterpret_cast<VkFence>(0xbe46ec2);
@@ -34,7 +35,7 @@ TEST_F(VulkanCommandBufferTest, constructor)
 {
     const auto mockVkBuffer = reinterpret_cast<VkCommandBuffer>(0xef4ca23);
 
-    EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(m_mockDevice.getMockVkDevice(), NotNull(), NotNull()))
+    EXPECT_CALL(m_rMockFcts, vkAllocateCommandBuffers(m_mockVkDevice, NotNull(), NotNull()))
         .WillOnce(Invoke([&](Unused, auto* pVkCreateInfo, auto* pVkCommandBuffer) {
             EXPECT_THAT(pVkCreateInfo->sType, Eq(VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO));
             EXPECT_THAT(pVkCreateInfo->pNext, IsNull());
@@ -42,6 +43,14 @@ TEST_F(VulkanCommandBufferTest, constructor)
             EXPECT_THAT(pVkCreateInfo->level, Eq(VK_COMMAND_BUFFER_LEVEL_PRIMARY));
             EXPECT_THAT(pVkCreateInfo->commandBufferCount, Eq(1U));
             *pVkCommandBuffer = mockVkBuffer;
+            return VK_SUCCESS;
+        }));
+    EXPECT_CALL(m_rMockFcts, vkSetDebugUtilsObjectNameEXT(m_mockVkDevice, NotNull()))
+        .WillOnce(Invoke([&](Unused, const auto* pDebugInfo) {
+            EXPECT_THAT(pDebugInfo->sType, Eq(VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT));
+            EXPECT_THAT(pDebugInfo->objectType, Eq(VK_OBJECT_TYPE_COMMAND_BUFFER));
+            EXPECT_THAT(pDebugInfo->objectHandle, Eq(reinterpret_cast<uint64_t>(mockVkBuffer)));
+            EXPECT_THAT(pDebugInfo->pObjectName, StrEq("Im3eCommandBuffer.buffer"));
             return VK_SUCCESS;
         }));
     EXPECT_CALL(m_mockDevice, createVkFence(VK_FENCE_CREATE_SIGNALED_BIT));
@@ -154,7 +163,7 @@ TEST_F(VulkanCommandBufferTest, submitToQueueSync)
                 EXPECT_THAT(pVkSubmitInfo->waitSemaphoreCount, Eq(0U));
                 return VK_SUCCESS;
             }));
-        EXPECT_CALL(m_rMockFcts, vkWaitForFences(m_mockDevice.getMockVkDevice(), 1U, Pointee(m_mockVkFence), VK_TRUE,
+        EXPECT_CALL(m_rMockFcts, vkWaitForFences(m_mockVkDevice, 1U, Pointee(m_mockVkFence), VK_TRUE,
                                                  numeric_limits<uint64_t>::max()));
     }
     pCommandBuffer->submitToQueue(CommandExecutionType::Sync);
@@ -167,8 +176,8 @@ TEST_F(VulkanCommandBufferTest, futureWaitsForCompletion)
 
     auto pFuture = pCommandBuffer->createFuture();
 
-    EXPECT_CALL(m_rMockFcts, vkWaitForFences(m_mockDevice.getMockVkDevice(), 1U, Pointee(m_mockVkFence), VK_TRUE,
-                                             numeric_limits<uint64_t>::max()));
+    EXPECT_CALL(m_rMockFcts,
+                vkWaitForFences(m_mockVkDevice, 1U, Pointee(m_mockVkFence), VK_TRUE, numeric_limits<uint64_t>::max()));
     pFuture->waitForCompletion();
 
     // vkWaitForFences will be called when the command buffer is destroyed.
