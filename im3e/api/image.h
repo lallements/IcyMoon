@@ -69,7 +69,10 @@ public:
         virtual auto getData() -> uint8_t* = 0;
         virtual auto getConstData() const -> const uint8_t* = 0;
         virtual auto getSizeInBytes() const -> VkDeviceSize = 0;
+
+        /// @return Number of bytes between each row in the mapped buffer.
         virtual auto getRowPitch() const -> VkDeviceSize = 0;
+
         virtual auto getPixel(uint32_t x, uint32_t y) const -> const uint8_t* = 0;
     };
 
