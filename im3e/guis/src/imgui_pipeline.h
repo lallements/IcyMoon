@@ -22,7 +22,8 @@ public:
                   std::shared_ptr<ImguiWorkspace> pWorkspace, std::optional<std::string> iniFilename = {});
     ~ImguiPipeline() override;
 
-    void prepareExecution(const ICommandBuffer& rCommandBuffer, std::shared_ptr<IImage> pOutputImage) override;
+    void prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
+                          std::shared_ptr<IImage> pOutputImage) override;
 
     void resize(const VkExtent2D& rVkExtent, uint32_t frameInFlightCount) override;
 

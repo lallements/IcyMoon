@@ -25,16 +25,16 @@ void windowIconifyCallback(GLFWwindow* pGlfwWindow, int iconified)
     getWindowCallbacks(pGlfwWindow).onWindowIconify(iconified == GLFW_TRUE);
 }
 
-auto createWindow(const ILogger& rLogger, std::string_view name, GlfwWindowCallbacks* pCallbacks)
+auto createWindow(const ILogger& rLogger, const GlfwWindow::Config& rConfig, GlfwWindowCallbacks* pCallbacks)
 {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);  // for Vulkan
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    glfwWindowHint(GLFW_MAXIMIZED, rConfig.maximized ? GLFW_TRUE : GLFW_FALSE);
 
     constexpr int Width = 1200;
     constexpr int Height = 800;
 
-    auto* pGlfwWindow = glfwCreateWindow(Width, Height, name.data(), nullptr, nullptr);
+    auto* pGlfwWindow = glfwCreateWindow(Width, Height, rConfig.name.data(), nullptr, nullptr);
     throwIfNull<runtime_error>(pGlfwWindow, "Could not create GLFW window");
 
     glfwSetWindowUserPointer(pGlfwWindow, pCallbacks);
@@ -73,7 +73,7 @@ GlfwWindow::GlfwWindow(shared_ptr<IDevice> pDevice, Config config, shared_ptr<Im
       pCallbacks->onWindowIconify = [this](bool i) { this->_onWindowIconify(i); };
       return pCallbacks;
   }())
-  , m_pWindow(createWindow(*m_pLogger, m_config.name, m_pCallbacks.get()))
+  , m_pWindow(createWindow(*m_pLogger, m_config, m_pCallbacks.get()))
   , m_pVkSurface(createVkSurface(*m_pDevice, m_pWindow.get()))
   , m_pPresenter(make_unique<Presenter>(
         m_pDevice, m_pVkSurface.get(),

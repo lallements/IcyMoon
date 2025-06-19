@@ -8,12 +8,17 @@
 
 namespace im3e {
 
+struct WindowConfig
+{
+    bool maximized = true;
+};
+
 class IWindowApplication
 {
 public:
     virtual ~IWindowApplication() = default;
 
-    virtual void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) = 0;
+    virtual void createWindow(WindowConfig config, std::shared_ptr<IGuiWorkspace> pWorkspace) = 0;
 
     /// @brief Starts execution of the application.
     /// This includes running the execution loop that listens to input events (keyboard, mouse) and refreshes windows

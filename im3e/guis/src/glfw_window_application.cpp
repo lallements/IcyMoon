@@ -50,7 +50,7 @@ GlfwWindowApplication::GlfwWindowApplication(const ILogger& rLogger, WindowAppli
 {
 }
 
-void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
+void GlfwWindowApplication::createWindow(WindowConfig config, shared_ptr<IGuiWorkspace> pWorkspace)
 {
     auto pImguiWorkspace = dynamic_pointer_cast<ImguiWorkspace>(pWorkspace);
     throwIfArgNull(pImguiWorkspace, "Cannot create window: GLFW only supports ImGui workspaces at the moment");
@@ -60,6 +60,7 @@ void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
     m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice,
                                                     GlfwWindow::Config{
                                                         .name = windowName,
+                                                        .maximized = config.maximized,
                                                         .iniFilename = iniFilename,
                                                     },
                                                     move(pImguiWorkspace)));

@@ -27,7 +27,7 @@ class GlfwWindowApplication : public IWindowApplication
 public:
     GlfwWindowApplication(const ILogger& rLogger, WindowApplicationConfig config);
 
-    void createWindow(std::shared_ptr<IGuiWorkspace> pWorkspace) override;
+    void createWindow(WindowConfig config, std::shared_ptr<IGuiWorkspace> pWorkspace) override;
 
     void run(std::function<void()> loopIterationFct) override;
     void stop() override;

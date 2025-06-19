@@ -22,11 +22,6 @@ private:
     std::unique_ptr<IFramePipeline> m_pFramePipeline;
     std::shared_ptr<const IDevice> m_pDevice;
 
-    VkExtent2D m_viewportSize{};
-    VkFormat m_vkWindowFormat{};
-    uint32_t m_frameInFlightCount{};
-    bool m_needsResize{};  // set to true if the frame pipeline should be resized in the next draw call
-
     std::shared_ptr<IImage> m_pRenderOutput;
     std::shared_ptr<IImageView> m_pRenderOutputView;
     VkUniquePtr<VkSampler> m_pRenderOutputSampler;
