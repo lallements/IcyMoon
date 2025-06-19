@@ -1,2 +1,3 @@
+add_subdirectory(anari)
 add_subdirectory(glfw_app)
 add_subdirectory(usd_viewer)
