@@ -52,18 +52,20 @@ auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anR
 
 void copyFrame(const ILogger&, ANARIDevice anDevice, ANARIFrame anFrame, IHostVisibleImage& dstImage)
 {
-    array<uint32_t, 2U> size{};
+    VkExtent2D srcSize{};
     ANARIDataType type = ANARI_UNKNOWN;
     auto* pSrcPixels = reinterpret_cast<const uint32_t*>(
-        anariMapFrame(anDevice, anFrame, "channel.color", &size[0], &size[1], &type));
+        anariMapFrame(anDevice, anFrame, "channel.color", &srcSize.width, &srcSize.height, &type));
     {
         auto pVkImageMapping = dstImage.map();
-        auto* pDstPixels = reinterpret_cast<uint32_t*>(pVkImageMapping->getData());
-        for (auto row = 0U; row < size[1]; row++)
+        auto* pDstPixels = pVkImageMapping->getData();
+        const auto dstRowPitch = pVkImageMapping->getRowPitch();
+        for (auto row = 0U; row < srcSize.height; row++)
         {
-            auto* pSrcRow = pSrcPixels + (size[1] - 1 - row) * size[0];
-            auto* pDstRow = pDstPixels + row * size[0];
-            copy(pSrcRow, pSrcRow + size[0], pDstRow);
+            // In ANARI, images start from the bottom instead of the top:
+            auto* pSrcRow = pSrcPixels + (srcSize.height - 1U - row) * srcSize.width;
+            auto* pDstRow = reinterpret_cast<uint32_t*>(pDstPixels + row * dstRowPitch);
+            copy(pSrcRow, pSrcRow + srcSize.width, pDstRow);
         }
         // pVkImageMapping->save("anari_output.png");
     }
@@ -112,7 +114,8 @@ AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, shared_ptr<IDevic
     m_pLogger->debug("Created Anari render panel");
 }
 
-void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage)
+void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
+                                          shared_ptr<IImage> pOutputImage)
 {
     if (!m_pAnFrame)
     {
@@ -166,10 +169,6 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
 {
     m_pAnFrame.reset();
     m_pImage.reset();
-
-    const auto aspectRatio = static_cast<float>(rVkExtent.width) / static_cast<float>(rVkExtent.height);
-    anariSetParameter(m_pAnDevice.get(), m_pAnCamera.get(), "aspect", ANARI_FLOAT32, &aspectRatio);
-    anariCommitParameters(m_pAnDevice.get(), m_pAnCamera.get());
 
     m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pAnCamera.get(), m_pAnWorld.get(),
                              rVkExtent);

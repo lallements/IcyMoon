@@ -332,7 +332,7 @@ int main()
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
     pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
-    pApp->createWindow(pGuiWorkspace);
+    pApp->createWindow(WindowConfig{}, pGuiWorkspace);
 
     pApp->run();
     return 0;
