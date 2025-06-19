@@ -17,7 +17,7 @@ int main([[maybe_unused]] int argc, char* argv[])
                                                       });
 
     auto pWorkspace = createImguiWorkspace("Workspace");
-    pApp->createWindow(pWorkspace);
+    pApp->createWindow(WindowConfig{}, pWorkspace);
 
     pApp->run();
     return 0;

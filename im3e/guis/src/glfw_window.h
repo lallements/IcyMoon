@@ -22,6 +22,7 @@ public:
     struct Config
     {
         std::string name;
+        bool maximized = true;
         std::optional<std::string> iniFilename{"imgui.ini"};
     };
     GlfwWindow(std::shared_ptr<IDevice> pDevice, Config config, std::shared_ptr<ImguiWorkspace> pWorkspace);

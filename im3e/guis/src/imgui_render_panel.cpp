@@ -12,13 +12,23 @@ using namespace std;
 
 namespace {
 
+constexpr auto RenderOutputFinalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 auto getWindowContentRegionSize()
 {
     const auto imguiContentRegionMin = ImGui::GetWindowContentRegionMin();
     const auto imguiContentRegionMax = ImGui::GetWindowContentRegionMax();
+    return ImVec2{
+        ceilf(imguiContentRegionMax.x - imguiContentRegionMin.x),
+        ceilf(imguiContentRegionMax.y - imguiContentRegionMin.y),
+    };
+}
+
+auto toVkExtent2D(const ImVec2& rImVec2)
+{
     return VkExtent2D{
-        .width = static_cast<uint32_t>(ceilf(imguiContentRegionMax.x - imguiContentRegionMin.x)),
-        .height = static_cast<uint32_t>(ceilf(imguiContentRegionMax.y - imguiContentRegionMin.y)),
+        .width = static_cast<uint32_t>(rImVec2.x),
+        .height = static_cast<uint32_t>(rImVec2.y),
     };
 }
 
@@ -52,35 +62,13 @@ ImguiRenderPanel::ImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> 
 
 void ImguiRenderPanel::draw(const ICommandBuffer& rCommandBuffer)
 {
-    constexpr auto RenderOutputFinalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-    const auto newViewportSize = getWindowContentRegionSize();
-    if (newViewportSize.width != m_viewportSize.width ||  //
-        newViewportSize.height != m_viewportSize.height || m_needsResize)
-    {
-        m_viewportSize = newViewportSize;
-        if (m_viewportSize.width != 0U && m_viewportSize.height != 0U)
-        {
-            m_needsResize = false;
-            m_pFramePipeline->resize(m_viewportSize, m_frameInFlightCount);
-            m_pRenderOutput = m_pDevice->getImageFactory()->createImage(ImageConfig{
-                .name = fmt::format("{}RenderOutput", m_name),
-                .vkExtent = m_viewportSize,
-                .vkFormat = m_vkWindowFormat,
-                .vkUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-            });
-            m_pRenderOutputView = m_pRenderOutput->createView();
-            m_vkRenderOutputSet = ImGui_ImplVulkan_AddTexture(
-                m_pRenderOutputSampler.get(), m_pRenderOutputView->getVkImageView(), RenderOutputFinalLayout);
-        }
-    }
-
     if (!m_pRenderOutput)
     {
         return;
     }
 
-    m_pFramePipeline->prepareExecution(rCommandBuffer, m_pRenderOutput);
+    const auto imViewportSize = getWindowContentRegionSize();
+    m_pFramePipeline->prepareExecution(rCommandBuffer, toVkExtent2D(imViewportSize), m_pRenderOutput);
     {
         auto pBarrierRecorder = rCommandBuffer.startScopedBarrier(fmt::format("barrierToDrawIn{}", m_name));
         pBarrierRecorder->addImageBarrier(*m_pRenderOutput,
@@ -91,24 +79,37 @@ void ImguiRenderPanel::draw(const ICommandBuffer& rCommandBuffer)
                                           });
     }
 
-    const auto imViewportSize = ImVec2(m_viewportSize.width, m_viewportSize.height);
     const auto imagePos = ImGui::GetCursorScreenPos();
+    const auto renderOutputSize = m_pRenderOutput->getVkExtent();
+    const ImVec2 maxUV{
+        imViewportSize.x / static_cast<float>(renderOutputSize.width),
+        imViewportSize.y / static_cast<float>(renderOutputSize.height),
+    };
+
     ImGui::SetNextItemAllowOverlap();
-    ImGui::Image(reinterpret_cast<ImTextureID>(m_vkRenderOutputSet), imViewportSize);
+    ImGui::Image(reinterpret_cast<ImTextureID>(m_vkRenderOutputSet), imViewportSize, ImVec2{}, maxUV);
     ImGui::SetCursorScreenPos(imagePos);
     ImGui::InvisibleButton(fmt::format("{}_mouseArea", m_name).c_str(), imViewportSize,
                            ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle);
     ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY);
 }
 
-void ImguiRenderPanel::onWindowResized(const VkExtent2D&, VkFormat vkFormat, uint32_t frameInFlightCount)
+void ImguiRenderPanel::onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat vkFormat, uint32_t frameInFlightCount)
 {
-    m_frameInFlightCount = frameInFlightCount;
-    m_vkWindowFormat = vkFormat;
-    m_needsResize = true;
+    m_pFramePipeline->resize(rVkWindowSize, frameInFlightCount);
+
+    m_pRenderOutput = m_pDevice->getImageFactory()->createImage(ImageConfig{
+        .name = fmt::format("{}.RenderOutput", m_name),
+        .vkExtent = rVkWindowSize,
+        .vkFormat = vkFormat,
+        .vkUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    });
+    m_pRenderOutputView = m_pRenderOutput->createView();
+    m_vkRenderOutputSet = ImGui_ImplVulkan_AddTexture(m_pRenderOutputSampler.get(),
+                                                      m_pRenderOutputView->getVkImageView(), RenderOutputFinalLayout);
 }
 
-auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline) -> unique_ptr<IGuiPanel>
+auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline) -> shared_ptr<IGuiPanel>
 {
-    return make_unique<ImguiRenderPanel>(name, move(pFramePipeline));
+    return make_shared<ImguiRenderPanel>(name, move(pFramePipeline));
 }

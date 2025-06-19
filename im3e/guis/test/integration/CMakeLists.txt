@@ -2,6 +2,7 @@ im3e_add_integration_tests_executable(
   TARGET
     integration_im3e_guis
   SOURCES
+    clear_color_test_pipeline.h
     integration_glfw_window_application.cpp
     integration_glfw_window.cpp
     integration_imgui_pipeline.cpp

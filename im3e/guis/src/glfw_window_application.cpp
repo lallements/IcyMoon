@@ -43,14 +43,14 @@ GlfwWindowApplication::GlfwWindowApplication(const ILogger& rLogger, WindowAppli
   , m_pLogger(rLogger.createChild(m_config.name))
   , m_pGlfwInstance(make_unique<GlfwInstance>(*m_pLogger))
   , m_pDevice(createDevice(*m_pLogger, DeviceConfig{
-                                           .isDebugEnabled = false,
+                                           .isDebugEnabled = config.isDebugEnabled,
                                            .isPresentationSupported = glfwGetPhysicalDevicePresentationSupport,
                                            .requiredInstanceExtensions = m_pGlfwInstance->getRequiredExtensions(),
                                        }))
 {
 }
 
-void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
+void GlfwWindowApplication::createWindow(WindowConfig config, shared_ptr<IGuiWorkspace> pWorkspace)
 {
     auto pImguiWorkspace = dynamic_pointer_cast<ImguiWorkspace>(pWorkspace);
     throwIfArgNull(pImguiWorkspace, "Cannot create window: GLFW only supports ImGui workspaces at the moment");
@@ -60,6 +60,7 @@ void GlfwWindowApplication::createWindow(shared_ptr<IGuiWorkspace> pWorkspace)
     m_pWindows.emplace_back(make_unique<GlfwWindow>(m_pDevice,
                                                     GlfwWindow::Config{
                                                         .name = windowName,
+                                                        .maximized = config.maximized,
                                                         .iniFilename = iniFilename,
                                                     },
                                                     move(pImguiWorkspace)));

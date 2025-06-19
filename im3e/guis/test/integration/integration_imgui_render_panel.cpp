@@ -3,54 +3,12 @@
 #include "src/imgui_pipeline.h"
 #include "src/imgui_workspace.h"
 
+#include "clear_color_test_pipeline.h"
+
 #include <im3e/test_utils/pipeline_integration_test.h>
 
 using namespace im3e;
 using namespace std;
-
-namespace {
-
-class TestPipeline : public IFramePipeline
-{
-public:
-    TestPipeline(shared_ptr<const IDevice> pDevice, const VkClearColorValue& rVkClearColor)
-      : m_pDevice(move(pDevice))
-      , m_vkClearColor(rVkClearColor)
-    {
-    }
-
-    void prepareExecution(const ICommandBuffer& rCommandBuffer, shared_ptr<IImage> pOutputImage) override
-    {
-        {
-            auto pBarrierRecorder = rCommandBuffer.startScopedBarrier("beforeClearColor");
-            pBarrierRecorder->addImageBarrier(*pOutputImage, ImageBarrierConfig{
-                                                                 .vkDstStageMask = VK_PIPELINE_STAGE_2_CLEAR_BIT,
-                                                                 .vkDstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
-                                                                 .vkLayout = VK_IMAGE_LAYOUT_GENERAL,
-                                                             });
-        }
-
-        const VkImageSubresourceRange vkRange{
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .levelCount = 1U,
-            .layerCount = 1U,
-        };
-
-        const auto& rFcts = m_pDevice->getFcts();
-        rFcts.vkCmdClearColorImage(rCommandBuffer.getVkCommandBuffer(), pOutputImage->getVkImage(),
-                                   VK_IMAGE_LAYOUT_GENERAL, &m_vkClearColor, 1U, &vkRange);
-    }
-
-    void resize(const VkExtent2D&, uint32_t) override {}
-
-    auto getDevice() const -> shared_ptr<const IDevice> override { return m_pDevice; }
-
-private:
-    shared_ptr<const IDevice> m_pDevice;
-    const VkClearColorValue m_vkClearColor{};
-};
-
-}  // namespace
 
 struct ImguiRenderPanelIntegration : public PipelineIntegrationTest
 {
@@ -62,8 +20,8 @@ struct ImguiRenderPanelIntegration : public PipelineIntegrationTest
 
     auto addRenderPanel(const VkClearColorValue& rVkClearColor)
     {
-        auto pRenderPanel = make_shared<ImguiRenderPanel>("Render",
-                                                          make_unique<TestPipeline>(getDevice(), rVkClearColor));
+        auto pRenderPanel = make_shared<ImguiRenderPanel>(
+            "Render", make_unique<ClearColorTestPipeline>(getDevice(), rVkClearColor));
         m_pWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel, 0.5F);
     }
 
