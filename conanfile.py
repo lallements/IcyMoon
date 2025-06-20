@@ -1,5 +1,6 @@
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake, cmake_layout
+import os
 
 
 class IcyMoonEngineRecipe(ConanFile):
@@ -14,8 +15,11 @@ class IcyMoonEngineRecipe(ConanFile):
     requires = {
         "cimg/3.3.2",
         "fmt/11.0.2",
+        "gdal/3.10.3",
         "glfw/3.4",
+        "glm/1.0.1",
         "gtest/1.15.0",
+        "proj/9.3.1",  # required by GDAL
         "vulkan-headers/1.3.243.0",  # version depended on by vulkan-memory-allocator
         "vulkan-memory-allocator/cci.20231120",
         "whereami/cci.20220112",
@@ -37,6 +41,8 @@ class IcyMoonEngineRecipe(ConanFile):
         "cimg/*:enable_magick": False,
         "cimg/*:enable_xrandr": False,
         "cimg/*:enable_xshm": False,
+        "gdal/*:shared": True,
+        "gdal/*:with_curl": True,
     }
 
     tool_requires = {
@@ -53,6 +59,9 @@ class IcyMoonEngineRecipe(ConanFile):
 
         if self.options.coverage == "on":
             toolChain.cache_variables["TEST_COVERAGE"] = True
+
+        proj_res_path = os.path.join(self.dependencies["proj"].package_folder, "res")
+        toolChain.cache_variables["PROJ_RES_PATH"] = proj_res_path
 
         toolChain.generate()
 

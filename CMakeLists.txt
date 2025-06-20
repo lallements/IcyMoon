@@ -33,6 +33,11 @@ add_definitions(
 
     # To suppress a warning caused by TBB in OpenUSD:
     -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1
+
+    # GLM
+    -DGLM_FORCE_DEPTH_ZERO_TO_ONE
+    -DGLM_FORCE_SILENT_WARNINGS
+    -DGLM_FORCE_SWIZZLE
 )
 
 if (MSVC)
@@ -59,7 +64,9 @@ im3e_set_coverage_flags()
 
 find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
+find_package(GDAL REQUIRED)
 find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
 find_package(GTest REQUIRED)
 find_package(OpenGL REQUIRED) # required by OpenUSD
 find_package(pxr CONFIG) # made optional for now
