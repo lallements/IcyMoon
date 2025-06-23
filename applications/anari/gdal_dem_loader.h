@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dem_block_sampler.h"
+
 #include <im3e/utils/loggers.h>
 
 #include <gdal_priv.h>
@@ -14,6 +16,8 @@ class GdalDemLoader
 {
 public:
     GdalDemLoader(const ILogger& rLogger, const std::filesystem::path& rDemFilePath);
+
+    auto createBlockSamplers(const glm::u32vec2& rBlockPos) -> DemBlockSamplers<float>;
 
     auto getBlockSize() const -> const glm::u32vec2& { return m_blockSize; }
     auto getBlockCount() const -> const glm::u32vec2& { return m_blockCount; }

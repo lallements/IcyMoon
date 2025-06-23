@@ -111,6 +111,78 @@ GdalDemLoader::GdalDemLoader(const ILogger& rLogger, const filesystem::path& rDe
         (static_cast<uint32_t>(m_pRasterBand->GetXSize()) + m_blockSize[0] - 1) / m_blockSize[0],
         (static_cast<uint32_t>(m_pRasterBand->GetYSize()) + m_blockSize[1] - 1) / m_blockSize[1],
     };
-    m_minValue = m_pRasterBand->GetMinimum();
+    int hasMinValue{};
+    m_minValue = m_pRasterBand->GetMinimum(&hasMinValue);
+    if (!hasMinValue)
+    {
+        m_minValue = 0.0F;
+    }
     m_blockScale = glm::vec3(m_blockSize.x * static_cast<float>(m_pRasterBand->GetScale()));
+}
+
+namespace {
+
+inline auto makeGdalFloatBlock(GDALRasterBand& rBand, uint32_t blockPosX, uint32_t blockPosY, float minV, float scale)
+{
+    auto pBlock = rBand.GetLockedBlockRef(blockPosX, blockPosY);
+    auto pData = reinterpret_cast<float*>(pBlock->GetDataRef());
+
+    int actualBlockSizeX, actualBlockSizeY;
+    rBand.GetActualBlockSize(blockPosX, blockPosY, &actualBlockSizeX, &actualBlockSizeY);
+
+    int blockSizeX, blockSizeY;
+    rBand.GetBlockSize(&blockSizeX, &blockSizeY);
+
+    return make_unique<DemBlockSampler<float>>(
+        unique_ptr<const float, function<void(const float*)>>(pData, [pBlock](auto*) { pBlock->DropLock(); }),
+        glm::u32vec2{blockPosX, blockPosY}, glm::u32vec2{blockSizeX, blockSizeY},
+        glm::u32vec2{actualBlockSizeX, actualBlockSizeY}, minV, scale);
+}
+
+}  // namespace
+
+auto GdalDemLoader::createBlockSamplers(const glm::u32vec2& rBlockPos) -> DemBlockSamplers<float>
+{
+    const auto minV = m_minValue;
+    const auto scale = m_blockScale.y;
+
+    DemBlockSamplers<float> samplers{
+        .pBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x, rBlockPos.y, minV, scale),
+    };
+    if (rBlockPos.y > 0)
+    {
+        samplers.pTopBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x, rBlockPos.y - 1, minV, scale);
+        if (rBlockPos.x > 0)
+        {
+            samplers.pTopLeftBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x - 1, rBlockPos.y - 1, minV, scale);
+        }
+        if (rBlockPos.x < m_blockCount.x - 1)
+        {
+            samplers.pTopRightBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x + 1, rBlockPos.y - 1, minV, scale);
+        }
+    }
+    if (rBlockPos.y < m_blockCount.y - 1)
+    {
+        samplers.pBottomBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x, rBlockPos.y + 1, minV, scale);
+        if (rBlockPos.x > 0)
+        {
+            samplers.pBottomLeftBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x - 1, rBlockPos.y + 1, minV,
+                                                           scale);
+        }
+        if (rBlockPos.x < m_blockCount.x - 1)
+        {
+            samplers.pBottomRightBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x + 1, rBlockPos.y + 1, minV,
+                                                            scale);
+        }
+    }
+    if (rBlockPos.x > 0)
+    {
+        samplers.pLeftBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x - 1, rBlockPos.y, minV, scale);
+    }
+    if (rBlockPos.x < m_blockCount.x - 1)
+    {
+        samplers.pRightBlock = makeGdalFloatBlock(*m_pRasterBand, rBlockPos.x + 1, rBlockPos.y, minV, scale);
+    }
+
+    return samplers;
 }

@@ -77,5 +77,6 @@ find_package(whereami REQUIRED)
 add_subdirectory(applications)
 add_subdirectory(external)
 add_subdirectory(im3e)
+add_subdirectory(resources)
 
 im3e_init_code_coverage()

@@ -11,14 +11,19 @@ auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
 {
     auto anCamera = anariNewCamera(anDevice, "perspective");
 
-    const array<float, 3U> position{};
+    const array<float, 3U> position{0.0F, 1400.0F, 0.0F};
     anariSetParameter(anDevice, anCamera, "position", ANARI_FLOAT32_VEC3, position.data());
 
-    const array<float, 3U> up{0.0F, 1.0F, 0.0F};
+    const array<float, 3U> up{0.0F, 0.0F, 1.0F};
     anariSetParameter(anDevice, anCamera, "up", ANARI_FLOAT32_VEC3, up.data());
 
-    const array<float, 3U> direction{0.1F, 0.0F, 1.0F};
+    const array<float, 3U> direction{0.0F, -1.0F, 0.0F};
     anariSetParameter(anDevice, anCamera, "direction", ANARI_FLOAT32_VEC3, direction.data());
+
+    const float near = 0.1F;
+    const float far = 1000.0F;
+    anariSetParameter(anDevice, anCamera, "near", ANARI_FLOAT32, &near);
+    anariSetParameter(anDevice, anCamera, "far", ANARI_FLOAT32, &far);
 
     anariCommitParameters(anDevice, anCamera);
 
