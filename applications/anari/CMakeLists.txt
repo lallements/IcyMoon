@@ -7,6 +7,10 @@ endif()
 message(STATUS "Found anari, building anari app")
 
 add_executable(anari
+    anari_camera_imgui_listener.cpp
+    anari_camera_imgui_listener.h
+    anari_camera.cpp
+    anari_camera.h
     anari_dem_surface_generator.cpp
     anari_dem_surface_generator.h
     anari_frame_pipeline.cpp

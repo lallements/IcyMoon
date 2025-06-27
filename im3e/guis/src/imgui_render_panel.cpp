@@ -1,7 +1,5 @@
 #include "imgui_render_panel.h"
 
-#include "guis.h"
-
 #include <im3e/utils/throw_utils.h>
 
 #include <imgui.h>
@@ -50,13 +48,23 @@ auto createRenderOutputSampler(const IDevice& rDevice)
     return makeVkUniquePtr<VkSampler>(vkDevice, vkSampler, rVkFcts.vkDestroySampler);
 }
 
+void dispatchEvents(ImGuiIO& rIo, IImguiEventListener& rEventListener)
+{
+    if (ImGui::IsItemHovered() && rIo.MouseWheel)
+    {
+        rEventListener.onMouseWheel(rIo.MouseWheel);
+    }
+}
+
 }  // namespace
 
-ImguiRenderPanel::ImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline)
+ImguiRenderPanel::ImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline,
+                                   unique_ptr<IImguiEventListener> pEventListener)
   : m_name(name)
   , m_pFramePipeline(throwIfArgNull(move(pFramePipeline), "ImGui render panel requires a frame pipeline"))
   , m_pDevice(m_pFramePipeline->getDevice())
   , m_pRenderOutputSampler(createRenderOutputSampler(*m_pDevice))
+  , m_pEventListener(move(pEventListener))
 {
 }
 
@@ -92,6 +100,11 @@ void ImguiRenderPanel::draw(const ICommandBuffer& rCommandBuffer)
     ImGui::InvisibleButton(fmt::format("{}_mouseArea", m_name).c_str(), imViewportSize,
                            ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle);
     ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY);
+
+    if (m_pEventListener)
+    {
+        dispatchEvents(ImGui::GetIO(), *m_pEventListener);
+    }
 }
 
 void ImguiRenderPanel::onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat vkFormat, uint32_t frameInFlightCount)
@@ -109,7 +122,8 @@ void ImguiRenderPanel::onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat
                                                       m_pRenderOutputView->getVkImageView(), RenderOutputFinalLayout);
 }
 
-auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline) -> shared_ptr<IGuiPanel>
+auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline,
+                                  unique_ptr<IImguiEventListener> pEventListener) -> shared_ptr<IGuiPanel>
 {
-    return make_shared<ImguiRenderPanel>(name, move(pFramePipeline));
+    return make_shared<ImguiRenderPanel>(name, move(pFramePipeline), move(pEventListener));
 }

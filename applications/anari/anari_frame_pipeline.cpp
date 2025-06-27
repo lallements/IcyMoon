@@ -7,32 +7,6 @@ using namespace std;
 
 namespace {
 
-auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
-{
-    auto anCamera = anariNewCamera(anDevice, "perspective");
-
-    const array<float, 3U> position{0.0F, 1400.0F, 0.0F};
-    anariSetParameter(anDevice, anCamera, "position", ANARI_FLOAT32_VEC3, position.data());
-
-    const array<float, 3U> up{0.0F, 0.0F, 1.0F};
-    anariSetParameter(anDevice, anCamera, "up", ANARI_FLOAT32_VEC3, up.data());
-
-    const array<float, 3U> direction{0.0F, -1.0F, 0.0F};
-    anariSetParameter(anDevice, anCamera, "direction", ANARI_FLOAT32_VEC3, direction.data());
-
-    const float near = 0.1F;
-    const float far = 1000.0F;
-    anariSetParameter(anDevice, anCamera, "near", ANARI_FLOAT32, &near);
-    anariSetParameter(anDevice, anCamera, "far", ANARI_FLOAT32, &far);
-
-    anariCommitParameters(anDevice, anCamera);
-
-    return UniquePtrWithDeleter<anari::api::Camera>(anCamera, [anDevice, pLogger = &rLogger](auto* anCamera) {
-        anariRelease(anDevice, anCamera);
-        pLogger->debug("Released camera");
-    });
-}
-
 auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anRenderer, ANARICamera anCamera,
                  ANARIWorld anWorld, const VkExtent2D& rWindowSize)
 {
@@ -114,8 +88,11 @@ AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, shared_ptr<IDevic
   , m_pAnRenderer(throwIfArgNull(move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
   , m_pAnWorld(throwIfArgNull(move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
 
-  , m_pAnCamera(createCamera(*m_pLogger, m_pAnDevice.get()))
+  , m_pCamera(make_shared<AnariCamera>(*m_pLogger, m_pAnDevice))
 {
+    m_pCamera->setPosition(glm::vec3{0.0F, 1400.0F, 0.0F});
+    m_pCamera->setDirection(glm::vec3{0.0F, -1.0F, -0.0F});
+    m_pCamera->setUp(glm::vec3{0.0F, 0.0F, 1.0F});
     m_pLogger->debug("Created Anari render panel");
 }
 
@@ -131,8 +108,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
     if (m_currentViewportSize != rVkViewportSize)
     {
         const auto aspectRatio = static_cast<float>(rVkViewportSize.width) / static_cast<float>(rVkViewportSize.height);
-        anariSetParameter(m_pAnDevice.get(), m_pAnCamera.get(), "aspect", ANARI_FLOAT32, &aspectRatio);
-        anariCommitParameters(m_pAnDevice.get(), m_pAnCamera.get());
+        m_pCamera->setAspectRatio(aspectRatio);
 
         anariSetParameter(m_pAnDevice.get(), m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
         anariCommitParameters(m_pAnDevice.get(), m_pAnFrame.get());
@@ -175,8 +151,8 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pAnFrame.reset();
     m_pImage.reset();
 
-    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pAnCamera.get(), m_pAnWorld.get(),
-                             rVkExtent);
+    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pCamera->getHandle(),
+                             m_pAnWorld.get(), rVkExtent);
 
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
         .name = "AnariPipelineImage",
@@ -186,4 +162,9 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     });
 
     m_currentViewportSize = {};
+}
+
+auto AnariFramePipeline::createCameraImguiListener() -> std::unique_ptr<IImguiEventListener>
+{
+    return make_unique<AnariCameraImguiListener>(*m_pLogger, m_pCamera);
 }

@@ -247,10 +247,11 @@ int main()
                                                           .name = "ANARI",
                                                           .isDebugEnabled = true,
                                                       });
-    auto pDevice = pApp->getDevice();
 
+    auto pDevice = pApp->getDevice();
     auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
-    auto pRenderPanel = createImguiRenderPanel("Renderer", std::move(pFramePipeline));
+    auto pCameraListener = pFramePipeline->createCameraImguiListener();
+    auto pRenderPanel = createImguiRenderPanel("Renderer", move(pFramePipeline), move(pCameraListener));
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
     pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
