@@ -1,3 +1,4 @@
+#include "anari_dem_surface_generator.h"
 #include "anari_frame_pipeline.h"
 
 #include <im3e/devices/devices.h>
@@ -144,86 +145,6 @@ void logRendererParameters(const ILogger& rLogger, ANARIDevice pDevice, string_v
     }
 }
 
-auto createGeometry(const ILogger& rLogger, ANARIDevice anDevice)
-{
-    auto anGeometry = anariNewGeometry(anDevice, "triangle");
-    auto pGeometry = shared_ptr<anari::api::Geometry>(anGeometry, [anDevice, pLogger = &rLogger](auto* anGeometry) {
-        anariRelease(anDevice, anGeometry);
-        pLogger->debug("Released geometry");
-    });
-
-    // Vertex positions:
-    {
-        constexpr array<array<float, 3U>, 4U> Vertices{
-            array<float, 3U>{-1.0f, -1.0f, 3.0F},
-            array<float, 3U>{-1.0F, 1.0F, 3.0F},
-            array<float, 3U>{1.0F, -1.0F, 3.0F},
-            array<float, 3U>{0.1F, 0.1F, 0.3F},
-        };
-
-        auto anArray = anariNewArray1D(anDevice, Vertices.data(), nullptr, nullptr, ANARI_FLOAT32_VEC3,
-                                       Vertices.size());
-        anariCommitParameters(anDevice, anArray);
-        anariSetParameter(anDevice, anGeometry, "vertex.position", ANARI_ARRAY1D, &anArray);
-        anariRelease(anDevice, anArray);
-    }
-
-    // Vertex colors:
-    {
-        constexpr array<array<float, 4U>, 4U> VertexColors{
-            array<float, 4U>{0.9f, 0.5f, 0.5f, 1.0f},  // red
-            array<float, 4U>{0.8f, 0.8f, 0.8f, 1.0f},  // 80% gray
-            array<float, 4U>{0.8f, 0.8f, 0.8f, 1.0f},  // 80% gray
-            array<float, 4U>{0.5f, 0.9f, 0.5f, 1.0f},  // green
-        };
-        auto anArray = anariNewArray1D(anDevice, VertexColors.data(), nullptr, nullptr, ANARI_FLOAT32_VEC4,
-                                       VertexColors.size());
-        anariCommitParameters(anDevice, anArray);
-        anariSetParameter(anDevice, anGeometry, "vertex.color", ANARI_ARRAY1D, &anArray);
-        anariRelease(anDevice, anArray);
-    }
-
-    // Vertex indices:
-    {
-        constexpr array<array<int32_t, 3U>, 2U> VertexIndices{
-            array<int32_t, 3U>{0U, 1U, 2U},
-            array<int32_t, 3U>{1U, 2U, 3U},
-        };
-        auto anArray = anariNewArray1D(anDevice, VertexIndices.data(), nullptr, nullptr, ANARI_UINT32_VEC3,
-                                       VertexIndices.size());
-        anariCommitParameters(anDevice, anArray);
-        anariSetParameter(anDevice, anGeometry, "primitive.index", ANARI_ARRAY1D, &anArray);
-        anariRelease(anDevice, anArray);
-    }
-
-    anariCommitParameters(anDevice, anGeometry);
-    rLogger.debug("Created Geometry");
-    return pGeometry;
-}
-
-auto createSurface(const ILogger& rLogger, ANARIDevice anDevice)
-{
-    auto pGeometry = createGeometry(rLogger, anDevice);
-    auto anGeometry = pGeometry.get();
-
-    auto anMaterial = anariNewMaterial(anDevice, "matte");
-    anariSetParameter(anDevice, anMaterial, "color", ANARI_STRING, "color");
-    anariCommitParameters(anDevice, anMaterial);
-
-    auto anSurface = anariNewSurface(anDevice);
-    anariSetParameter(anDevice, anSurface, "geometry", ANARI_GEOMETRY, &anGeometry);
-    anariSetParameter(anDevice, anSurface, "material", ANARI_MATERIAL, &anMaterial);
-    anariCommitParameters(anDevice, anSurface);
-    anariRelease(anDevice, anMaterial);
-
-    rLogger.debug("Created surface");
-
-    return shared_ptr<anari::api::Surface>(anSurface, [anDevice, pLogger = &rLogger](auto* anSurface) {
-        anariRelease(anDevice, anSurface);
-        pLogger->debug("Released surface");
-    });
-}
-
 auto createLight(const ILogger& rLogger, ANARIDevice anDevice)
 {
     auto anLight = anariNewLight(anDevice, "directional");
@@ -248,8 +169,9 @@ auto createWorld(const ILogger& rLogger, ANARIDevice anDevice)
 
     // Surfaces of world:
     {
-        auto pSurface = createSurface(rLogger, anDevice);
+        auto pSurface = AnariDemSurfaceGenerator::generate(rLogger, anDevice);
         auto anSurface = pSurface.get();
+
         auto anArray = anariNewArray1D(anDevice, &anSurface, nullptr, nullptr, ANARI_SURFACE, 1U);
         anariCommitParameters(anDevice, anArray);
         anariSetParameter(anDevice, anWorld, "surface", ANARI_ARRAY1D, &anArray);
@@ -290,7 +212,7 @@ auto createRenderer(const ILogger& rLogger, ANARIDevice anDevice, string_view re
 {
     auto anRenderer = anariNewRenderer(anDevice, rendererSubtype.data());
 
-    array<float, 4U> backgroundColor{1.0F, 1.0F, 1.0F, 1.0F};
+    array<float, 4U> backgroundColor{0.3F, 0.3F, 0.4F, 1.0F};
     anariSetParameter(anDevice, anRenderer, "background", ANARI_FLOAT32_VEC4, backgroundColor.data());
 
     anariCommitParameters(anDevice, anRenderer);
