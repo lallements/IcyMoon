@@ -16,7 +16,7 @@ auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anR
         pLogger->debug("Released frame");
     });
 
-    const ANARIDataType format = ANARI_UFIXED8_RGBA_SRGB;
+    const ANARIDataType format = ANARI_UFIXED8_VEC4;
     anariSetParameter(anDevice, anFrame, "size", ANARI_UINT32_VEC2, &rWindowSize);
     anariSetParameter(anDevice, anFrame, "channel.color", ANARI_DATA_TYPE, &format);
     anariSetParameter(anDevice, anFrame, "renderer", ANARI_RENDERER, &anRenderer);
@@ -88,11 +88,8 @@ AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, shared_ptr<IDevic
   , m_pAnRenderer(throwIfArgNull(move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
   , m_pAnWorld(throwIfArgNull(move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
 
-  , m_pCamera(make_shared<AnariCamera>(*m_pLogger, m_pAnDevice))
+  , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_pAnDevice))
 {
-    m_pCamera->setPosition(glm::vec3{0.0F, 1400.0F, 0.0F});
-    m_pCamera->setDirection(glm::vec3{0.0F, -1.0F, -0.0F});
-    m_pCamera->setUp(glm::vec3{0.0F, 0.0F, 1.0F});
     m_pLogger->debug("Created Anari render panel");
 }
 
@@ -115,6 +112,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
 
         m_currentViewportSize = rVkViewportSize;
     }
+    m_pCamera->update();
 
     anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
     anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
@@ -157,14 +155,14 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
         .name = "AnariPipelineImage",
         .vkExtent = rVkExtent,
-        .vkFormat = VK_FORMAT_R8G8B8A8_SRGB,
+        .vkFormat = VK_FORMAT_R8G8B8A8_UNORM,
         .vkUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     });
 
     m_currentViewportSize = {};
 }
 
-auto AnariFramePipeline::createCameraImguiListener() -> std::unique_ptr<IImguiEventListener>
+auto AnariFramePipeline::getCameraListener() -> std::shared_ptr<IImguiEventListener>
 {
-    return make_unique<AnariCameraImguiListener>(*m_pLogger, m_pCamera);
+    return m_pCamera;
 }

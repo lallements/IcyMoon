@@ -2,8 +2,6 @@
 
 #include "command_buffer.h"
 
-#include <glm/glm.hpp>
-
 #include <memory>
 #include <string>
 

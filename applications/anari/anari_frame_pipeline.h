@@ -1,7 +1,6 @@
 #pragma once
 
-#include "anari_camera.h"
-#include "anari_camera_imgui_listener.h"
+#include "anari_map_camera.h"
 
 #include <im3e/api/device.h>
 #include <im3e/api/frame_pipeline.h>
@@ -26,7 +25,7 @@ public:
 
     void resize(const VkExtent2D& rWindowSize, uint32_t frameInFlightCount) override;
 
-    auto createCameraImguiListener() -> std::unique_ptr<IImguiEventListener>;
+    auto getCameraListener() -> std::shared_ptr<IImguiEventListener>;
 
     virtual auto getDevice() const -> std::shared_ptr<const IDevice> override { return m_pDevice; }
 
@@ -37,7 +36,7 @@ private:
     std::shared_ptr<anari::api::Renderer> m_pAnRenderer;
     std::shared_ptr<anari::api::World> m_pAnWorld;
 
-    std::shared_ptr<AnariCamera> m_pCamera;
+    std::shared_ptr<AnariMapCamera> m_pCamera;
     UniquePtrWithDeleter<anari::api::Frame> m_pAnFrame;
     std::unique_ptr<IHostVisibleImage> m_pImage;
 

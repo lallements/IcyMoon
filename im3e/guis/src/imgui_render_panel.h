@@ -12,7 +12,7 @@ class ImguiRenderPanel : public IGuiPanel
 {
 public:
     ImguiRenderPanel(std::string_view name, std::unique_ptr<IFramePipeline> pFramePipeline,
-                     std::unique_ptr<IImguiEventListener> pEventListener = nullptr);
+                     std::shared_ptr<IImguiEventListener> pEventListener = nullptr);
 
     void draw(const ICommandBuffer& rCommandBuffer) override;
 
@@ -30,7 +30,7 @@ private:
     VkUniquePtr<VkSampler> m_pRenderOutputSampler;
     VkDescriptorSet m_vkRenderOutputSet;
 
-    std::unique_ptr<IImguiEventListener> m_pEventListener;
+    std::shared_ptr<IImguiEventListener> m_pEventListener;
 };
 
 }  // namespace im3e
