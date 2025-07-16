@@ -30,11 +30,12 @@ target_link_libraries(im3e_guis
   PUBLIC
     im3e_api
     im3e_utils
+    glm::glm
   PRIVATE
     glfw
+    imgui
     im3e_devices
     im3e_resources
-    imgui
 )
 
 add_subdirectory(test)

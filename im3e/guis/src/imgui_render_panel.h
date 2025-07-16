@@ -1,5 +1,7 @@
 #pragma once
 
+#include "guis.h"
+
 #include <im3e/api/frame_pipeline.h>
 #include <im3e/api/gui.h>
 #include <im3e/api/image.h>
@@ -9,7 +11,8 @@ namespace im3e {
 class ImguiRenderPanel : public IGuiPanel
 {
 public:
-    ImguiRenderPanel(std::string_view name, std::unique_ptr<IFramePipeline> pFramePipeline);
+    ImguiRenderPanel(std::string_view name, std::unique_ptr<IFramePipeline> pFramePipeline,
+                     std::shared_ptr<IImguiEventListener> pEventListener = nullptr);
 
     void draw(const ICommandBuffer& rCommandBuffer) override;
 
@@ -26,6 +29,8 @@ private:
     std::shared_ptr<IImageView> m_pRenderOutputView;
     VkUniquePtr<VkSampler> m_pRenderOutputSampler;
     VkDescriptorSet m_vkRenderOutputSet;
+
+    std::shared_ptr<IImguiEventListener> m_pEventListener;
 };
 
 }  // namespace im3e

@@ -7,32 +7,6 @@ using namespace std;
 
 namespace {
 
-auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
-{
-    auto anCamera = anariNewCamera(anDevice, "perspective");
-
-    const array<float, 3U> position{0.0F, 1400.0F, 0.0F};
-    anariSetParameter(anDevice, anCamera, "position", ANARI_FLOAT32_VEC3, position.data());
-
-    const array<float, 3U> up{0.0F, 0.0F, 1.0F};
-    anariSetParameter(anDevice, anCamera, "up", ANARI_FLOAT32_VEC3, up.data());
-
-    const array<float, 3U> direction{0.0F, -1.0F, 0.0F};
-    anariSetParameter(anDevice, anCamera, "direction", ANARI_FLOAT32_VEC3, direction.data());
-
-    const float near = 0.1F;
-    const float far = 1000.0F;
-    anariSetParameter(anDevice, anCamera, "near", ANARI_FLOAT32, &near);
-    anariSetParameter(anDevice, anCamera, "far", ANARI_FLOAT32, &far);
-
-    anariCommitParameters(anDevice, anCamera);
-
-    return UniquePtrWithDeleter<anari::api::Camera>(anCamera, [anDevice, pLogger = &rLogger](auto* anCamera) {
-        anariRelease(anDevice, anCamera);
-        pLogger->debug("Released camera");
-    });
-}
-
 auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anRenderer, ANARICamera anCamera,
                  ANARIWorld anWorld, const VkExtent2D& rWindowSize)
 {
@@ -42,7 +16,7 @@ auto createFrame(const ILogger& rLogger, ANARIDevice anDevice, ANARIRenderer anR
         pLogger->debug("Released frame");
     });
 
-    const ANARIDataType format = ANARI_UFIXED8_RGBA_SRGB;
+    const ANARIDataType format = ANARI_UFIXED8_VEC4;
     anariSetParameter(anDevice, anFrame, "size", ANARI_UINT32_VEC2, &rWindowSize);
     anariSetParameter(anDevice, anFrame, "channel.color", ANARI_DATA_TYPE, &format);
     anariSetParameter(anDevice, anFrame, "renderer", ANARI_RENDERER, &anRenderer);
@@ -114,7 +88,7 @@ AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, shared_ptr<IDevic
   , m_pAnRenderer(throwIfArgNull(move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
   , m_pAnWorld(throwIfArgNull(move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
 
-  , m_pAnCamera(createCamera(*m_pLogger, m_pAnDevice.get()))
+  , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_pAnDevice))
 {
     m_pLogger->debug("Created Anari render panel");
 }
@@ -131,14 +105,14 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
     if (m_currentViewportSize != rVkViewportSize)
     {
         const auto aspectRatio = static_cast<float>(rVkViewportSize.width) / static_cast<float>(rVkViewportSize.height);
-        anariSetParameter(m_pAnDevice.get(), m_pAnCamera.get(), "aspect", ANARI_FLOAT32, &aspectRatio);
-        anariCommitParameters(m_pAnDevice.get(), m_pAnCamera.get());
+        m_pCamera->setAspectRatio(aspectRatio);
 
         anariSetParameter(m_pAnDevice.get(), m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
         anariCommitParameters(m_pAnDevice.get(), m_pAnFrame.get());
 
         m_currentViewportSize = rVkViewportSize;
     }
+    m_pCamera->update();
 
     anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
     anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
@@ -175,15 +149,20 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pAnFrame.reset();
     m_pImage.reset();
 
-    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pAnCamera.get(), m_pAnWorld.get(),
-                             rVkExtent);
+    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pCamera->getHandle(),
+                             m_pAnWorld.get(), rVkExtent);
 
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
         .name = "AnariPipelineImage",
         .vkExtent = rVkExtent,
-        .vkFormat = VK_FORMAT_R8G8B8A8_SRGB,
+        .vkFormat = VK_FORMAT_R8G8B8A8_UNORM,
         .vkUsage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     });
 
     m_currentViewportSize = {};
+}
+
+auto AnariFramePipeline::getCameraListener() -> std::shared_ptr<IImguiEventListener>
+{
+    return m_pCamera;
 }

@@ -11,6 +11,8 @@ add_executable(anari
     anari_dem_surface_generator.h
     anari_frame_pipeline.cpp
     anari_frame_pipeline.h
+    anari_map_camera.cpp
+    anari_map_camera.h
     anari.cpp
     dem_block_sampler.h
     gdal_dem_loader.cpp
