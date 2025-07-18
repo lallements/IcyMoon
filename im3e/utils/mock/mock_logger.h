@@ -9,7 +9,7 @@ class MockLoggerTracker : public ILoggerTracker
 {
 public:
     MockLoggerTracker();
-    ~MockLoggerTracker();
+    ~MockLoggerTracker() override;
 
     MOCK_METHOD(void, clearErrors, (), (override));
 

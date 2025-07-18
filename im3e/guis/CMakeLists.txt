@@ -10,6 +10,8 @@ add_library(im3e_guis
     src/imgui_pipeline.h
     src/imgui_render_panel.cpp
     src/imgui_render_panel.h
+    src/imgui_stats_panel.cpp
+    src/imgui_stats_panel.h
     src/imgui_vulkan_backend.cpp
     src/imgui_vulkan_backend.h
     src/imgui_workspace.cpp

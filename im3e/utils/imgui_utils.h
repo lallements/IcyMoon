@@ -31,6 +31,8 @@ public:
 
     bool isOpen() const { return m_isOpen; }
 
+    operator bool() const { return m_isOpen; }
+
 private:
     const bool m_isOpen = false;
     std::function<void()> m_endScopeFct;

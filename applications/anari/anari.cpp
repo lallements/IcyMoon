@@ -353,9 +353,11 @@ int main()
     auto pDevice = pApp->getDevice();
     auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
     auto pRenderPanel = createImguiRenderPanel("Renderer", move(pFramePipeline), pFramePipeline->getCameraListener());
+    auto pStatsPanel = createImguiStatsPanel("Stats", pDevice->getStatsProvider());
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
     pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
+    pGuiWorkspace->addPanel(IGuiWorkspace::Location::Bottom, pStatsPanel);
     pApp->createWindow(WindowConfig{}, pGuiWorkspace);
 
     pApp->run();

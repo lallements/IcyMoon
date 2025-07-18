@@ -5,6 +5,7 @@
 #include "vulkan_functions.h"
 
 #include <im3e/utils/loggers.h>
+#include <im3e/utils/stats.h>
 
 namespace im3e {
 
@@ -18,6 +19,8 @@ public:
     virtual void waitForVkFence(VkFence vkFence) const = 0;
 
     virtual auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> = 0;
+
+    virtual auto getStatsProvider() -> std::shared_ptr<IStatsProvider> = 0;
 
     virtual auto getVkInstance() const -> VkInstance = 0;
     virtual auto getVkPhysicalDevice() const -> VkPhysicalDevice = 0;

@@ -102,8 +102,13 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
         return;
     }
 
+    auto pStatsProvider = m_pDevice->getStatsProvider();
+    auto pPipelineSpan = pStatsProvider->startScopedSpan("executeAnariPipeline");
+
     if (m_currentViewportSize != rVkViewportSize)
     {
+        auto pResizeSpan = pStatsProvider->startScopedSpan("resizeViewport");
+
         const auto aspectRatio = static_cast<float>(rVkViewportSize.width) / static_cast<float>(rVkViewportSize.height);
         m_pCamera->setAspectRatio(aspectRatio);
 
@@ -112,12 +117,20 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
 
         m_currentViewportSize = rVkViewportSize;
     }
-    m_pCamera->update();
-
-    anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
-    anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
-
     {
+        auto pCameraUpdateSpan = pStatsProvider->startScopedSpan("updateCamera");
+        m_pCamera->update();
+    }
+    {
+        auto pRenderSpan = pStatsProvider->startScopedSpan("anariRenderFrame");
+        anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
+    }
+    {
+        auto pWaitFrameSpan = pStatsProvider->startScopedSpan("anariFrameReady");
+        anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
+    }
+    {
+        auto pImageBarrierSpan = pStatsProvider->startScopedSpan("imageBarrier");
         auto pCommandBuffer = m_pDevice->getCommandQueue()->startScopedCommand("AnariFramePipeline",
                                                                                CommandExecutionType::Sync);
         auto pBarrier = pCommandBuffer->startScopedBarrier("transitionLayoutBeforeCopy");
@@ -127,8 +140,12 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
                                                  .vkLayout = VK_IMAGE_LAYOUT_GENERAL,
                                              });
     }
-    copyFrame(*m_pLogger, m_pAnDevice.get(), m_pAnFrame.get(), *m_pImage);
     {
+        auto pCopyFrameSpan = pStatsProvider->startScopedSpan("copyFrame");
+        copyFrame(*m_pLogger, m_pAnDevice.get(), m_pAnFrame.get(), *m_pImage);
+    }
+    {
+        auto pFinalizeSpan = pStatsProvider->startScopedSpan("finalImageBarrier");
         auto pBarrier = rCommandBuffer.startScopedBarrier("finalizeOutputImage");
         pBarrier->addImageBarrier(*m_pImage, ImageBarrierConfig{
                                                  .vkDstStageMask = VK_PIPELINE_STAGE_2_BLIT_BIT,
@@ -141,7 +158,10 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
                                                      .vkLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                                  });
     }
-    blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer.getVkCommandBuffer(), *m_pImage, *pOutputImage);
+    {
+        auto pBlitSpan = pStatsProvider->startScopedSpan("bitToOutput");
+        blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer.getVkCommandBuffer(), *m_pImage, *pOutputImage);
+    }
 }
 
 void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
