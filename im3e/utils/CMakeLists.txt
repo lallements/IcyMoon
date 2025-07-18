@@ -1,5 +1,6 @@
 add_library(im3e_utils STATIC
     src/platform_utils.cpp
+    src/stats_provider.cpp
     src/stream_logger.cpp
     src/stream_logger.h
     src/vk_utils.cpp
@@ -7,6 +8,7 @@ add_library(im3e_utils STATIC
     loggers.h
     throw_utils.h
     platform_utils.h
+    stats.h
     types.h
     vk_utils.h
 )

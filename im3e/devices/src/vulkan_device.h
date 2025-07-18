@@ -24,6 +24,8 @@ public:
 
     auto createLogger(std::string_view name) const -> std::unique_ptr<ILogger> override;
 
+    auto getStatsProvider() -> std::shared_ptr<IStatsProvider> override { return m_pStatsProvider; }
+
     auto getVkInstance() const -> VkInstance override { return m_instance.getVkInstance(); }
     auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_physicalDevice.vkPhysicalDevice; }
     auto getVkDevice() const -> VkDevice override { return m_pVkDevice.get(); }
@@ -35,6 +37,7 @@ public:
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
+    std::shared_ptr<IStatsProvider> m_pStatsProvider;
     const DeviceConfig m_config;
 
     const VulkanInstance m_instance;

@@ -24,6 +24,8 @@ public:
 
     auto createLogger(string_view name) const -> unique_ptr<ILogger> override { return m_rMock.createLogger(name); }
 
+    auto getStatsProvider() -> shared_ptr<IStatsProvider> override { return m_rMock.getStatsProvider(); }
+
     auto getVkInstance() const -> VkInstance override { return m_rMock.getVkInstance(); }
     auto getVkPhysicalDevice() const -> VkPhysicalDevice override { return m_rMock.getVkPhysicalDevice(); }
     auto getVkDevice() const -> VkDevice override { return m_rMock.getVkDevice(); }
@@ -49,6 +51,8 @@ MockDevice::MockDevice()
     }));
 
     ON_CALL(*this, createLogger(_)).WillByDefault(InvokeWithoutArgs([this] { return m_mockLogger.createMockProxy(); }));
+
+    ON_CALL(*this, getStatsProvider()).WillByDefault(Invoke([this] { return m_mockStatsProvider.createMockProxy(); }));
 
     ON_CALL(*this, getVkInstance()).WillByDefault(Return(m_vkInstance));
     ON_CALL(*this, getVkPhysicalDevice()).WillByDefault(Return(m_vkPhysicalDevice));

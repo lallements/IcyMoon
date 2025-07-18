@@ -191,6 +191,7 @@ auto findCommandQueueInfo(const VulkanDeviceFcts& rFcts, VkDevice vkDevice,
 
 VulkanDevice::VulkanDevice(const ILogger& rLogger, DeviceConfig config)
   : m_pLogger(rLogger.createChild("VulkanDevice"))
+  , m_pStatsProvider(createStatsProvider())
   , m_config(move(config))
 
   , m_instance(*m_pLogger, m_config.isDebugEnabled, m_config.requiredInstanceExtensions,

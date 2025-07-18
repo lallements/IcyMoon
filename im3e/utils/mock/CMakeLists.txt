@@ -3,7 +3,9 @@ im3e_add_mock_library(
     mock_im3e_utils
   SOURCES
     src/mock_logger.cpp
+    src/mock_stats.cpp
     mock_logger.h
+    mock_stats.h
 )
 
 target_include_directories(mock_im3e_utils

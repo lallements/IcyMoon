@@ -6,6 +6,7 @@
 
 #include <im3e/api/device.h>
 #include <im3e/utils/mock/mock_logger.h>
+#include <im3e/utils/mock/mock_stats.h>
 
 #include <gmock/gmock.h>
 
@@ -25,6 +26,8 @@ public:
 
     MOCK_METHOD(std::unique_ptr<ILogger>, createLogger, (std::string_view name), (const, override));
 
+    MOCK_METHOD(std::shared_ptr<IStatsProvider>, getStatsProvider, (), (override));
+
     MOCK_METHOD(VkInstance, getVkInstance, (), (const, override));
     MOCK_METHOD(VkPhysicalDevice, getVkPhysicalDevice, (), (const, override));
     MOCK_METHOD(VkDevice, getVkDevice, (), (const, override));
@@ -37,6 +40,7 @@ public:
     auto createMockProxy() -> std::unique_ptr<IDevice>;
 
     auto getMockLogger() -> MockLogger& { return m_mockLogger; }
+    auto getMockStatsProvider() -> MockStatsProvider& { return m_mockStatsProvider; }
     auto getMockVkInstance() const -> VkInstance { return m_vkInstance; }
     auto getMockVkPhysicalDevice() const -> VkPhysicalDevice { return m_vkPhysicalDevice; }
     auto getMockVkDevice() const -> VkDevice { return m_vkDevice; }
@@ -52,6 +56,7 @@ private:
     const VkFence m_vkFence = reinterpret_cast<VkFence>(0xf52e6a);
 
     ::testing::NiceMock<MockLogger> m_mockLogger;
+    ::testing::NiceMock<MockStatsProvider> m_mockStatsProvider;
     ::testing::NiceMock<MockVulkanFunctions> m_mockFcts;
     ::testing::NiceMock<MockImageFactory> m_mockImageFactory;
     ::testing::NiceMock<MockCommandQueue> m_mockCommandQueue;
