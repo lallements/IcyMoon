@@ -41,6 +41,7 @@ private:
     std::unique_ptr<IHostVisibleImage> m_pImage;
 
     VkExtent2D m_currentViewportSize{};
+    bool m_renderingFrame = false;
 };
 
 }  // namespace im3e
