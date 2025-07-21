@@ -20,7 +20,7 @@ using namespace std;
 
 namespace {
 
-constexpr auto AnariImplementationName = "helide";
+constexpr array<string_view, 2U> AnariImplementationNames{"visrtx", "helide"};
 
 void statusFct([[maybe_unused]] const void* pUserData, [[maybe_unused]] ANARIDevice anariDevice,
                [[maybe_unused]] ANARIObject anariObject, [[maybe_unused]] ANARIDataType anariSourceType,
@@ -44,14 +44,25 @@ void statusFct([[maybe_unused]] const void* pUserData, [[maybe_unused]] ANARIDev
 
 auto loadLibrary(const ILogger& rLogger)
 {
-    const auto libName = AnariImplementationName;
+    string anLibName{};
+    ANARILibrary anLib{};
+    for (auto& rLibName : AnariImplementationNames)
+    {
+        rLogger.info(fmt::format("Loading ANARI implementation \"{}\"", rLibName));
+        anLib = anariLoadLibrary(rLibName.data(), statusFct, &rLogger);
+        if (anLib)
+        {
+            anLibName = rLibName;
+            rLogger.info(fmt::format("Successfully loaded ANARI implementation \"{}\"", anLibName));
+            break;
+        }
+        rLogger.info(fmt::format("Failed to load ANARI implementation \"{}\"", rLibName));
+    }
+    throwIfNull<runtime_error>(anLib, "Could not find ANARI implementation to load");
 
-    auto anariLib = anariLoadLibrary(libName, statusFct, &rLogger);
-    throwIfNull<runtime_error>(anariLib, fmt::format("Failed to load Anari lib: \"{}\"", libName));
-    rLogger.info(fmt::format("Loaded Anari lib \"{}\"", libName));
-    return shared_ptr<anari::api::Library>(anariLib, [libName, pLogger = &rLogger](auto* anariLib) {
+    return shared_ptr<anari::api::Library>(anLib, [anLibName, pLogger = &rLogger](auto* anariLib) {
         anariUnloadLibrary(anariLib);
-        pLogger->info(fmt::format("Unloaded Anari lib \"{}\"", libName));
+        pLogger->info(fmt::format("Unloaded Anari lib \"{}\"", anLibName));
     });
 }
 

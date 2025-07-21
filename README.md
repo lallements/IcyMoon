@@ -2,7 +2,9 @@
 
 - [How to Build](#how-to-build)
   - [Dependencies](#dependencies)
-  - [OpenUSD](#openusd)
+  - [ANARI SDK](#anari-sdk)
+  - [VisRTX](#visrtx)
+  - [OpenUSD - Optional](#openusd---optional)
   - [Conan](#conan)
   - [Compiling](#compiling)
   - [Running tests](#running-tests)
@@ -17,9 +19,53 @@ The following must be installed manually:
 
 - [Conan](https://conan.io/downloads.html) (tested with 2.9.2)
 - [Vulkan SDK](https://vulkan.lunarg.com/) (tested with 1.3.290.0)
-- [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) (tested with 24.11)
+- [ANARI SDK](https://github.com/KhronosGroup/ANARI-SDK) (tested with 0.14.0)
+- [VisRTX](https://github.com/NVIDIA/VisRTX) (tested with 0.12.0) - optional
+- [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) (tested with 24.11) - optional
 
-### OpenUSD
+### ANARI SDK
+
+Clone the [ANARI-SDK](https://github.com/KhronosGroup/ANARI-SDK/) GitHub repo and checkout the right version:
+```
+git clone https://github.com/KhronosGroup/ANARI-SDK.git
+git checkout v0.14.0
+```
+
+Build and install using CMake:
+```
+cd /path/to/anari
+mkdir build
+cd build
+cmake ..
+cmake --build . -t install
+```
+
+> Note: `sudo` might be needed to successfully install on Linux
+
+### VisRTX - Optional
+
+Clone the [VisRTX](https://github.com/NVIDIA/VisRTX) GitHub repo and checkout the right version:
+```
+git clone https://github.com/NVIDIA/VisRTX.git
+git checkout v0.12.0
+```
+
+Dependencies to install:
+- [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=22.04&target_type=deb_local)
+- [OptiX](https://developer.nvidia.com/designworks/optix/download)
+- 
+
+Build and install using CMake:
+```
+cd /path/to/visrtx
+mkdir build
+cd build
+cmake ..
+make
+make install
+```
+
+### OpenUSD - Optional
 
 OpenUSD needs to be manually added to your Conan local cache. To do so, from the root folder of this project, run:
 
