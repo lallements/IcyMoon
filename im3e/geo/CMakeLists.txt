@@ -4,6 +4,7 @@ add_library(im3e_geo STATIC
     src/gdal_geotiff_loader.h
     src/gdal_instance.cpp
     src/gdal_instance.h
+    src/gdal_utils.h
 )
 
 target_include_directories(im3e_geo

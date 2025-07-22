@@ -23,30 +23,27 @@ int main(int argc, char** argv)
                                           "Expected Usage:\n"
                                           "\t{} srcPath dstPath\n"
                                           "with:\n"
-                                          " - srcPath: path to the source GeoTIFF file\n"
-                                          " - dstPath: path to the destimation GeoTIFF file\n",
+                                          " - action: action to perform. Current options are:\n"
+                                          "\t- info: print information about the given file\n"
+                                          " - filePath: path to the file to process\n",
                                           ExpectedArgc - 1U, argc - 1U, appRelativePath.filename()));
 
-    filesystem::path srcPath{argv[1]};
-    throwIfFalse<invalid_argument>(filesystem::exists(srcPath), fmt::format("File not found: \"{}\"", srcPath));
-    pLogger->info(fmt::format("Src file: {}", srcPath));
+    const string action{argv[1]};
+    pLogger->info(fmt::format("action: {}", action));
 
-    filesystem::path dstPath{argv[2]};
-    if (filesystem::exists(dstPath))
-        pLogger->info(fmt::format("Dst file: {}", dstPath));
+    filesystem::path filePath{argv[2]};
+    throwIfFalse<invalid_argument>(filesystem::exists(filePath), fmt::format("File not found: \"{}\"", filePath));
+    pLogger->info(fmt::format("filePath: {}", filePath));
+
+    if (action == "info")
     {
-        pLogger->info(fmt::format("Deleting existing dst file at \"{}\"", dstPath));
-        filesystem::remove(dstPath);
+        pLogger->setLevelFilter(LogLevel::Verbose);
+        auto pHeightMap = loadHeightMapFromFile(*pLogger, HeightMapFileConfig{.path = filePath, .readOnly = true});
     }
-
-    pLogger->info(fmt::format("Copying \"{}\" to \"{}\"", srcPath, dstPath));
-    filesystem::copy(srcPath, dstPath);
-    pLogger->info("Copy complete");
-
-    auto pHeightMap = loadHeightMapFromFile(*pLogger, HeightMapFileConfig{
-                                                          .path = dstPath,
-                                                          .readOnly = true,
-                                                      });
+    else
+    {
+        throw runtime_error(fmt::format("Unsupported action: {}", action));
+    }
 
     return 0;
 }

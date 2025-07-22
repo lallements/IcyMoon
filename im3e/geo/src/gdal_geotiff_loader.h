@@ -23,6 +23,7 @@ private:
 
     std::shared_ptr<IGdalInstance> m_pGdalInstance;
     GDALDatasetUniquePtr m_pDataset;
+    GDALRasterBand* m_pRasterBand;
 };
 
 }  // namespace im3e
