@@ -3,6 +3,7 @@ add_library(im3e_api INTERFACE
     device.h
     frame_pipeline.h
     gui.h
+    height_map.h
     image.h
     vulkan_functions.h
     window.h
