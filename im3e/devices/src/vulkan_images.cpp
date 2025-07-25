@@ -2,7 +2,7 @@
 
 #include "vulkan_device.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <CImg.h>
 #include <fmt/format.h>

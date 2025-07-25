@@ -2,7 +2,7 @@
 
 #include "vulkan_images.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/types.h>
 #include <im3e/utils/vk_utils.h>
 

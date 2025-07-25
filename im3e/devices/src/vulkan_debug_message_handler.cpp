@@ -1,6 +1,6 @@
 #include "vulkan_debug_message_handler.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/vk_utils.h>
 
 #include <fmt/format.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "throw_utils.h"
+#include <im3e/utils/core/throw_utils.h>
 
 #include <functional>
 

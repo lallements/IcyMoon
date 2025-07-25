@@ -1,6 +1,7 @@
 #pragma once
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
+#include <im3e/utils/loggers.h>
 #include <im3e/utils/types.h>
 
 #include <fmt/format.h>
@@ -20,6 +21,20 @@ constexpr bool operator!=(const VkExtent2D& rVkExtent1, const VkExtent2D& rVkExt
 }
 
 namespace im3e {
+
+inline void throwIfVkFailed(VkResult vkResult, std::string_view errorMessage)
+{
+    throwIfFalse<std::runtime_error>(vkResult == VK_SUCCESS,
+                                     fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
+}
+
+inline void logIfVkFailed(VkResult vkResult, const ILogger& rLogger, std::string_view errorMessage)
+{
+    if (vkResult != VK_SUCCESS)
+    {
+        rLogger.error(fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
+    }
+}
 
 template <typename T, typename F, typename... Args>
 std::vector<T> getVkList(F fct, std::string_view name, Args... args)

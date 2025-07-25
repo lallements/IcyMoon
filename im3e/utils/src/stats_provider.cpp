@@ -1,6 +1,6 @@
 #include "stats.h"
 
-#include "throw_utils.h"
+#include <im3e/utils/core/throw_utils.h>
 
 #include <mutex>
 #include <optional>

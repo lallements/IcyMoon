@@ -3,8 +3,8 @@
 
 #include <im3e/devices/devices.h>
 #include <im3e/guis/guis.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/throw_utils.h>
 
 #include <anari/anari.h>
 #define ANARI_EXTENSION_UTILITY_IMPL
