@@ -16,8 +16,11 @@ class TestProperty : public IProperty
 public:
     void registerOnChange(weak_ptr<function<void()>>) const override {}
 
-    auto getName() const -> string override { return ""; }
+    void setAnyValue(any) override {}
+
+    auto getName() const -> string_view override { return ""; }
     auto getType() const -> type_index override { return typeid(void); }
+    auto getAnyValue() const -> any override { return {}; }
 };
 
 }  // namespace
