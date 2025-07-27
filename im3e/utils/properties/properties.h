@@ -10,7 +10,7 @@
 namespace im3e {
 
 template <typename T>
-struct PropertyConfig
+struct PropertyValueConfig
 {
     using Type = T;
     const std::string_view name;
@@ -19,24 +19,24 @@ struct PropertyConfig
 };
 
 // clang-format off
-template <typename T> struct IsPropertyConfigT : std::false_type{};
-template <typename T> struct IsPropertyConfigT<PropertyConfig<T>> : std::true_type{};
-template <typename T> inline constexpr bool IsPropertyConfig = IsPropertyConfigT<T>::value;
+template <typename T> struct IsPropertyValueConfigT : std::false_type{};
+template <typename T> struct IsPropertyValueConfigT<PropertyValueConfig<T>> : std::true_type{};
+template <typename T> inline constexpr bool IsPropertyValueConfig = IsPropertyValueConfigT<T>::value;
 
 template <const auto& Config> 
-concept CPropertyConfig = IsPropertyConfig<std::remove_cvref_t<decltype(Config)>>;
+concept CPropertyValueConfig = IsPropertyValueConfig<std::remove_cvref_t<decltype(Config)>>;
 // clang-format on
 
 template <const auto& Config>
-    requires CPropertyConfig<Config>
-class Property : public IProperty
+    requires CPropertyValueConfig<Config>
+class PropertyValue : public IPropertyValue
 {
 public:
     using Type = typename std::remove_cvref_t<decltype(Config)>::Type;
 
     void registerOnChange(std::weak_ptr<std::function<void()>> pOnChangeCallback) const override
     {
-        m_changeNotifier.registerOnChanged(std::move(pOnChangeCallback));
+        m_changeNotifier.registerOnChange(std::move(pOnChangeCallback));
     }
 
     void setValue(Type value)
@@ -63,5 +63,8 @@ private:
     mutable PropertyChangeNotifier m_changeNotifier;
     Type m_value = Config.defaultValue.value_or(Type{});
 };
+
+auto createPropertyGroup(std::string_view name, std::vector<std::shared_ptr<IProperty>> pProperties)
+    -> std::shared_ptr<IPropertyGroup>;
 
 }  // namespace im3e

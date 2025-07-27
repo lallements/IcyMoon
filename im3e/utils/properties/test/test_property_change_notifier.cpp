@@ -20,7 +20,7 @@ TEST(PropertyChangeNotifierTest, registerOnChange)
     bool called{};
     auto callback = [&] { called = true; };
     auto pOnChanged = make_shared<function<void()>>(callback);
-    notifier.registerOnChanged(pOnChanged);
+    notifier.registerOnChange(pOnChanged);
 
     EXPECT_THAT(called, IsFalse());
     notifier.notifyChanged();
@@ -34,7 +34,7 @@ TEST(PropertyChangeNotifierTest, notifyChangedAfterCallbackDeleted)
     bool called{};
     auto callback = [&] { called = true; };
     auto pOnChanged = make_shared<function<void()>>(callback);
-    notifier.registerOnChanged(pOnChanged);
+    notifier.registerOnChange(pOnChanged);
 
     pOnChanged.reset();
 

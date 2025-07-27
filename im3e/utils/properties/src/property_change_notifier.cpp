@@ -5,11 +5,11 @@
 using namespace im3e;
 using namespace std;
 
-void PropertyChangeNotifier::registerOnChanged(weak_ptr<function<void()>> pOnChangedCallback)
+void PropertyChangeNotifier::registerOnChange(weak_ptr<function<void()>> pOnChangeCallback)
 {
-    throwIfArgNull(pOnChangedCallback.lock(), "Property cannot register null callback");
-    throwIfArgNull(*pOnChangedCallback.lock(), "Property cannot register null callback");
-    m_pOnChangeCallbacks.emplace_back(move(pOnChangedCallback));
+    throwIfArgNull(pOnChangeCallback.lock(), "Property cannot register null callback");
+    throwIfArgNull(*pOnChangeCallback.lock(), "Property cannot register empty function");
+    m_pOnChangeCallbacks.emplace_back(move(pOnChangeCallback));
 }
 
 void PropertyChangeNotifier::notifyChanged()

@@ -1,5 +1,6 @@
 add_library(im3e_utils_properties STATIC
     src/property_change_notifier.cpp
+    src/property_group.cpp
     properties.h
     property_change_notifier.h
 )

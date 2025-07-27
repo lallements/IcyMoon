@@ -10,7 +10,7 @@ namespace im3e {
 class PropertyChangeNotifier
 {
 public:
-    void registerOnChanged(std::weak_ptr<std::function<void()>> pOnChangedCallback);
+    void registerOnChange(std::weak_ptr<std::function<void()>> pOnChangeCallback);
     void notifyChanged();
 
 private:
