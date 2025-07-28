@@ -21,7 +21,7 @@ public:
         m_notifier.registerOnChange(move(pOnChangeCallback));
     }
 
-    auto getName() const -> string_view override { return m_name; }
+    auto getName() const -> string override { return m_name; }
     auto getChildren() const -> vector<shared_ptr<IProperty>> override { return m_pProperties; }
 
 private:

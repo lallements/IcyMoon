@@ -54,7 +54,7 @@ public:
         setValue(std::move(value));
     }
 
-    auto getName() const -> std::string_view override { return Config.name; }
+    auto getName() const -> std::string override { return std::string{Config.name}; }
     auto getType() const -> std::type_index override { return typeid(Type); }
     auto getValue() const -> Type { return m_value; }
     auto getAnyValue() const -> std::any { return m_value; }

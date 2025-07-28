@@ -5,6 +5,7 @@
 #include <im3e/api/gui.h>
 #include <im3e/api/window.h>
 #include <im3e/utils/loggers.h>
+#include <im3e/utils/properties/api/property.h>
 #include <im3e/utils/stats.h>
 
 #include <glm/glm.hpp>
@@ -35,6 +36,8 @@ auto createImguiRenderPanel(std::string_view name, std::unique_ptr<IFramePipelin
 
 auto createImguiStatsPanel(std::string_view name, std::shared_ptr<IStatsProvider> pStatsProvider)
     -> std::shared_ptr<IGuiPanel>;
+
+auto createImguiPropertyPanel(std::shared_ptr<IPropertyGroup> pPropertyGroup) -> std::shared_ptr<IGuiPanel>;
 
 auto createImguiWorkspace(std::string_view name) -> std::shared_ptr<IGuiWorkspace>;
 

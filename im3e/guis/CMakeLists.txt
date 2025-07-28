@@ -8,6 +8,10 @@ add_library(im3e_guis
     src/imgui_context.h
     src/imgui_pipeline.cpp
     src/imgui_pipeline.h
+    src/imgui_property_control.cpp
+    src/imgui_property_control.h
+    src/imgui_property_panel.cpp
+    src/imgui_property_panel.h
     src/imgui_render_panel.cpp
     src/imgui_render_panel.h
     src/imgui_stats_panel.cpp
@@ -38,6 +42,7 @@ target_link_libraries(im3e_guis
     imgui
     im3e_devices
     im3e_resources
+    im3e_utils_properties_api
 )
 
 add_subdirectory(test)
