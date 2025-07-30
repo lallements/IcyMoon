@@ -1,6 +1,6 @@
 #include "vulkan_physical_devices.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/vk_utils.h>
 
 #include <fmt/format.h>

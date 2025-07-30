@@ -31,6 +31,16 @@ TEST(VkUtilsTest, VkExtent2DDiffOperator)
     EXPECT_THAT(vkExtent1 != vkExtent4, IsTrue());
 }
 
+TEST(VkUtilsTest, throwIfVkFailedThrowsOnFailure)
+{
+    EXPECT_THROW(throwIfVkFailed(VK_ERROR_UNKNOWN, "Expected Failure"), runtime_error);
+}
+
+TEST(VkUtilsTest, throwIfVkFailedDoesNotThrowOnSuccess)
+{
+    EXPECT_NO_THROW(throwIfVkFailed(VK_SUCCESS, "Unexpected Failure"));
+}
+
 TEST(VkUtilsTest, getVkList)
 {
     const VkDevice vkDevice = reinterpret_cast<VkDevice>(0xc0ffee);

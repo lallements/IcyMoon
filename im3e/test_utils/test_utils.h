@@ -11,6 +11,7 @@ using ::testing::Const;
 using ::testing::ContainerEq;
 using ::testing::DoAll;
 using ::testing::Eq;
+using ::testing::FloatEq;
 using ::testing::Ge;
 using ::testing::InSequence;
 using ::testing::Invoke;

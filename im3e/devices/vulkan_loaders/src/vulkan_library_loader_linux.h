@@ -1,6 +1,6 @@
 #pragma once
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/types.h>
 
 #include <dlfcn.h>

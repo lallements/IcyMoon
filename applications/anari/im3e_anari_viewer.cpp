@@ -3,8 +3,9 @@
 
 #include <im3e/devices/devices.h>
 #include <im3e/guis/guis.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/properties/properties.h>
 
 #include <anari/anari.h>
 #define ANARI_EXTENSION_UTILITY_IMPL
@@ -362,13 +363,33 @@ int main()
                                                       });
 
     auto pDevice = pApp->getDevice();
-    auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
-    auto pRenderPanel = createImguiRenderPanel("Renderer", move(pFramePipeline), pFramePipeline->getCameraListener());
-    auto pStatsPanel = createImguiStatsPanel("Stats", pDevice->getStatsProvider());
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
+
+    // Test Properties
+    {
+        static constexpr PropertyValueConfig<uint32_t> LevelOfDetails{
+            .name = "Level of Details",
+            .description = "Index of the current level of details of the terrain being rendered",
+            .defaultValue = 0U,
+        };
+
+        auto pLodProperty = make_shared<PropertyValue<LevelOfDetails>>();
+        auto pParametersGroup = createPropertyGroup("Parameters", {pLodProperty});
+
+        // TODO: add renderer properties here
+
+        auto pParametersPanel = createImguiPropertyPanel(pParametersGroup);
+        pGuiWorkspace->addPanel(IGuiWorkspace::Location::Left, pParametersPanel);
+    }
+
+    auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
+    auto pRenderPanel = createImguiRenderPanel("Renderer", move(pFramePipeline), pFramePipeline->getCameraListener());
     pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
+
+    auto pStatsPanel = createImguiStatsPanel("Stats", pDevice->getStatsProvider());
     pGuiWorkspace->addPanel(IGuiWorkspace::Location::Bottom, pStatsPanel);
+
     pApp->createWindow(WindowConfig{}, pGuiWorkspace);
 
     pApp->run();

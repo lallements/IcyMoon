@@ -1,6 +1,6 @@
 #include "imgui_vulkan_backend.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>

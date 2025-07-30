@@ -7,7 +7,7 @@ target_include_directories(im3e_resources
 
 target_link_libraries(im3e_resources
   INTERFACE
-    im3e_utils
+    im3e_utils_core
 )
 
 set(IM3E_RESOURCES_PATH "${CMAKE_CURRENT_SOURCE_DIR}")

@@ -1,7 +1,7 @@
 #include "imgui_pipeline.h"
 
 #include <im3e/resources/resources.h>
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <fmt/format.h>
 #include <imgui_impl_glfw.h>

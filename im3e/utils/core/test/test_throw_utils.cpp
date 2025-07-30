@@ -1,4 +1,4 @@
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <im3e/test_utils/test_utils.h>
 
@@ -27,14 +27,4 @@ TEST(ThrowUtilsTest, throwIfArgNullDoesNotThrowWhenNotNull)
 {
     const void* pNonNullPtr = reinterpret_cast<const void*>(0x1234);
     EXPECT_NO_THROW(throwIfArgNull(pNonNullPtr, "Unexpected Throw"));
-}
-
-TEST(ThrowUtilsTest, throwIfVkFailedThrowsOnFailure)
-{
-    EXPECT_THROW(throwIfVkFailed(VK_ERROR_UNKNOWN, "Expected Failure"), runtime_error);
-}
-
-TEST(ThrowUtilsTest, throwIfVkFailedDoesNotThrowOnSuccess)
-{
-    EXPECT_NO_THROW(throwIfVkFailed(VK_SUCCESS, "Unexpected Failure"));
 }

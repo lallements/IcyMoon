@@ -2,7 +2,7 @@
 
 #include "gdal_dem_loader.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 using namespace im3e;
 using namespace std;

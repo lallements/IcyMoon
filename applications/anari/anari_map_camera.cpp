@@ -1,6 +1,6 @@
 #include "anari_map_camera.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <fmt/format.h>
 #include <glm/gtc/quaternion.hpp>

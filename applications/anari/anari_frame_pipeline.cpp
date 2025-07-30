@@ -1,6 +1,6 @@
 #include "anari_frame_pipeline.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 using namespace im3e;
 using namespace std;

@@ -1,6 +1,6 @@
 #include "imgui_render_panel.h"
 
-#include <im3e/utils/throw_utils.h>
+#include <im3e/utils/core/throw_utils.h>
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -89,6 +89,11 @@ void ImguiRenderPanel::draw(const ICommandBuffer& rCommandBuffer)
     }
 
     const auto imViewportSize = getWindowContentRegionSize();
+    if (imViewportSize.x == 0 || imViewportSize.y == 0)
+    {
+        return;
+    }
+
     m_pFramePipeline->prepareExecution(rCommandBuffer, toVkExtent2D(imViewportSize), m_pRenderOutput);
     {
         auto pBarrierRecorder = rCommandBuffer.startScopedBarrier(fmt::format("barrierToDrawIn{}", m_name));

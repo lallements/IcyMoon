@@ -1,9 +1,6 @@
 #pragma once
 
-#include "loggers.h"
-
 #include <fmt/format.h>
-#include <vulkan/vulkan.h>
 
 #include <stdexcept>
 #include <string_view>
@@ -37,20 +34,6 @@ void throwIfFalse(bool expression, std::string_view exceptionMessage)
     if (!expression)
     {
         throw E(exceptionMessage.data());
-    }
-}
-
-inline void throwIfVkFailed(VkResult vkResult, std::string_view errorMessage)
-{
-    throwIfFalse<std::runtime_error>(vkResult == VK_SUCCESS,
-                                     fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
-}
-
-inline void logIfVkFailed(VkResult vkResult, const ILogger& rLogger, std::string_view errorMessage)
-{
-    if (vkResult != VK_SUCCESS)
-    {
-        rLogger.error(fmt::format("Vulkan Error {}: {}", static_cast<int>(vkResult), errorMessage));
     }
 }
 

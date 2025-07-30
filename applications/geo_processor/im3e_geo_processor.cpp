@@ -1,6 +1,6 @@
 #include <im3e/geo/geo.h>
+#include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/throw_utils.h>
 
 #include <fmt/format.h>
 #include <fmt/std.h>
