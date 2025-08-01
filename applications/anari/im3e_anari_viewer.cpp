@@ -1,6 +1,7 @@
 #include "anari_dem_surface_generator.h"
 #include "anari_frame_pipeline.h"
 
+#include <im3e/anari/anari.h>
 #include <im3e/devices/devices.h>
 #include <im3e/guis/guis.h>
 #include <im3e/utils/core/throw_utils.h>
@@ -9,8 +10,6 @@
 #include <im3e/utils/types.h>
 
 #include <anari/anari.h>
-#define ANARI_EXTENSION_UTILITY_IMPL
-#include <anari/frontend/anari_extension_utility.h>
 #include <fmt/format.h>
 
 #include <iostream>
@@ -22,104 +21,7 @@ using namespace std;
 
 namespace {
 
-constexpr array<string_view, 2U> AnariImplementationNames{"visrtx", "helide"};
-
-void statusFct([[maybe_unused]] const void* pUserData, [[maybe_unused]] ANARIDevice anariDevice,
-               [[maybe_unused]] ANARIObject anariObject, [[maybe_unused]] ANARIDataType anariSourceType,
-               [[maybe_unused]] ANARIStatusSeverity anariStatusSeverity,
-               [[maybe_unused]] ANARIStatusCode anariStatusCode, [[maybe_unused]] const char* pMessage)
-{
-    auto pLogger = static_cast<const ILogger*>(pUserData);
-    switch (anariStatusSeverity)
-    {
-        case ANARI_SEVERITY_FATAL_ERROR: pLogger->error(fmt::format("[ANARI][FATAL] {}", pMessage)); break;
-        case ANARI_SEVERITY_ERROR: pLogger->error(fmt::format("[ANARI] {}", pMessage)); break;
-        case ANARI_SEVERITY_WARNING: pLogger->warning(fmt::format("[ANARI] {}", pMessage)); break;
-        case ANARI_SEVERITY_PERFORMANCE_WARNING:
-            pLogger->verbose(fmt::format("[ANARI][PERFORMANCE] {}", pMessage));
-            break;
-        case ANARI_SEVERITY_INFO: pLogger->info(fmt::format("[ANARI] {}", pMessage)); break;
-        case ANARI_SEVERITY_DEBUG: pLogger->debug(fmt::format("[ANARI] {}", pMessage)); break;
-        default: pLogger->verbose(fmt::format("[ANARI][UNKNOWN] {}", pMessage)); break;
-    }
-}
-
-auto loadLibrary(const ILogger& rLogger)
-{
-    string anLibName{};
-    ANARILibrary anLib{};
-    for (auto& rLibName : AnariImplementationNames)
-    {
-        rLogger.info(fmt::format("Loading ANARI implementation \"{}\"", rLibName));
-        anLib = anariLoadLibrary(rLibName.data(), statusFct, &rLogger);
-        if (anLib)
-        {
-            anLibName = rLibName;
-            rLogger.info(fmt::format("Successfully loaded ANARI implementation \"{}\"", anLibName));
-            break;
-        }
-        rLogger.info(fmt::format("Failed to load ANARI implementation \"{}\"", rLibName));
-    }
-    throwIfNull<runtime_error>(anLib, "Could not find ANARI implementation to load");
-
-    return shared_ptr<anari::api::Library>(anLib, [anLibName, pLogger = &rLogger](auto* anariLib) {
-        anariUnloadLibrary(anariLib);
-        pLogger->info(fmt::format("Unloaded Anari lib \"{}\"", anLibName));
-    });
-}
-
-auto chooseDeviceSubtype(const ILogger& rLogger, ANARILibrary pLib)
-{
-    auto pSubtypes = anariGetDeviceSubtypes(pLib);
-    throwIfNull<runtime_error>(pSubtypes, "Failed to get device subtypes");
-
-    rLogger.debug("Found the following subtypes:");
-    for (const char** pSubtype = pSubtypes; *pSubtype != nullptr; pSubtype++)
-    {
-        rLogger.debug(fmt::format(" - {}", *pSubtype));
-    }
-
-    rLogger.info(fmt::format("Selecting the first device subtype found: \"{}\"", *pSubtypes));
-    return string{*pSubtypes};
-}
-
-auto detectDeviceExtensions(const ILogger& rLogger, ANARILibrary pLib, string_view deviceSubtype)
-{
-    ANARIExtensions extensions{};
-    if (anariGetDeviceExtensionStruct(&extensions, pLib, deviceSubtype.data()))
-    {
-        throw runtime_error("Failed to get ANARI device extensions");
-    }
-
-    auto verifyExt = [&](int supported, string_view name) {
-        rLogger.info(fmt::format(R"(Extension "{}" is {})", name, supported ? "supported" : "not supported"));
-        // throwIfFalse<runtime_error>(supported, fmt::format("{} not supported", name));
-    };
-    verifyExt(extensions.ANARI_KHR_CAMERA_PERSPECTIVE, "ANARI_KHR_CAMERA_PERSPECTIVE");
-    verifyExt(extensions.ANARI_KHR_GEOMETRY_TRIANGLE, "ANARI_KHR_GEOMETRY_TRIANGLE");
-    verifyExt(extensions.ANARI_KHR_LIGHT_DIRECTIONAL, "ANARI_KHR_LIGHT_DIRECTIONAL");
-    verifyExt(extensions.ANARI_KHR_LIGHT_POINT, "ANARI_KHR_LIGHT_POINT");
-    verifyExt(extensions.ANARI_KHR_MATERIAL_MATTE, "ANARI_KHR_MATERIAL_MATTE");
-    verifyExt(extensions.ANARI_KHR_MATERIAL_PHYSICALLY_BASED, "ANARI_KHR_MATERIAL_PHYSICALLY_BASED");
-
-    return extensions;
-}
-
-auto createDevice(const ILogger& rLogger, ANARILibrary pLib, string_view deviceSubtype)
-{
-    auto pDevice = throwIfNull<runtime_error>(
-        anariNewDevice(pLib, deviceSubtype.data()),
-        fmt::format("Failed to create ANARI device with subtype \"{}\"", deviceSubtype));
-    rLogger.info(fmt::format("Created device with subtype \"{}\"", deviceSubtype));
-
-    anariCommitParameters(pDevice, pDevice);
-
-    return shared_ptr<anari::api::Device>(pDevice, [pLogger = &rLogger](auto* pDevice) {
-        anariRelease(pDevice, pDevice);
-        pLogger->info("Destroyed device");
-    });
-}
-
+/*
 auto chooseRendererSubtype(const ILogger& rLogger, ANARIDevice pDevice)
 {
     const auto** pSubtypes = anariGetObjectSubtypes(pDevice, ANARI_RENDERER);
@@ -402,7 +304,7 @@ auto createRenderer(const ILogger& rLogger, ANARIDevice anDevice, string_view re
         anariRelease(anDevice, anRenderer);
         pLogger->debug("Released renderer");
     });
-}
+}*/
 
 }  // namespace
 
@@ -412,12 +314,9 @@ int main()
     pLogger->setLevelFilter(LogLevel::Verbose);
     pLogger->debug("ANARI App");
 
-    auto pAnLib = loadLibrary(*pLogger);
-    const auto anDeviceSubtype = chooseDeviceSubtype(*pLogger, pAnLib.get());
-    [[maybe_unused]] const auto anDeviceExtensions = detectDeviceExtensions(*pLogger, pAnLib.get(), anDeviceSubtype);
-    auto pAnDevice = createDevice(*pLogger, pAnLib.get(), anDeviceSubtype);
+    auto pAnDevice = createAnariDevice(*pLogger);
 
-    const auto anRendererSubtype = chooseRendererSubtype(*pLogger, pAnDevice.get());
+    /*const auto anRendererSubtype = chooseRendererSubtype(*pLogger, pAnDevice.get());
     logRendererParameters(*pLogger, pAnDevice.get(), anRendererSubtype);
 
     auto pAnRenderer = createRenderer(*pLogger, pAnDevice.get(), anRendererSubtype);
@@ -462,6 +361,6 @@ int main()
 
     pApp->createWindow(WindowConfig{}, pGuiWorkspace);
 
-    pApp->run();
+    pApp->run();*/
     return 0;
 }

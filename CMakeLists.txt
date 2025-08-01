@@ -62,6 +62,7 @@ endif()
 add_subdirectory(cmake)
 im3e_set_coverage_flags()
 
+find_package(anari REQUIRED)
 find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
 find_package(GDAL REQUIRED)
