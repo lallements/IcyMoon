@@ -7,8 +7,8 @@ using namespace std;
 
 namespace {
 
-constexpr PropertyValueConfig<int32_t> IntPropertyConfig{.name = "Int Property"};
-constexpr PropertyValueConfig<bool> BoolPropertyConfig{.name = "Bool Property"};
+constexpr PropertyValueTConfig<int32_t> IntPropertyConfig{.name = "Int Property"};
+constexpr PropertyValueTConfig<bool> BoolPropertyConfig{.name = "Bool Property"};
 
 }  // namespace
 
@@ -16,8 +16,8 @@ TEST(PropertyGroupTest, constructor)
 {
     constexpr auto TestGroupName = "Test Group";
     const vector<shared_ptr<IProperty>> properties{
-        make_shared<PropertyValue<IntPropertyConfig>>(),
-        make_shared<PropertyValue<BoolPropertyConfig>>(),
+        make_shared<PropertyValueT<IntPropertyConfig>>(),
+        make_shared<PropertyValueT<BoolPropertyConfig>>(),
         createPropertyGroup("Other Group", {}),
     };
     auto pProperty = createPropertyGroup(TestGroupName, properties);

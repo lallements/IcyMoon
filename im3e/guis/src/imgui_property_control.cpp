@@ -3,6 +3,7 @@
 #include <im3e/utils/imgui_utils.h>
 
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -54,6 +55,28 @@ struct ImguiUnknownPropertyControl : public ImguiBasePropertyControl
     }
 };
 
+class ImguiStringPropertyControl : public ImguiBasePropertyControl
+{
+public:
+    ImguiStringPropertyControl(shared_ptr<IPropertyValue> pProperty)
+      : ImguiBasePropertyControl(move(pProperty))
+      , m_value(any_cast<string>(m_pProperty->getAnyValue()))
+    {
+    }
+
+    void draw() override
+    {
+        if (ImGui::InputText(fmt::format("##{}", m_pProperty->getName()).c_str(), &m_value))
+        {
+            m_pProperty->setAnyValue(m_value);
+        }
+        m_value = any_cast<string>(m_pProperty->getAnyValue());
+    }
+
+private:
+    string m_value;
+};
+
 class ImguiBoolPropertyControl : public ImguiBasePropertyControl
 {
 public:
@@ -74,6 +97,29 @@ public:
 
 private:
     bool m_value;
+};
+
+class ImguiInt32PropertyControl : public ImguiBasePropertyControl
+{
+public:
+    ImguiInt32PropertyControl(shared_ptr<IPropertyValue> pProperty)
+      : ImguiBasePropertyControl(move(pProperty))
+      , m_value(any_cast<int32_t>(m_pProperty->getAnyValue()))
+    {
+    }
+
+    void draw() override
+    {
+        const auto inputId = fmt::format("##{}", m_pProperty->getName());
+        if (ImGui::InputInt(inputId.c_str(), &m_value))
+        {
+            m_pProperty->setAnyValue(static_cast<int32_t>(m_value));
+        }
+        m_value = any_cast<int32_t>(m_pProperty->getAnyValue());
+    }
+
+private:
+    int m_value{};
 };
 
 class ImguiUint32PropertyControl : public ImguiBasePropertyControl
@@ -207,7 +253,9 @@ auto im3e::createImguiPropertyControl(shared_ptr<IProperty> pProperty) -> unique
 {
     static const unordered_map<type_index, ControlFactoryFct> typeToValueControlFactory{
         createControlFactory<void, ImguiVoidPropertyControl>(),
+        createControlFactory<string, ImguiStringPropertyControl>(),
         createControlFactory<bool, ImguiBoolPropertyControl>(),
+        createControlFactory<int32_t, ImguiInt32PropertyControl>(),
         createControlFactory<uint32_t, ImguiUint32PropertyControl>(),
         createControlFactory<float, ImguiFloatPropertyControl>(),
         createControlFactory<glm::vec3, ImguiVec3PropertyControl>(),

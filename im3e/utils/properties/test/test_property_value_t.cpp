@@ -17,35 +17,35 @@ struct OnChangeReceiver
 
 }  // namespace
 
-TEST(PropertyValueTest, constructor)
+TEST(PropertyValueTTest, constructor)
 {
-    static constexpr PropertyValueConfig<bool> BoolConfig{
+    static constexpr PropertyValueTConfig<bool> BoolConfig{
         .name = "Boolean",
     };
-    PropertyValue<BoolConfig> property;
+    PropertyValueT<BoolConfig> property;
     EXPECT_THAT(property.getName(), StrEq(BoolConfig.name));
     EXPECT_THAT(property.getType() == typeid(bool), IsTrue());
     EXPECT_THAT(property.getValue(), Eq(bool{}));
 }
 
-TEST(PropertyValueTest, constructorWithDefaultValue)
+TEST(PropertyValueTTest, constructorWithDefaultValue)
 {
-    static constexpr PropertyValueConfig<uint32_t> UintConfig{
+    static constexpr PropertyValueTConfig<uint32_t> UintConfig{
         .name = "Uint",
         .defaultValue = 42U,
     };
-    PropertyValue<UintConfig> property;
+    PropertyValueT<UintConfig> property;
     EXPECT_THAT(property.getName(), StrEq(UintConfig.name));
     EXPECT_THAT(property.getType() == typeid(uint32_t), IsTrue());
     EXPECT_THAT(property.getValue(), Eq(UintConfig.defaultValue.value()));
 }
 
-TEST(PropertyValueTest, setValue)
+TEST(PropertyValueTTest, setValue)
 {
-    static constexpr PropertyValueConfig<float> FloatConfig{
+    static constexpr PropertyValueTConfig<float> FloatConfig{
         .defaultValue = 2.0F,
     };
-    PropertyValue<FloatConfig> property;
+    PropertyValueT<FloatConfig> property;
     EXPECT_THAT(property.getValue(), FloatEq(2.0F));
 
     OnChangeReceiver receiver(property);
@@ -57,14 +57,14 @@ TEST(PropertyValueTest, setValue)
     EXPECT_THAT(property.getValue(), FloatEq(expectedValue));
 }
 
-TEST(PropertyValueTest, setValueDoesNotNotifyIfGivenSameValue)
+TEST(PropertyValueTTest, setValueDoesNotNotifyIfGivenSameValue)
 {
     constexpr uint32_t TestValue = 50U;
 
-    static constexpr PropertyValueConfig<uint32_t> IntConfig{
+    static constexpr PropertyValueTConfig<uint32_t> IntConfig{
         .defaultValue = TestValue,
     };
-    PropertyValue<IntConfig> property;
+    PropertyValueT<IntConfig> property;
     EXPECT_THAT(property.getValue(), Eq(TestValue));
 
     OnChangeReceiver receiver(property);
@@ -75,12 +75,12 @@ TEST(PropertyValueTest, setValueDoesNotNotifyIfGivenSameValue)
     EXPECT_THAT(property.getValue(), Eq(TestValue));
 }
 
-TEST(PropertyValueTest, setAnyValue)
+TEST(PropertyValueTTest, setAnyValue)
 {
-    static constexpr PropertyValueConfig<int32_t> IntConfig{
+    static constexpr PropertyValueTConfig<int32_t> IntConfig{
         .defaultValue = -5,
     };
-    PropertyValue<IntConfig> property;
+    PropertyValueT<IntConfig> property;
     EXPECT_THAT(any_cast<int32_t>(property.getAnyValue()), Eq(IntConfig.defaultValue.value()));
 
     OnChangeReceiver receiver(property);
@@ -92,14 +92,14 @@ TEST(PropertyValueTest, setAnyValue)
     EXPECT_THAT(any_cast<int32_t>(property.getAnyValue()), Eq(expectedValue));
 }
 
-TEST(PropertyValueTest, setAnyValueDoesNotNotifyIfGivenSameValue)
+TEST(PropertyValueTTest, setAnyValueDoesNotNotifyIfGivenSameValue)
 {
     constexpr int32_t TestValue = 65;
 
-    static constexpr PropertyValueConfig<int32_t> IntConfig{
+    static constexpr PropertyValueTConfig<int32_t> IntConfig{
         .defaultValue = TestValue,
     };
-    PropertyValue<IntConfig> property;
+    PropertyValueT<IntConfig> property;
     EXPECT_THAT(any_cast<int32_t>(property.getAnyValue()), Eq(TestValue));
 
     OnChangeReceiver receiver(property);
