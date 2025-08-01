@@ -14,6 +14,8 @@ add_library(imgui STATIC
     imgui/backends/imgui_impl_glfw.h
     imgui/backends/imgui_impl_vulkan.cpp
     imgui/backends/imgui_impl_vulkan.h
+    imgui/misc/cpp/imgui_stdlib.cpp
+    imgui/misc/cpp/imgui_stdlib.h
 
     # TODO: bring back implot
     #implot/implot_demo.cpp
@@ -27,6 +29,7 @@ target_include_directories(imgui
   PUBLIC
     imgui
     imgui/backends
+    imgui/misc/cpp
     implot
 )
 

@@ -10,7 +10,7 @@
 namespace im3e {
 
 template <typename T>
-struct PropertyValueConfig
+struct PropertyValueTConfig
 {
     using Type = T;
     const std::string_view name;
@@ -19,17 +19,17 @@ struct PropertyValueConfig
 };
 
 // clang-format off
-template <typename T> struct IsPropertyValueConfigT : std::false_type{};
-template <typename T> struct IsPropertyValueConfigT<PropertyValueConfig<T>> : std::true_type{};
-template <typename T> inline constexpr bool IsPropertyValueConfig = IsPropertyValueConfigT<T>::value;
+template <typename T> struct IsPropertyValueTConfigT : std::false_type{};
+template <typename T> struct IsPropertyValueTConfigT<PropertyValueTConfig<T>> : std::true_type{};
+template <typename T> inline constexpr bool IsPropertyValueTConfig = IsPropertyValueTConfigT<T>::value;
 
 template <const auto& Config> 
-concept CPropertyValueConfig = IsPropertyValueConfig<std::remove_cvref_t<decltype(Config)>>;
+concept CPropertyValueTConfig = IsPropertyValueTConfig<std::remove_cvref_t<decltype(Config)>>;
 // clang-format on
 
 template <const auto& Config>
-    requires CPropertyValueConfig<Config>
-class PropertyValue : public IPropertyValue
+    requires CPropertyValueTConfig<Config>
+class PropertyValueT : public IPropertyValue
 {
 public:
     using Type = typename std::remove_cvref_t<decltype(Config)>::Type;
@@ -62,6 +62,53 @@ public:
 private:
     mutable PropertyChangeNotifier m_changeNotifier;
     Type m_value = Config.defaultValue.value_or(Type{});
+};
+
+template <typename T>
+struct PropertyValueConfig
+{
+    using Type = T;
+    const std::string name;
+    const std::string description;
+    T defaultValue{};
+    std::function<void(T newValue)> onChange{};
+};
+
+template <typename T>
+class PropertyValue : public IPropertyValue
+{
+public:
+    using Type = T;
+
+    PropertyValue(PropertyValueConfig<T> config)
+      : m_config(std::move(config))
+      , m_value(config.defaultValue)
+    {
+    }
+
+    void registerOnChange(std::weak_ptr<std::function<void()>> pOnChangeCallback) const override
+    {
+        m_notifier.registerOnChange(std::move(pOnChangeCallback));
+    }
+
+    void setAnyValue(std::any value) override
+    {
+        m_value = move(value);
+        m_notifier.notifyChanged();
+        if (m_config.onChange)
+        {
+            m_config.onChange(std::any_cast<T>(m_value));
+        }
+    }
+
+    auto getName() const -> std::string override { return m_config.name; }
+    auto getType() const -> std::type_index { return typeid(Type); }
+    auto getAnyValue() const -> std::any { return m_value; }
+
+private:
+    PropertyValueConfig<T> m_config;
+    mutable PropertyChangeNotifier m_notifier;
+    std::any m_value;
 };
 
 auto createPropertyGroup(std::string_view name, std::vector<std::shared_ptr<IProperty>> pProperties)

@@ -4,8 +4,15 @@
 
 #include <functional>
 #include <memory>
+#include <typeindex>
 
 namespace im3e {
+
+template <typename T>
+auto createTypeIndex()
+{
+    return std::type_index(typeid(T));
+}
 
 template <typename T>
 using UniquePtrWithDeleter = std::unique_ptr<T, std::function<void(T*)>>;
