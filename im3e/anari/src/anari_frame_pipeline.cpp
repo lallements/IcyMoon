@@ -102,17 +102,15 @@ inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, const ICommandBuffe
 
 }  // namespace
 
-AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, shared_ptr<IDevice> pDevice,
-                                       shared_ptr<anari::api::Device> pAnDevice,
-                                       shared_ptr<anari::api::Renderer> pAnRenderer,
-                                       shared_ptr<anari::api::World> pAnWorld)
+AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice, ANARIDevice anDevice,
+                                       ANARIRenderer anRenderer, shared_ptr<IAnariWorld> pAnWorld)
   : m_pLogger(rLogger.createChild("AnariRenderPanel"))
   , m_pDevice(throwIfArgNull(move(pDevice), "AnariRenderPanel requires a device"))
-  , m_pAnDevice(throwIfArgNull(move(pAnDevice), "AnariRenderPanel requires an ANARI device"))
-  , m_pAnRenderer(throwIfArgNull(move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
-  , m_pAnWorld(throwIfArgNull(move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
+  , m_anDevice(throwIfArgNull(anDevice, "AnariRenderPanel requires an ANARI device"))
+  , m_anRenderer(throwIfArgNull(anRenderer, "AnariRenderPanel requires an ANARI Renderer"))
+  , m_pAnWorld(throwIfArgNull(std::move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
 
-  , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_pAnDevice))
+  , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_anDevice))
 {
     m_pLogger->debug("Created Anari render panel");
 }
@@ -134,7 +132,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
         auto pPipelineSpan = pStatsProvider->startScopedSpan("outputFrame");
         {
             auto pFrameReadySpan = pStatsProvider->startScopedSpan("waitForFrame");
-            anariFrameReady(m_pAnDevice.get(), m_pAnFrame.get(), ANARI_WAIT);
+            anariFrameReady(m_anDevice, m_pAnFrame.get(), ANARI_WAIT);
         }
         m_renderingFrame = false;
 
@@ -146,8 +144,8 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
                                      static_cast<float>(rVkViewportSize.height);
             m_pCamera->setAspectRatio(aspectRatio);
 
-            anariSetParameter(m_pAnDevice.get(), m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
-            anariCommitParameters(m_pAnDevice.get(), m_pAnFrame.get());
+            anariSetParameter(m_anDevice, m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
+            anariCommitParameters(m_anDevice, m_pAnFrame.get());
 
             m_currentViewportSize = rVkViewportSize;
         }
@@ -155,7 +153,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
             auto pCameraUpdateSpan = pStatsProvider->startScopedSpan("updateCamera");
             m_pCamera->update();
         }
-        copyFrame(*pStatsProvider, m_pAnDevice.get(), m_pAnFrame.get(), *m_pImage);
+        copyFrame(*pStatsProvider, m_anDevice, m_pAnFrame.get(), *m_pImage);
         blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer, *pStatsProvider, *m_pImage, *pOutputImage);
         {
             auto pBarrier = rCommandBuffer.startScopedBarrier("resetImageLayoutToGeneral");
@@ -168,7 +166,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
     }
 
     auto pRenderSpan = pStatsProvider->startScopedSpan("anariRenderFrame");
-    anariRenderFrame(m_pAnDevice.get(), m_pAnFrame.get());
+    anariRenderFrame(m_anDevice, m_pAnFrame.get());
     m_renderingFrame = true;
 }
 
@@ -177,8 +175,8 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pAnFrame.reset();
     m_pImage.reset();
 
-    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice.get(), m_pAnRenderer.get(), m_pCamera->getHandle(),
-                             m_pAnWorld.get(), rVkExtent);
+    m_pAnFrame = createFrame(*m_pLogger, m_anDevice, m_anRenderer, m_pCamera->getHandle(), m_pAnWorld->getHandle(),
+                             rVkExtent);
 
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
         .name = "AnariPipelineImage",

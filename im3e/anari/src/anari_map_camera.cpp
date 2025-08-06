@@ -24,10 +24,10 @@ auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
 
 }  // namespace
 
-AnariMapCamera::AnariMapCamera(const ILogger& rLogger, shared_ptr<anari::api::Device> pAnDevice)
+AnariMapCamera::AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice)
   : m_pLogger(rLogger.createChild("AnariMapCamera"))
-  , m_pAnDevice(throwIfArgNull(move(pAnDevice), "Anari Map Camera requires a device"))
-  , m_pAnCamera(createCamera(*m_pLogger, m_pAnDevice.get()))
+  , m_anDevice(throwIfArgNull(anDevice, "Anari Map Camera requires a device"))
+  , m_pAnCamera(createCamera(*m_pLogger, anDevice))
 {
     m_view.update();  // calculate initial view state
     this->update();
@@ -41,9 +41,9 @@ void AnariMapCamera::update()
     }
     m_needsUpdate = true;
 
-    m_perspective.setCameraParameters(m_pAnDevice.get(), m_pAnCamera.get());
-    m_view.setCameraParameters(m_pAnDevice.get(), m_pAnCamera.get());
-    anariCommitParameters(m_pAnDevice.get(), m_pAnCamera.get());
+    m_perspective.setCameraParameters(m_anDevice, m_pAnCamera.get());
+    m_view.setCameraParameters(m_anDevice, m_pAnCamera.get());
+    anariCommitParameters(m_anDevice, m_pAnCamera.get());
 }
 
 void AnariMapCamera::onMouseMove(const glm::vec2& rClipOffset, const array<bool, 3U>& rMouseButtonsDown)

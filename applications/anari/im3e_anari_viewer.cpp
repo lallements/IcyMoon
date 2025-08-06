@@ -285,19 +285,16 @@ int main()
     auto pAnDevice = createAnariDevice(*pLogger);
     auto pAnWorld = pAnDevice->createWorld();
 
-    /*auto pAnWorld = createWorld(*pLogger, pAnDevice.get());
-
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
-                                                          .name = "ANARI",
-                                                          .isDebugEnabled = true,
+                                                          .name = "ANARI Viewer",
+                                                          .isDebugEnabled = false,
                                                       });
-
     auto pDevice = pApp->getDevice();
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
 
-    // Properties
-    {
+    // Properties Panel
+    /*{
         vector<shared_ptr<IProperty>> pProperties;
         pProperties.emplace_back(
             createRendererProperties(*pLogger, pAnDevice.get(), pAnRenderer.get(), anRendererSubtype));
@@ -315,17 +312,24 @@ int main()
         auto pPropertyGroup = createPropertyGroup("Parameters", pProperties);
         auto pParametersPanel = createImguiPropertyPanel(pPropertyGroup);
         pGuiWorkspace->addPanel(IGuiWorkspace::Location::Left, pParametersPanel);
+    }*/
+
+    // Render Panel
+    {
+        auto pFramePipeline = pAnDevice->createFramePipeline(pDevice, pAnWorld);
+        auto pCameraListener = pFramePipeline->getCameraListener();
+        auto pRenderPanel = createImguiRenderPanel("Renderer", std::move(pFramePipeline), std::move(pCameraListener));
+        pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, std::move(pRenderPanel));
     }
 
-    auto pFramePipeline = make_unique<AnariFramePipeline>(*pLogger, pDevice, pAnDevice, pAnRenderer, pAnWorld);
-    auto pRenderPanel = createImguiRenderPanel("Renderer", move(pFramePipeline), pFramePipeline->getCameraListener());
-    pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, pRenderPanel);
-
-    auto pStatsPanel = createImguiStatsPanel("Stats", pDevice->getStatsProvider());
-    pGuiWorkspace->addPanel(IGuiWorkspace::Location::Bottom, pStatsPanel);
+    // Stats Panel
+    {
+        auto pStatsPanel = createImguiStatsPanel("Stats", pDevice->getStatsProvider());
+        pGuiWorkspace->addPanel(IGuiWorkspace::Location::Bottom, std::move(pStatsPanel));
+    }
 
     pApp->createWindow(WindowConfig{}, pGuiWorkspace);
 
-    pApp->run();*/
+    pApp->run();
     return 0;
 }

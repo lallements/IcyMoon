@@ -1,6 +1,7 @@
 #include "anari_device.h"
 
 #include "anari.h"
+#include "anari_frame_pipeline.h"
 #include "anari_world.h"
 
 #include <im3e/utils/core/throw_utils.h>
@@ -172,9 +173,11 @@ auto AnariDevice::createWorld() const -> std::shared_ptr<IAnariWorld>
     return make_shared<AnariWorld>(*m_pLogger, m_pAnDevice.get());
 }
 
-auto AnariDevice::createFramePipeline(std::shared_ptr<IDevice>) -> std::unique_ptr<IFramePipeline>
+auto AnariDevice::createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
+    -> std::unique_ptr<IAnariFramePipeline>
 {
-    return nullptr;
+    return make_unique<AnariFramePipeline>(*m_pLogger, std::move(pDevice), m_pAnDevice.get(), m_pAnRenderer.get(),
+                                           std::move(pAnWorld));
 }
 
 auto im3e::createAnariDevice(const ILogger& rLogger) -> shared_ptr<IAnariDevice>

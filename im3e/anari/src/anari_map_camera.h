@@ -12,7 +12,7 @@ namespace im3e {
 class AnariMapCamera : public IGuiEventListener
 {
 public:
-    AnariMapCamera(const ILogger& rLogger, std::shared_ptr<anari::api::Device> pAnDevice);
+    AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice);
 
     void update();
 
@@ -25,7 +25,7 @@ public:
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
-    std::shared_ptr<anari::api::Device> m_pAnDevice;
+    ANARIDevice m_anDevice;
     std::shared_ptr<anari::api::Camera> m_pAnCamera;
 
     bool m_needsUpdate{true};

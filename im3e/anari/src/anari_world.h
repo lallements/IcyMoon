@@ -14,9 +14,12 @@ class AnariWorld : public IAnariWorld
 public:
     AnariWorld(const ILogger& rLogger, ANARIDevice anDevice);
 
+    auto getHandle() const -> ANARIWorld override { return m_pAnWorld.get(); }
+
 private:
     std::unique_ptr<ILogger> m_pLogger;
     ANARIDevice m_anDevice;
+    std::shared_ptr<anari::api::World> m_pAnWorld;
 };
 
 }  // namespace im3e

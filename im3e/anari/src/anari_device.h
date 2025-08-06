@@ -18,7 +18,8 @@ public:
     AnariDevice(const ILogger& rLogger);
 
     auto createWorld() const -> std::shared_ptr<IAnariWorld> override;
-    auto createFramePipeline(std::shared_ptr<IDevice> pDevice) -> std::unique_ptr<IFramePipeline> override;
+    auto createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
+        -> std::unique_ptr<IAnariFramePipeline> override;
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
