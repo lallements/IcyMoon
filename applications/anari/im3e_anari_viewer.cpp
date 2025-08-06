@@ -1,5 +1,4 @@
 #include "anari_dem_surface_generator.h"
-#include "anari_frame_pipeline.h"
 
 #include <im3e/anari/anari.h>
 #include <im3e/devices/devices.h>
@@ -22,21 +21,6 @@ using namespace std;
 namespace {
 
 /*
-auto chooseRendererSubtype(const ILogger& rLogger, ANARIDevice pDevice)
-{
-    const auto** pSubtypes = anariGetObjectSubtypes(pDevice, ANARI_RENDERER);
-    throwIfNull<runtime_error>(pSubtypes, "Failed to retrieve renderer subtypes");
-
-    rLogger.info("Detected the following renderer subtypes:");
-    for (const auto** pSubtype = pSubtypes; *pSubtype != nullptr; pSubtype++)
-    {
-        rLogger.info(fmt::format(" - {}", *pSubtype));
-    }
-
-    rLogger.info(fmt::format("Choosing first renderer subtype found: \"{}\"", *pSubtypes));
-    return *pSubtypes;
-}
-
 void logRendererParameters(const ILogger& rLogger, ANARIDevice pDevice, string_view rendererSubtype)
 {
     const auto* rendererParams = static_cast<const ANARIParameter*>(
@@ -288,22 +272,6 @@ auto createWorld(const ILogger& rLogger, ANARIDevice anDevice)
     }
 
     return pWorld;
-}
-
-auto createRenderer(const ILogger& rLogger, ANARIDevice anDevice, string_view rendererSubtype)
-{
-    auto anRenderer = anariNewRenderer(anDevice, rendererSubtype.data());
-
-    array<float, 4U> backgroundColor{0.3F, 0.3F, 0.4F, 1.0F};
-    anariSetParameter(anDevice, anRenderer, "background", ANARI_FLOAT32_VEC4, backgroundColor.data());
-
-    anariCommitParameters(anDevice, anRenderer);
-    rLogger.debug("Created renderer");
-
-    return shared_ptr<anari::api::Renderer>(anRenderer, [anDevice, pLogger = &rLogger](auto* anRenderer) {
-        anariRelease(anDevice, anRenderer);
-        pLogger->debug("Released renderer");
-    });
 }*/
 
 }  // namespace
@@ -315,12 +283,9 @@ int main()
     pLogger->debug("ANARI App");
 
     auto pAnDevice = createAnariDevice(*pLogger);
+    auto pAnWorld = pAnDevice->createWorld();
 
-    /*const auto anRendererSubtype = chooseRendererSubtype(*pLogger, pAnDevice.get());
-    logRendererParameters(*pLogger, pAnDevice.get(), anRendererSubtype);
-
-    auto pAnRenderer = createRenderer(*pLogger, pAnDevice.get(), anRendererSubtype);
-    auto pAnWorld = createWorld(*pLogger, pAnDevice.get());
+    /*auto pAnWorld = createWorld(*pLogger, pAnDevice.get());
 
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
                                                           .name = "ANARI",

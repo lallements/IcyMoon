@@ -1,0 +1,11 @@
+#include "anari_world.h"
+
+#include <im3e/utils/core/throw_utils.h>
+
+using namespace im3e;
+
+AnariWorld::AnariWorld(const ILogger& rLogger, ANARIDevice anDevice)
+  : m_pLogger(rLogger.createChild("ANARI World"))
+  , m_anDevice(throwIfArgNull(anDevice, "Cannot create ANARI World without a device"))
+{
+}

@@ -1,10 +1,6 @@
 add_executable(im3e_anari_viewer
     anari_dem_surface_generator.cpp
     anari_dem_surface_generator.h
-    anari_frame_pipeline.cpp
-    anari_frame_pipeline.h
-    anari_map_camera.cpp
-    anari_map_camera.h
     dem_block_sampler.h
     gdal_dem_loader.cpp
     gdal_dem_loader.h

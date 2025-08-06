@@ -25,7 +25,7 @@ public:
 
     void resize(const VkExtent2D& rWindowSize, uint32_t frameInFlightCount) override;
 
-    auto getCameraListener() -> std::shared_ptr<IImguiEventListener>;
+    auto getCameraListener() -> std::shared_ptr<IGuiEventListener>;
 
     virtual auto getDevice() const -> std::shared_ptr<const IDevice> override { return m_pDevice; }
 

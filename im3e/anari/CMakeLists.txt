@@ -3,6 +3,12 @@ add_library(im3e_anari STATIC
     src/anari_device.cpp
     src/anari_device.h
     src/anari_extension_utility.cpp
+    src/anari_frame_pipeline.cpp
+    src/anari_frame_pipeline.h
+    src/anari_map_camera.cpp
+    src/anari_map_camera.h
+    src/anari_world.cpp
+    src/anari_world.h
 )
 
 target_include_directories(im3e_anari
@@ -16,6 +22,7 @@ target_include_directories(im3e_anari
 target_link_libraries(im3e_anari
   PUBLIC
     anari::anari_static
+    im3e_api
     im3e_utils
   PRIVATE
     fmt::fmt

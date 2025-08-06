@@ -17,12 +17,20 @@ class AnariDevice : public IAnariDevice
 public:
     AnariDevice(const ILogger& rLogger);
 
+    auto createWorld() const -> std::shared_ptr<IAnariWorld> override;
+    auto createFramePipeline(std::shared_ptr<IDevice> pDevice) -> std::unique_ptr<IFramePipeline> override;
+
 private:
     std::unique_ptr<ILogger> m_pLogger;
+
     UniquePtrWithDeleter<anari::api::Library> m_pAnLib;
+
     const std::string m_anDeviceSubtype;
     const ANARIExtensions m_anExtensions;
     UniquePtrWithDeleter<anari::api::Device> m_pAnDevice;
+
+    const std::string m_anRendererSubtype;
+    std::shared_ptr<anari::api::Renderer> m_pAnRenderer;
 };
 
 }  // namespace im3e

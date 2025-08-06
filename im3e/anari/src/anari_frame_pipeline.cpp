@@ -200,7 +200,7 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_currentViewportSize = {};
 }
 
-auto AnariFramePipeline::getCameraListener() -> std::shared_ptr<IImguiEventListener>
+auto AnariFramePipeline::getCameraListener() -> std::shared_ptr<IGuiEventListener>
 {
     return m_pCamera;
 }

@@ -1,6 +1,7 @@
 #include "anari_device.h"
 
 #include "anari.h"
+#include "anari_world.h"
 
 #include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
@@ -111,15 +112,69 @@ auto createAnDevice(const ILogger& rLogger, ANARILibrary anLib, string_view devi
     });
 }
 
+auto chooseAnRendererSubtype(const ILogger& rLogger, ANARIDevice pDevice)
+{
+    const auto** pSubtypes = anariGetObjectSubtypes(pDevice, ANARI_RENDERER);
+    throwIfNull<runtime_error>(pSubtypes, "Failed to retrieve renderer subtypes");
+
+    std::string subtypesMsg = "[";
+    for (const auto** pSubtype = pSubtypes; *pSubtype != nullptr; pSubtype++)
+    {
+        if (pSubtype != pSubtypes)
+        {
+            subtypesMsg += ", ";
+        }
+        subtypesMsg += fmt::format("{}", *pSubtype);
+    }
+    subtypesMsg += "]";
+
+    const std::string chosenSubtype = *pSubtypes;
+    rLogger.info(fmt::format("Available renderer subtypes: {}. Choosing: {}", subtypesMsg, chosenSubtype));
+    return chosenSubtype;
+}
+
+auto createAnRenderer(const ILogger& rLogger, ANARIDevice anDevice, std::string_view anSubtype)
+{
+    auto anRenderer = anariNewRenderer(anDevice, anSubtype.data());
+    throwIfNull<std::runtime_error>(anRenderer, fmt::format("Failed to create renderer with subtype {}", anSubtype));
+
+    constexpr std::array<float, 4U> BackgroundColor{0.3F, 0.3F, 0.4F, 1.0F};
+    anariSetParameter(anDevice, anRenderer, "background", ANARI_FLOAT32_VEC4, BackgroundColor.data());
+
+    anariCommitParameters(anDevice, anRenderer);
+    rLogger.debug(fmt::format("Created renderer with subtype {}", anSubtype));
+
+    return std::shared_ptr<anari::api::Renderer>(
+        anRenderer, [anDevice, pLogger = &rLogger, anSubtype](auto* anRenderer) {
+            anariRelease(anDevice, anRenderer);
+            pLogger->debug(fmt::format("Destroyed renderer with subtype {}", anSubtype));
+        });
+}
+
 }  // namespace
 
 AnariDevice::AnariDevice(const ILogger& rLogger)
-  : m_pLogger(rLogger.createChild("ANARI"))
+  : m_pLogger(rLogger.createChild("ANARI Device"))
+
   , m_pAnLib(loadAnLibrary(*m_pLogger))
+
   , m_anDeviceSubtype(chooseAnDeviceSubtype(*m_pLogger, m_pAnLib.get()))
   , m_anExtensions(detectAnDeviceExtensions(*m_pLogger, m_pAnLib.get(), m_anDeviceSubtype))
   , m_pAnDevice(createAnDevice(*m_pLogger, m_pAnLib.get(), m_anDeviceSubtype))
+
+  , m_anRendererSubtype(chooseAnRendererSubtype(*m_pLogger, m_pAnDevice.get()))
+  , m_pAnRenderer(createAnRenderer(*m_pLogger, m_pAnDevice.get(), m_anRendererSubtype))
 {
+}
+
+auto AnariDevice::createWorld() const -> std::shared_ptr<IAnariWorld>
+{
+    return make_shared<AnariWorld>(*m_pLogger, m_pAnDevice.get());
+}
+
+auto AnariDevice::createFramePipeline(std::shared_ptr<IDevice>) -> std::unique_ptr<IFramePipeline>
+{
+    return nullptr;
 }
 
 auto im3e::createAnariDevice(const ILogger& rLogger) -> shared_ptr<IAnariDevice>
