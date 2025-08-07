@@ -65,6 +65,11 @@ void drawProperty(
         auto pPropertyControl = getPropertyControl(pProperty, pPropertyControlMap);
         ImGui::Text("%s", pPropertyControl->getName().c_str());
 
+        if (auto pValueProperty = dynamic_pointer_cast<IPropertyValue>(pProperty))
+        {
+            ImGui::SetItemTooltip("%s", pValueProperty->getDescription().c_str());
+        }
+
         ImGui::TableSetColumnIndex(1);
 
         ImGui::PushItemWidth(-FLT_MIN);

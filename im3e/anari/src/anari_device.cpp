@@ -1,6 +1,5 @@
 #include "anari_device.h"
 
-#include "anari.h"
 #include "anari_frame_pipeline.h"
 #include "anari_world.h"
 
@@ -152,6 +151,56 @@ auto createAnRenderer(const ILogger& rLogger, ANARIDevice anDevice, std::string_
         });
 }
 
+template <typename T>
+auto getRenderParamInfo(ANARIDevice anDevice, string_view rendererSubtype, const ANARIParameter* pAnParam,
+                        string_view attribute, ANARIDataType attributeType)
+{
+    return static_cast<const T*>(anariGetParameterInfo(anDevice, ANARI_RENDERER, rendererSubtype.data(), pAnParam->name,
+                                                       pAnParam->type, attribute.data(), attributeType));
+}
+
+template <typename T>
+auto createPropertyValue(ANARIDevice anDevice, ANARIRenderer anRenderer, string_view rendererSubtype,
+                         const ANARIParameter* pAnParam)
+{
+    const auto* description = getRenderParamInfo<char>(anDevice, rendererSubtype, pAnParam, "description",
+                                                       ANARI_STRING);
+    const auto* defaultValue = getRenderParamInfo<T>(anDevice, rendererSubtype, pAnParam, "default", pAnParam->type);
+
+    PropertyValueConfig<T> config{
+        .name = pAnParam->name,
+        .description = description,
+        .onChange =
+            [anDevice, anRenderer, pAnParam](T newValue) {
+                anariSetParameter(anDevice, anRenderer, pAnParam->name, pAnParam->type, &newValue);
+                anariCommitParameters(anDevice, anRenderer);
+            },
+    };
+    if (defaultValue)
+    {
+        config.defaultValue = *defaultValue;
+    }
+    return make_shared<PropertyValue<T>>(move(config));
+}
+
+auto createPropertyValueFromAnParameter(ANARIDevice anDevice, ANARIRenderer anRenderer, string_view rendererSubtype,
+                                        const ANARIParameter* pAnParam) -> shared_ptr<IPropertyValue>
+{
+    switch (static_cast<int>(pAnParam->type))
+    {
+        case ANARI_BOOL: return createPropertyValue<bool>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_INT32: return createPropertyValue<int32_t>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_FLOAT32: return createPropertyValue<float>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_STRING: return createPropertyValue<string>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_FLOAT32_VEC3: return createPropertyValue<glm::vec3>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_FLOAT32_VEC4: return createPropertyValue<glm::vec4>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_ARRAY2D: return createPropertyValue<void*>(anDevice, anRenderer, rendererSubtype, pAnParam);
+        case ANARI_UNKNOWN: throw runtime_error(fmt::format("Unsupported UNKNOWN ANARI data type"));
+        default: break;
+    }
+    throw runtime_error(fmt::format("Unsupported ANARI data type: {}", static_cast<int>(pAnParam->type)));
+}
+
 }  // namespace
 
 AnariDevice::AnariDevice(const ILogger& rLogger)
@@ -178,6 +227,20 @@ auto AnariDevice::createFramePipeline(std::shared_ptr<IDevice> pDevice, std::sha
 {
     return make_unique<AnariFramePipeline>(*m_pLogger, std::move(pDevice), m_pAnDevice.get(), m_pAnRenderer.get(),
                                            std::move(pAnWorld));
+}
+
+auto AnariDevice::createRendererProperties() -> std::shared_ptr<IPropertyGroup>
+{
+    const auto* pAnParams = static_cast<const ANARIParameter*>(anariGetObjectInfo(
+        m_pAnDevice.get(), ANARI_RENDERER, m_anRendererSubtype.data(), "parameter", ANARI_PARAMETER_LIST));
+
+    vector<shared_ptr<IProperty>> pProperties;
+    for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
+    {
+        pProperties.emplace_back(
+            createPropertyValueFromAnParameter(m_pAnDevice.get(), m_pAnRenderer.get(), m_anRendererSubtype, pAnParam));
+    }
+    return createPropertyGroup(fmt::format("Renderer: \"{}\"", m_anRendererSubtype), pProperties);
 }
 
 auto im3e::createAnariDevice(const ILogger& rLogger) -> shared_ptr<IAnariDevice>

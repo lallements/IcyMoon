@@ -1,6 +1,7 @@
 #pragma once
 
-#include <im3e/api/anari.h>
+#include "anari.h"
+
 #include <im3e/utils/loggers.h>
 #include <im3e/utils/types.h>
 
@@ -20,6 +21,7 @@ public:
     auto createWorld() const -> std::shared_ptr<IAnariWorld> override;
     auto createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
         -> std::unique_ptr<IAnariFramePipeline> override;
+    auto createRendererProperties() -> std::shared_ptr<IPropertyGroup> override;
 
 private:
     std::unique_ptr<ILogger> m_pLogger;

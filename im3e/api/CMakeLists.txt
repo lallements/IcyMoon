@@ -1,5 +1,4 @@
 add_library(im3e_api INTERFACE
-    anari.h
     command_buffer.h
     device.h
     frame_pipeline.h
@@ -17,7 +16,6 @@ target_include_directories(im3e_api
 
 target_link_libraries(im3e_api
   INTERFACE
-    anari::anari_static
     fmt::fmt
     glm::glm
     im3e_utils

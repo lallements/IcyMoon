@@ -1,6 +1,7 @@
 #pragma once
 
-#include <im3e/api/anari.h>
+#include "anari.h"
+
 #include <im3e/utils/loggers.h>
 
 #include <anari/anari.h>

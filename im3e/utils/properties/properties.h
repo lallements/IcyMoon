@@ -55,6 +55,7 @@ public:
     }
 
     auto getName() const -> std::string override { return std::string{Config.name}; }
+    auto getDescription() const -> std::string override { return std::string{Config.description}; }
     auto getType() const -> std::type_index override { return typeid(Type); }
     auto getValue() const -> Type { return m_value; }
     auto getAnyValue() const -> std::any { return m_value; }
@@ -102,6 +103,7 @@ public:
     }
 
     auto getName() const -> std::string override { return m_config.name; }
+    auto getDescription() const -> std::string override { return m_config.description; }
     auto getType() const -> std::type_index { return typeid(Type); }
     auto getAnyValue() const -> std::any { return m_value; }
 

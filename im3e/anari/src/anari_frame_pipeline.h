@@ -1,8 +1,8 @@
 #pragma once
 
+#include "anari.h"
 #include "anari_map_camera.h"
 
-#include <im3e/api/anari.h>
 #include <im3e/api/device.h>
 #include <im3e/api/frame_pipeline.h>
 #include <im3e/api/image.h>
