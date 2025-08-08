@@ -3,7 +3,6 @@
 #include <im3e/utils/core/throw_utils.h>
 
 using namespace im3e;
-using namespace std;
 
 namespace {
 
@@ -46,7 +45,7 @@ void copyFrame(IStatsProvider& rStatsProvider, ANARIDevice anDevice, ANARIFrame 
             // In ANARI, images start from the bottom instead of the top:
             auto* pSrcRow = pSrcPixels + (srcSize.height - 1U - row) * srcSize.width;
             auto* pDstRow = reinterpret_cast<uint32_t*>(pDstPixels + row * dstRowPitch);
-            copy(pSrcRow, pSrcRow + srcSize.width, pDstRow);
+            std::copy(pSrcRow, pSrcRow + srcSize.width, pDstRow);
         }
         // pVkImageMapping->save("anari_output.png");
     }
@@ -102,21 +101,21 @@ inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, const ICommandBuffe
 
 }  // namespace
 
-AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice, ANARIDevice anDevice,
-                                       std::shared_ptr<AnariRenderer> pAnRenderer, shared_ptr<AnariWorld> pAnWorld)
-  : m_pLogger(rLogger.createChild("ANARI Frame Pipeline"))
-  , m_pDevice(throwIfArgNull(move(pDevice), "AnariRenderPanel requires a device"))
-  , m_anDevice(throwIfArgNull(anDevice, "AnariRenderPanel requires an ANARI device"))
-  , m_pAnRenderer(throwIfArgNull(std::move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
-  , m_pAnWorld(throwIfArgNull(std::move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
+AnariFramePipeline::AnariFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<AnariDevice> pAnDevice)
+  : m_pDevice(throwIfArgNull(std::move(pDevice), "ANARI Frame Pipeline requires a device"))
+  , m_pAnDevice(throwIfArgNull(std::move(pAnDevice), "ANARI Frame Pipeline requires an ANARI device"))
+  , m_pLogger(m_pAnDevice->createLogger("ANARI Frame Pipeline"))
 
-  , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_anDevice))
+  , m_pAnRenderer(std::make_unique<AnariRenderer>(m_pAnDevice))
+  , m_pAnWorld(std::make_shared<AnariWorld>(m_pAnDevice))
+
+  , m_pCamera(std::make_shared<AnariMapCamera>(m_pAnDevice))
 {
     m_pLogger->debug("Successfully created");
 }
 
 void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
-                                          shared_ptr<IImage> pOutputImage)
+                                          std::shared_ptr<IImage> pOutputImage)
 {
     auto pStatsProvider = m_pDevice->getStatsProvider();
     auto pExecuteSpan = pStatsProvider->startScopedSpan("AnariFramePipeline.prepareExecution");
@@ -132,7 +131,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
         auto pPipelineSpan = pStatsProvider->startScopedSpan("outputFrame");
         {
             auto pFrameReadySpan = pStatsProvider->startScopedSpan("waitForFrame");
-            anariFrameReady(m_anDevice, m_pAnFrame.get(), ANARI_WAIT);
+            anariFrameReady(m_pAnDevice->getHandle(), m_pAnFrame.get(), ANARI_WAIT);
         }
         m_renderingFrame = false;
 
@@ -144,8 +143,8 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
                                      static_cast<float>(rVkViewportSize.height);
             m_pCamera->setAspectRatio(aspectRatio);
 
-            anariSetParameter(m_anDevice, m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
-            anariCommitParameters(m_anDevice, m_pAnFrame.get());
+            anariSetParameter(m_pAnDevice->getHandle(), m_pAnFrame.get(), "size", ANARI_UINT32_VEC2, &rVkViewportSize);
+            anariCommitParameters(m_pAnDevice->getHandle(), m_pAnFrame.get());
 
             m_currentViewportSize = rVkViewportSize;
         }
@@ -161,7 +160,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
             auto pWorldCommitSpan = pStatsProvider->startScopedSpan("commitWorld");
             m_pAnWorld->commitChanges();
         }
-        copyFrame(*pStatsProvider, m_anDevice, m_pAnFrame.get(), *m_pImage);
+        copyFrame(*pStatsProvider, m_pAnDevice->getHandle(), m_pAnFrame.get(), *m_pImage);
         blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer, *pStatsProvider, *m_pImage, *pOutputImage);
         {
             auto pBarrier = rCommandBuffer.startScopedBarrier("resetImageLayoutToGeneral");
@@ -174,7 +173,7 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
     }
 
     auto pRenderSpan = pStatsProvider->startScopedSpan("anariRenderFrame");
-    anariRenderFrame(m_anDevice, m_pAnFrame.get());
+    anariRenderFrame(m_pAnDevice->getHandle(), m_pAnFrame.get());
     m_renderingFrame = true;
 }
 
@@ -183,7 +182,7 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pAnFrame.reset();
     m_pImage.reset();
 
-    m_pAnFrame = createFrame(*m_pLogger, m_anDevice, m_pAnRenderer->getHandle(), m_pCamera->getHandle(),
+    m_pAnFrame = createFrame(*m_pLogger, m_pAnDevice->getHandle(), m_pAnRenderer->getHandle(), m_pCamera->getHandle(),
                              m_pAnWorld->getHandle(), rVkExtent);
 
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
@@ -206,7 +205,7 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_currentViewportSize = {};
 }
 
-auto AnariFramePipeline::getCameraListener() -> std::shared_ptr<IGuiEventListener>
+auto AnariFramePipeline::createRendererProperties() -> std::shared_ptr<IPropertyGroup>
 {
-    return m_pCamera;
+    return m_pAnRenderer->createProperties();
 }

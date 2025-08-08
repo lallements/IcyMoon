@@ -193,21 +193,20 @@ int main()
     pLogger->setLevelFilter(LogLevel::Verbose);
     pLogger->debug("ANARI App");
 
-    auto pAnDevice = createAnariDevice(*pLogger);
-    auto pAnWorld = pAnDevice->createWorld();
-
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
                                                           .name = "ANARI Viewer",
                                                           .isDebugEnabled = false,
                                                       });
     auto pDevice = pApp->getDevice();
+    auto pAnEngine = createAnariEngine(*pLogger, pDevice);
+    auto pFramePipeline = pAnEngine->createFramePipeline();
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
 
     // Properties Panel
     {
         vector<shared_ptr<IProperty>> pProperties{
-            pAnDevice->createRendererProperties(),
+            pFramePipeline->createRendererProperties(),
         };
 
         static constexpr PropertyValueTConfig<uint32_t> LevelOfDetails{
@@ -227,7 +226,6 @@ int main()
 
     // Render Panel
     {
-        auto pFramePipeline = pAnDevice->createFramePipeline(pDevice, pAnWorld);
         auto pCameraListener = pFramePipeline->getCameraListener();
         auto pRenderPanel = createImguiRenderPanel("Renderer", std::move(pFramePipeline), std::move(pCameraListener));
         pGuiWorkspace->addPanel(IGuiWorkspace::Location::Center, std::move(pRenderPanel));

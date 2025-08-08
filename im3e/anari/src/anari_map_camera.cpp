@@ -6,7 +6,6 @@
 #include <glm/gtc/quaternion.hpp>
 
 using namespace im3e;
-using namespace std;
 
 namespace {
 
@@ -15,7 +14,7 @@ constexpr float ScrollSensitivity = 0.1F;
 auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
 {
     auto anCamera = anariNewCamera(anDevice, "perspective");
-    return unique_ptr<anari::api::Camera, function<void(anari::api::Camera*)>>(
+    return std::unique_ptr<anari::api::Camera, std::function<void(anari::api::Camera*)>>(
         anCamera, [anDevice, pLogger = &rLogger](auto* anCamera) {
             anariRelease(anDevice, anCamera);
             pLogger->debug("Released camera");
@@ -24,10 +23,10 @@ auto createCamera(const ILogger& rLogger, ANARIDevice anDevice)
 
 }  // namespace
 
-AnariMapCamera::AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice)
-  : m_pLogger(rLogger.createChild("AnariMapCamera"))
-  , m_anDevice(throwIfArgNull(anDevice, "Anari Map Camera requires a device"))
-  , m_pAnCamera(createCamera(*m_pLogger, anDevice))
+AnariMapCamera::AnariMapCamera(std::shared_ptr<AnariDevice> pAnDevice)
+  : m_pAnDevice(throwIfArgNull(std::move(pAnDevice), "ANARI Map Camera requires an ANARI Device"))
+  , m_pLogger(m_pAnDevice->createLogger("AnariMapCamera"))
+  , m_pAnCamera(createCamera(*m_pLogger, m_pAnDevice->getHandle()))
 {
     m_view.update();  // calculate initial view state
     this->commitChanges();
@@ -41,21 +40,21 @@ void AnariMapCamera::commitChanges()
     }
     m_needsUpdate = true;
 
-    m_perspective.setCameraParameters(m_anDevice, m_pAnCamera.get());
-    m_view.setCameraParameters(m_anDevice, m_pAnCamera.get());
-    anariCommitParameters(m_anDevice, m_pAnCamera.get());
+    m_perspective.setCameraParameters(m_pAnDevice->getHandle(), m_pAnCamera.get());
+    m_view.setCameraParameters(m_pAnDevice->getHandle(), m_pAnCamera.get());
+    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnCamera.get());
 }
 
-void AnariMapCamera::onMouseMove(const glm::vec2& rClipOffset, const array<bool, 3U>& rMouseButtonsDown)
+void AnariMapCamera::onMouseMove(const glm::vec2& rClipOffset, const std::array<bool, 3U>& rMouseButtonsDown)
 {
     if (rMouseButtonsDown[static_cast<size_t>(MouseButton::Left)])
     {
-        constexpr auto HalfPi = numbers::pi_v<float> / 2.0F;
+        constexpr auto HalfPi = std::numbers::pi_v<float> / 2.0F;
 
         const auto angleXOffset = -rClipOffset.y * HalfPi;
         const auto angleYOffset = -rClipOffset.x * HalfPi / 2.0F;
 
-        m_view.angleX = clamp(m_view.angleX + angleXOffset, 0.0F, HalfPi);
+        m_view.angleX = std::clamp(m_view.angleX + angleXOffset, 0.0F, HalfPi);
         m_view.angleY += angleYOffset;
         m_view.update();
         m_needsUpdate = true;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "anari.h"
+#include "anari_device.h"
 
 #include <im3e/utils/loggers.h>
 #include <im3e/utils/properties/properties.h>
@@ -15,16 +15,16 @@ namespace im3e {
 class AnariRenderer
 {
 public:
-    AnariRenderer(const ILogger& rLogger, ANARIDevice anDevice);
+    AnariRenderer(std::shared_ptr<AnariDevice> pAnDevice);
 
     void commitChanges();
-    auto createRendererProperties() -> std::shared_ptr<IPropertyGroup>;
+    auto createProperties() -> std::shared_ptr<IPropertyGroup>;
 
     auto getHandle() const -> ANARIRenderer { return m_pAnRenderer.get(); }
 
 private:
+    std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
-    const ANARIDevice m_anDevice;
 
     const std::string m_anRendererSubtype;
     std::shared_ptr<anari::api::Renderer> m_pAnRenderer;

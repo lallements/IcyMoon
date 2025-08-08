@@ -99,29 +99,29 @@ auto createPropertyValueFromAnParameter(ANARIDevice anDevice, ANARIRenderer anRe
 
 }  // namespace
 
-AnariRenderer::AnariRenderer(const ILogger& rLogger, ANARIDevice anDevice)
-  : m_pLogger(rLogger.createChild("ANARI Renderer"))
-  , m_anDevice(throwIfArgNull(anDevice, "ANARI Renderer requires an ANARI device"))
-  , m_anRendererSubtype(chooseAnRendererSubtype(*m_pLogger, m_anDevice))
-  , m_pAnRenderer(createAnRenderer(*m_pLogger, m_anDevice, m_anRendererSubtype))
+AnariRenderer::AnariRenderer(std::shared_ptr<AnariDevice> pAnDevice)
+  : m_pAnDevice(throwIfArgNull(std::move(pAnDevice), "ANARI Renderer requires an ANARI device"))
+  , m_pLogger(m_pAnDevice->createLogger("ANARI Renderer"))
+  , m_anRendererSubtype(chooseAnRendererSubtype(*m_pLogger, m_pAnDevice->getHandle()))
+  , m_pAnRenderer(createAnRenderer(*m_pLogger, m_pAnDevice->getHandle(), m_anRendererSubtype))
 {
 }
 
 void AnariRenderer::commitChanges()
 {
-    anariCommitParameters(m_anDevice, m_pAnRenderer.get());
+    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnRenderer.get());
 }
 
-auto AnariRenderer::createRendererProperties() -> std::shared_ptr<IPropertyGroup>
+auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
 {
-    const auto* pAnParams = static_cast<const ANARIParameter*>(
-        anariGetObjectInfo(m_anDevice, ANARI_RENDERER, m_anRendererSubtype.data(), "parameter", ANARI_PARAMETER_LIST));
+    const auto* pAnParams = static_cast<const ANARIParameter*>(anariGetObjectInfo(
+        m_pAnDevice->getHandle(), ANARI_RENDERER, m_anRendererSubtype.data(), "parameter", ANARI_PARAMETER_LIST));
 
     std::vector<std::shared_ptr<IProperty>> pProperties;
     for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
     {
-        pProperties.emplace_back(
-            createPropertyValueFromAnParameter(m_anDevice, m_pAnRenderer.get(), m_anRendererSubtype, pAnParam));
+        pProperties.emplace_back(createPropertyValueFromAnParameter(m_pAnDevice->getHandle(), m_pAnRenderer.get(),
+                                                                    m_anRendererSubtype, pAnParam));
     }
     return createPropertyGroup(fmt::format("Renderer: \"{}\"", m_anRendererSubtype), pProperties);
 }

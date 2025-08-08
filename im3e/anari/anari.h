@@ -23,20 +23,19 @@ class IAnariFramePipeline : public IFramePipeline
 public:
     virtual ~IAnariFramePipeline() = default;
 
+    virtual auto createRendererProperties() -> std::shared_ptr<IPropertyGroup> = 0;
     virtual auto getCameraListener() -> std::shared_ptr<IGuiEventListener> = 0;
+    virtual auto getWorld() -> std::shared_ptr<IAnariWorld> = 0;
 };
 
-class IAnariDevice
+class IAnariEngine
 {
 public:
-    virtual ~IAnariDevice() = default;
+    virtual ~IAnariEngine() = default;
 
-    virtual auto createWorld() -> std::shared_ptr<IAnariWorld> = 0;
-    virtual auto createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
-        -> std::unique_ptr<IAnariFramePipeline> = 0;
-    virtual auto createRendererProperties() -> std::shared_ptr<IPropertyGroup> = 0;
+    virtual auto createFramePipeline() -> std::unique_ptr<IAnariFramePipeline> = 0;
 };
 
-auto createAnariDevice(const ILogger& rLogger) -> std::shared_ptr<IAnariDevice>;
+auto createAnariEngine(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice) -> std::unique_ptr<IAnariEngine>;
 
 }  // namespace im3e

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "anari_device.h"
+
 #include <im3e/api/gui.h>
 #include <im3e/utils/loggers.h>
-
-#include <anari/anari.h>
 
 #include <numbers>
 
@@ -12,7 +12,7 @@ namespace im3e {
 class AnariMapCamera : public IGuiEventListener
 {
 public:
-    AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice);
+    AnariMapCamera(std::shared_ptr<AnariDevice> pAnDevice);
 
     void commitChanges();
 
@@ -24,8 +24,8 @@ public:
     auto getHandle() const -> ANARICamera { return m_pAnCamera.get(); }
 
 private:
+    std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
-    ANARIDevice m_anDevice;
     std::shared_ptr<anari::api::Camera> m_pAnCamera;
 
     bool m_needsUpdate{true};

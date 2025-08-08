@@ -2,6 +2,7 @@ add_library(im3e_anari STATIC
     anari.h
     src/anari_device.cpp
     src/anari_device.h
+    src/anari_engine.cpp
     src/anari_extension_utility.cpp
     src/anari_frame_pipeline.cpp
     src/anari_frame_pipeline.h

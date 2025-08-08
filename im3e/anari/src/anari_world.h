@@ -1,6 +1,6 @@
 #pragma once
 
-#include "anari.h"
+#include "anari_device.h"
 
 #include <im3e/utils/loggers.h>
 
@@ -13,15 +13,15 @@ namespace im3e {
 class AnariWorld : public IAnariWorld
 {
 public:
-    AnariWorld(const ILogger& rLogger, ANARIDevice anDevice);
+    AnariWorld(std::shared_ptr<AnariDevice> pAnDevice);
 
     void commitChanges();
 
     auto getHandle() const -> ANARIWorld { return m_pAnWorld.get(); }
 
 private:
+    std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
-    ANARIDevice m_anDevice;
     std::shared_ptr<anari::api::World> m_pAnWorld;
 };
 
