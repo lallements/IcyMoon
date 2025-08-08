@@ -15,7 +15,9 @@ class AnariWorld : public IAnariWorld
 public:
     AnariWorld(const ILogger& rLogger, ANARIDevice anDevice);
 
-    auto getHandle() const -> ANARIWorld override { return m_pAnWorld.get(); }
+    void commitChanges();
+
+    auto getHandle() const -> ANARIWorld { return m_pAnWorld.get(); }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;

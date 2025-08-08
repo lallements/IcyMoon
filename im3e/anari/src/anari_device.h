@@ -1,6 +1,8 @@
 #pragma once
 
 #include "anari.h"
+#include "anari_renderer.h"
+#include "anari_world.h"
 
 #include <im3e/utils/loggers.h>
 #include <im3e/utils/types.h>
@@ -9,6 +11,7 @@
 #include <anari/frontend/anari_extension_utility.h>
 
 #include <memory>
+#include <set>
 #include <string>
 
 namespace im3e {
@@ -18,7 +21,7 @@ class AnariDevice : public IAnariDevice
 public:
     AnariDevice(const ILogger& rLogger);
 
-    auto createWorld() const -> std::shared_ptr<IAnariWorld> override;
+    auto createWorld() -> std::shared_ptr<IAnariWorld> override;
     auto createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
         -> std::unique_ptr<IAnariFramePipeline> override;
     auto createRendererProperties() -> std::shared_ptr<IPropertyGroup> override;
@@ -32,8 +35,9 @@ private:
     const ANARIExtensions m_anExtensions;
     UniquePtrWithDeleter<anari::api::Device> m_pAnDevice;
 
-    const std::string m_anRendererSubtype;
-    std::shared_ptr<anari::api::Renderer> m_pAnRenderer;
+    std::set<std::shared_ptr<AnariWorld>> m_pAnWorlds;
+
+    std::shared_ptr<AnariRenderer> m_pAnRenderer;
 };
 
 }  // namespace im3e

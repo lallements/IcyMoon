@@ -24,3 +24,5 @@ AnariWorld::AnariWorld(const ILogger& rLogger, ANARIDevice anDevice)
   , m_pAnWorld(createAnariWorld(*m_pLogger, m_anDevice))
 {
 }
+
+void AnariWorld::commitChanges() {}

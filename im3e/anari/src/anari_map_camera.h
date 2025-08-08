@@ -14,7 +14,7 @@ class AnariMapCamera : public IGuiEventListener
 public:
     AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice);
 
-    void update();
+    void commitChanges();
 
     void onMouseMove(const glm::vec2& rClipOffset, const std::array<bool, 3U>& rMouseButtonsDown) override;
     void onMouseWheel(float scrollSteps) override;

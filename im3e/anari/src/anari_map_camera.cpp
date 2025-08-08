@@ -30,10 +30,10 @@ AnariMapCamera::AnariMapCamera(const ILogger& rLogger, ANARIDevice anDevice)
   , m_pAnCamera(createCamera(*m_pLogger, anDevice))
 {
     m_view.update();  // calculate initial view state
-    this->update();
+    this->commitChanges();
 }
 
-void AnariMapCamera::update()
+void AnariMapCamera::commitChanges()
 {
     if (!m_needsUpdate)
     {

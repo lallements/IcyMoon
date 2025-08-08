@@ -2,6 +2,8 @@
 
 #include "anari.h"
 #include "anari_map_camera.h"
+#include "anari_renderer.h"
+#include "anari_world.h"
 
 #include <im3e/api/device.h>
 #include <im3e/api/frame_pipeline.h>
@@ -18,7 +20,7 @@ class AnariFramePipeline : public IAnariFramePipeline
 {
 public:
     AnariFramePipeline(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice, ANARIDevice anDevice,
-                       ANARIRenderer anRenderer, std::shared_ptr<IAnariWorld> pWorld);
+                       std::shared_ptr<AnariRenderer> pAnRenderer, std::shared_ptr<AnariWorld> pWorld);
 
     void prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
                           std::shared_ptr<IImage> pOutputImage) override;
@@ -33,8 +35,8 @@ private:
     std::unique_ptr<ILogger> m_pLogger;
     std::shared_ptr<IDevice> m_pDevice;
     ANARIDevice m_anDevice;
-    ANARIRenderer m_anRenderer;
-    std::shared_ptr<IAnariWorld> m_pAnWorld;
+    std::shared_ptr<AnariRenderer> m_pAnRenderer;
+    std::shared_ptr<AnariWorld> m_pAnWorld;
 
     std::shared_ptr<AnariMapCamera> m_pCamera;
     UniquePtrWithDeleter<anari::api::Frame> m_pAnFrame;

@@ -7,6 +7,8 @@ add_library(im3e_anari STATIC
     src/anari_frame_pipeline.h
     src/anari_map_camera.cpp
     src/anari_map_camera.h
+    src/anari_renderer.cpp
+    src/anari_renderer.h
     src/anari_world.cpp
     src/anari_world.h
 )

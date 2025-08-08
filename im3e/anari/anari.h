@@ -16,8 +16,6 @@ class IAnariWorld
 {
 public:
     virtual ~IAnariWorld() = default;
-
-    virtual auto getHandle() const -> ANARIWorld = 0;
 };
 
 class IAnariFramePipeline : public IFramePipeline
@@ -33,7 +31,7 @@ class IAnariDevice
 public:
     virtual ~IAnariDevice() = default;
 
-    virtual auto createWorld() const -> std::shared_ptr<IAnariWorld> = 0;
+    virtual auto createWorld() -> std::shared_ptr<IAnariWorld> = 0;
     virtual auto createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
         -> std::unique_ptr<IAnariFramePipeline> = 0;
     virtual auto createRendererProperties() -> std::shared_ptr<IPropertyGroup> = 0;

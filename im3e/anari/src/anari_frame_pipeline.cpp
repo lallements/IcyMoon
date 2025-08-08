@@ -103,16 +103,16 @@ inline void blitToOutputImage(const VulkanDeviceFcts& rFcts, const ICommandBuffe
 }  // namespace
 
 AnariFramePipeline::AnariFramePipeline(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice, ANARIDevice anDevice,
-                                       ANARIRenderer anRenderer, shared_ptr<IAnariWorld> pAnWorld)
-  : m_pLogger(rLogger.createChild("AnariRenderPanel"))
+                                       std::shared_ptr<AnariRenderer> pAnRenderer, shared_ptr<AnariWorld> pAnWorld)
+  : m_pLogger(rLogger.createChild("ANARI Frame Pipeline"))
   , m_pDevice(throwIfArgNull(move(pDevice), "AnariRenderPanel requires a device"))
   , m_anDevice(throwIfArgNull(anDevice, "AnariRenderPanel requires an ANARI device"))
-  , m_anRenderer(throwIfArgNull(anRenderer, "AnariRenderPanel requires an ANARI Renderer"))
+  , m_pAnRenderer(throwIfArgNull(std::move(pAnRenderer), "AnariRenderPanel requires an ANARI Renderer"))
   , m_pAnWorld(throwIfArgNull(std::move(pAnWorld), "AnariRenderPanel requires an ANARI World"))
 
   , m_pCamera(make_shared<AnariMapCamera>(*m_pLogger, m_anDevice))
 {
-    m_pLogger->debug("Created Anari render panel");
+    m_pLogger->debug("Successfully created");
 }
 
 void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, const VkExtent2D& rVkViewportSize,
@@ -150,8 +150,16 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
             m_currentViewportSize = rVkViewportSize;
         }
         {
-            auto pCameraUpdateSpan = pStatsProvider->startScopedSpan("updateCamera");
-            m_pCamera->update();
+            auto pCameraCommitSpan = pStatsProvider->startScopedSpan("commitCamera");
+            m_pCamera->commitChanges();
+        }
+        {
+            auto pRendererCommitSpan = pStatsProvider->startScopedSpan("commitRenderer");
+            m_pAnRenderer->commitChanges();
+        }
+        {
+            auto pWorldCommitSpan = pStatsProvider->startScopedSpan("commitWorld");
+            m_pAnWorld->commitChanges();
         }
         copyFrame(*pStatsProvider, m_anDevice, m_pAnFrame.get(), *m_pImage);
         blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer, *pStatsProvider, *m_pImage, *pOutputImage);
@@ -175,8 +183,8 @@ void AnariFramePipeline::resize(const VkExtent2D& rVkExtent, uint32_t)
     m_pAnFrame.reset();
     m_pImage.reset();
 
-    m_pAnFrame = createFrame(*m_pLogger, m_anDevice, m_anRenderer, m_pCamera->getHandle(), m_pAnWorld->getHandle(),
-                             rVkExtent);
+    m_pAnFrame = createFrame(*m_pLogger, m_anDevice, m_pAnRenderer->getHandle(), m_pCamera->getHandle(),
+                             m_pAnWorld->getHandle(), rVkExtent);
 
     m_pImage = m_pDevice->getImageFactory()->createHostVisibleImage(ImageConfig{
         .name = "AnariPipelineImage",

@@ -9,6 +9,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+#include <algorithm>
 #include <array>
 #include <string_view>
 
@@ -112,95 +113,6 @@ auto createAnDevice(const ILogger& rLogger, ANARILibrary anLib, string_view devi
     });
 }
 
-auto chooseAnRendererSubtype(const ILogger& rLogger, ANARIDevice pDevice)
-{
-    const auto** pSubtypes = anariGetObjectSubtypes(pDevice, ANARI_RENDERER);
-    throwIfNull<runtime_error>(pSubtypes, "Failed to retrieve renderer subtypes");
-
-    std::string subtypesMsg = "[";
-    for (const auto** pSubtype = pSubtypes; *pSubtype != nullptr; pSubtype++)
-    {
-        if (pSubtype != pSubtypes)
-        {
-            subtypesMsg += ", ";
-        }
-        subtypesMsg += fmt::format("{}", *pSubtype);
-    }
-    subtypesMsg += "]";
-
-    const std::string chosenSubtype = *pSubtypes;
-    rLogger.info(fmt::format("Available renderer subtypes: {}. Choosing: {}", subtypesMsg, chosenSubtype));
-    return chosenSubtype;
-}
-
-auto createAnRenderer(const ILogger& rLogger, ANARIDevice anDevice, std::string_view anSubtype)
-{
-    auto anRenderer = anariNewRenderer(anDevice, anSubtype.data());
-    throwIfNull<std::runtime_error>(anRenderer, fmt::format("Failed to create renderer with subtype {}", anSubtype));
-
-    constexpr std::array<float, 4U> BackgroundColor{0.3F, 0.3F, 0.4F, 1.0F};
-    anariSetParameter(anDevice, anRenderer, "background", ANARI_FLOAT32_VEC4, BackgroundColor.data());
-
-    anariCommitParameters(anDevice, anRenderer);
-    rLogger.debug(fmt::format("Created renderer with subtype {}", anSubtype));
-
-    return std::shared_ptr<anari::api::Renderer>(
-        anRenderer, [anDevice, pLogger = &rLogger, anSubtype](auto* anRenderer) {
-            anariRelease(anDevice, anRenderer);
-            pLogger->debug(fmt::format("Destroyed renderer with subtype {}", anSubtype));
-        });
-}
-
-template <typename T>
-auto getRenderParamInfo(ANARIDevice anDevice, string_view rendererSubtype, const ANARIParameter* pAnParam,
-                        string_view attribute, ANARIDataType attributeType)
-{
-    return static_cast<const T*>(anariGetParameterInfo(anDevice, ANARI_RENDERER, rendererSubtype.data(), pAnParam->name,
-                                                       pAnParam->type, attribute.data(), attributeType));
-}
-
-template <typename T>
-auto createPropertyValue(ANARIDevice anDevice, ANARIRenderer anRenderer, string_view rendererSubtype,
-                         const ANARIParameter* pAnParam)
-{
-    const auto* description = getRenderParamInfo<char>(anDevice, rendererSubtype, pAnParam, "description",
-                                                       ANARI_STRING);
-    const auto* defaultValue = getRenderParamInfo<T>(anDevice, rendererSubtype, pAnParam, "default", pAnParam->type);
-
-    PropertyValueConfig<T> config{
-        .name = pAnParam->name,
-        .description = description,
-        .onChange =
-            [anDevice, anRenderer, pAnParam](T newValue) {
-                anariSetParameter(anDevice, anRenderer, pAnParam->name, pAnParam->type, &newValue);
-                anariCommitParameters(anDevice, anRenderer);
-            },
-    };
-    if (defaultValue)
-    {
-        config.defaultValue = *defaultValue;
-    }
-    return make_shared<PropertyValue<T>>(move(config));
-}
-
-auto createPropertyValueFromAnParameter(ANARIDevice anDevice, ANARIRenderer anRenderer, string_view rendererSubtype,
-                                        const ANARIParameter* pAnParam) -> shared_ptr<IPropertyValue>
-{
-    switch (static_cast<int>(pAnParam->type))
-    {
-        case ANARI_BOOL: return createPropertyValue<bool>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_INT32: return createPropertyValue<int32_t>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32: return createPropertyValue<float>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_STRING: return createPropertyValue<string>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32_VEC3: return createPropertyValue<glm::vec3>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32_VEC4: return createPropertyValue<glm::vec4>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_ARRAY2D: return createPropertyValue<void*>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_UNKNOWN: throw runtime_error(fmt::format("Unsupported UNKNOWN ANARI data type"));
-        default: break;
-    }
-    throw runtime_error(fmt::format("Unsupported ANARI data type: {}", static_cast<int>(pAnParam->type)));
-}
-
 }  // namespace
 
 AnariDevice::AnariDevice(const ILogger& rLogger)
@@ -212,38 +124,34 @@ AnariDevice::AnariDevice(const ILogger& rLogger)
   , m_anExtensions(detectAnDeviceExtensions(*m_pLogger, m_pAnLib.get(), m_anDeviceSubtype))
   , m_pAnDevice(createAnDevice(*m_pLogger, m_pAnLib.get(), m_anDeviceSubtype))
 
-  , m_anRendererSubtype(chooseAnRendererSubtype(*m_pLogger, m_pAnDevice.get()))
-  , m_pAnRenderer(createAnRenderer(*m_pLogger, m_pAnDevice.get(), m_anRendererSubtype))
+  , m_pAnRenderer(std::make_shared<AnariRenderer>(*m_pLogger, m_pAnDevice.get()))
 {
 }
 
-auto AnariDevice::createWorld() const -> std::shared_ptr<IAnariWorld>
+auto AnariDevice::createWorld() -> std::shared_ptr<IAnariWorld>
 {
-    return make_shared<AnariWorld>(*m_pLogger, m_pAnDevice.get());
+    auto pAnWorld = std::make_shared<AnariWorld>(*m_pLogger, m_pAnDevice.get());
+    m_pAnWorlds.emplace(pAnWorld);
+    return pAnWorld;
 }
 
 auto AnariDevice::createFramePipeline(std::shared_ptr<IDevice> pDevice, std::shared_ptr<IAnariWorld> pAnWorld)
     -> std::unique_ptr<IAnariFramePipeline>
 {
-    return make_unique<AnariFramePipeline>(*m_pLogger, std::move(pDevice), m_pAnDevice.get(), m_pAnRenderer.get(),
-                                           std::move(pAnWorld));
+    auto itFind = std::find_if(m_pAnWorlds.begin(), m_pAnWorlds.end(),
+                               [&pAnWorld](auto& pWorld) { return pWorld == pAnWorld; });
+    throwIfFalse<std::runtime_error>(itFind != m_pAnWorlds.end(), "Could not create frame pipeline: invalid world");
+
+    return std::make_unique<AnariFramePipeline>(*m_pLogger, std::move(pDevice), m_pAnDevice.get(), m_pAnRenderer,
+                                                *itFind);
 }
 
 auto AnariDevice::createRendererProperties() -> std::shared_ptr<IPropertyGroup>
 {
-    const auto* pAnParams = static_cast<const ANARIParameter*>(anariGetObjectInfo(
-        m_pAnDevice.get(), ANARI_RENDERER, m_anRendererSubtype.data(), "parameter", ANARI_PARAMETER_LIST));
-
-    vector<shared_ptr<IProperty>> pProperties;
-    for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
-    {
-        pProperties.emplace_back(
-            createPropertyValueFromAnParameter(m_pAnDevice.get(), m_pAnRenderer.get(), m_anRendererSubtype, pAnParam));
-    }
-    return createPropertyGroup(fmt::format("Renderer: \"{}\"", m_anRendererSubtype), pProperties);
+    return m_pAnRenderer->createRendererProperties();
 }
 
-auto im3e::createAnariDevice(const ILogger& rLogger) -> shared_ptr<IAnariDevice>
+auto im3e::createAnariDevice(const ILogger& rLogger) -> std::shared_ptr<IAnariDevice>
 {
-    return make_shared<AnariDevice>(rLogger);
+    return std::make_shared<AnariDevice>(rLogger);
 }
