@@ -9,6 +9,7 @@
 #include <anari/anari.h>
 
 #include <memory>
+#include <string_view>
 
 namespace im3e {
 
@@ -16,6 +17,8 @@ class IAnariWorld
 {
 public:
     virtual ~IAnariWorld() = default;
+
+    virtual void addPlane(std::string_view name) = 0;
 };
 
 class IAnariFramePipeline : public IFramePipeline

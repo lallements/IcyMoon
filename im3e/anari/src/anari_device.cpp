@@ -79,6 +79,17 @@ AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib)
 {
 }
 
+auto AnariDevice::createArray1d(const void* pData, ANARIDataType type, size_t count)
+    -> UniquePtrWithDeleter<anari::api::Array1D>
+{
+    auto anArray = anariNewArray1D(m_pAnDevice.get(), pData, nullptr, nullptr, type, count);
+    auto pAnArray = UniquePtrWithDeleter<anari::api::Array1D>(
+        anArray, [anDevice = m_pAnDevice.get()](auto anArray) { anariRelease(anDevice, anArray); });
+
+    anariCommitParameters(m_pAnDevice.get(), anArray);
+    return pAnArray;
+}
+
 auto AnariDevice::createLogger(std::string_view name) -> std::unique_ptr<ILogger>
 {
     return m_pLogger->createChild(name);
