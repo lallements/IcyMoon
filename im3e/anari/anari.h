@@ -13,12 +13,18 @@
 
 namespace im3e {
 
+class IAnariObject
+{
+public:
+    virtual auto getProperties() -> std::shared_ptr<IPropertyGroup> = 0;
+};
+
 class IAnariWorld
 {
 public:
     virtual ~IAnariWorld() = default;
 
-    virtual void addPlane(std::string_view name) = 0;
+    virtual auto addPlane(std::string_view name) -> std::shared_ptr<IAnariObject> = 0;
 };
 
 class IAnariFramePipeline : public IFramePipeline

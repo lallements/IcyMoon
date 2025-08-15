@@ -41,16 +41,16 @@ void drawProperty(
     if (auto pPropertyGroup = dynamic_pointer_cast<IPropertyGroup>(pProperty))
     {
         const auto treeNodeId = fmt::format("{}##header", pPropertyGroup->getName());
+        const auto treeNodeFlags = ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen;
         ImguiScope treeNode(
-            ImGui::TreeNodeEx(treeNodeId.c_str(), ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen, "%s",
-                              pPropertyGroup->getName().c_str()),
+            ImGui::TreeNodeEx(treeNodeId.c_str(), treeNodeFlags, "%s", pPropertyGroup->getName().c_str()),
             &ImGui::TreePop);
 
         ImGui::TableSetColumnIndex(1);
 
-        ImguiScope treeNode2(
-            ImGui::TreeNodeEx(treeNodeId.c_str(), ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Framed, " "),
-            &ImGui::TreePop);
+        const auto treeNode2Id = fmt::format("{}##header2", pPropertyGroup->getName());
+        const auto treeNode2Flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_Framed;
+        ImguiScope treeNode2(ImGui::TreeNodeEx(treeNode2Id.c_str(), treeNode2Flags, " "), &ImGui::TreePop);
 
         if (treeNode.isOpen())
         {

@@ -81,7 +81,9 @@ int main()
     auto pDevice = pApp->getDevice();
     auto pAnEngine = createAnariEngine(*pLogger, pDevice);
     auto pFramePipeline = pAnEngine->createFramePipeline();
+
     auto pWorld = pFramePipeline->getWorld();
+    auto pPlane = pWorld->addPlane("Ground");
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
 
@@ -89,6 +91,7 @@ int main()
     {
         vector<shared_ptr<IProperty>> pProperties{
             pFramePipeline->createRendererProperties(),
+            pPlane->getProperties(),
         };
 
         static constexpr PropertyValueTConfig<uint32_t> LevelOfDetails{
@@ -120,8 +123,6 @@ int main()
     }
 
     pApp->createWindow(WindowConfig{}, pGuiWorkspace);
-
-    pWorld->addPlane("Ground");
 
     pApp->run();
     return 0;

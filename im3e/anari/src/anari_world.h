@@ -18,7 +18,7 @@ class AnariWorld : public IAnariWorld
 public:
     AnariWorld(std::shared_ptr<AnariDevice> pAnDevice);
 
-    void addPlane(std::string_view name) override;
+    auto addPlane(std::string_view name) -> std::shared_ptr<IAnariObject> override;
     void commitChanges();
 
     auto getHandle() const -> ANARIWorld { return m_pAnWorld.get(); }
@@ -33,6 +33,9 @@ private:
 
     std::vector<ANARISurface> m_anSurfaces;
     bool m_surfacesChanged{};
+
+    std::vector<ANARIInstance> m_anInstances;
+    bool m_instancesChanged{};
 };
 
 }  // namespace im3e

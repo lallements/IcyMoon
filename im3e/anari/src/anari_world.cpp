@@ -54,12 +54,13 @@ AnariWorld::AnariWorld(std::shared_ptr<AnariDevice> pAnDevice)
     anariCommitParameters(m_pAnDevice->getHandle(), m_pAnWorld.get());
 }
 
-void AnariWorld::addPlane(std::string_view name)
+auto AnariWorld::addPlane(std::string_view name) -> std::shared_ptr<IAnariObject>
 {
     auto pPlane = std::make_shared<AnariPlane>(name, m_pAnDevice);
-    m_anSurfaces.emplace_back(pPlane->getSurface());
-    m_pPlanes.emplace_back(std::move(pPlane));
-    m_surfacesChanged = true;
+    m_anInstances.emplace_back(pPlane->getInstance());
+    m_pPlanes.emplace_back(pPlane);
+    m_instancesChanged = true;
+    return pPlane;
 }
 
 void AnariWorld::commitChanges()
@@ -72,6 +73,14 @@ void AnariWorld::commitChanges()
         auto anSurfaces = pAnSurfaces.get();
         anariSetParameter(m_pAnDevice->getHandle(), m_pAnWorld.get(), "surface", ANARI_ARRAY1D, &anSurfaces);
         m_surfacesChanged = false;
+    }
+
+    if (m_instancesChanged)
+    {
+        auto pAnInstances = m_pAnDevice->createArray1d(m_anInstances, ANARI_INSTANCE);
+        auto anInstances = pAnInstances.get();
+        anariSetParameter(m_pAnDevice->getHandle(), m_pAnWorld.get(), "instance", ANARI_ARRAY1D, &anInstances);
+        m_instancesChanged = false;
     }
 
     anariCommitParameters(m_pAnDevice->getHandle(), m_pAnWorld.get());
