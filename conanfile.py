@@ -13,6 +13,7 @@ class IcyMoonEngineRecipe(ConanFile):
     generators = "VirtualBuildEnv"
 
     requires = {
+        "anari/0.14.1",
         "cimg/3.3.2",
         "fmt/11.0.2",
         "gdal/3.10.3",

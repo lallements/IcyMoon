@@ -60,6 +60,10 @@ jobs:
       # - name: Install Python dependencies for OpenUSD
       #   run: pip install PySide6 PyOpenGL
 
+      - name: Add ANARI SDK recipe
+        working-directory: ${{ github.workspace }}/recipes/anari
+        run: conan create . -pr:a ${{ github.workspace }}/profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
+
       # - name: Conan Create OpenUSD
       #   working-directory: ${{ github.workspace }}/recipes/open_usd
       #   run: conan create . -pr:a ${{ github.workspace }}/profiles/${{ steps.strings.outputs.cmake-preset }} --build=missing
