@@ -1,5 +1,9 @@
 #include "anari_plane.h"
 
+#include "anari_utils.h"
+
+#include <im3e/utils/properties/properties.h>
+
 #include <fmt/format.h>
 
 using namespace im3e;
@@ -138,12 +142,6 @@ auto createPlaneInstance(const ILogger& rLogger, ANARIDevice anDevice, ANARIGrou
     });
 }
 
-auto createAnariPlaneProperties(std::string_view name)
-{
-    std::vector<std::shared_ptr<IProperty>> pProperties{};
-    return createPropertyGroup(name, std::move(pProperties));
-}
-
 }  // namespace
 
 AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice)
@@ -157,11 +155,29 @@ AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDe
   , m_pAnGroup(createPlaneGroup(*m_pLogger, *m_pAnDevice, m_pAnSurface.get()))
   , m_pAnInstance(createPlaneInstance(*m_pLogger, m_pAnDevice->getHandle(), m_pAnGroup.get()))
 
-  , m_pProperties(createAnariPlaneProperties(m_name))
+  , m_pScaleProp(std::make_shared<PropertyValue<glm::vec3>>(PropertyValueConfig<glm::vec3>{
+        .name = "Scale",
+        .description = "Applies a scale to the plane",
+        .defaultValue = m_transform.getScale(),
+        .onChange =
+            [this](auto scale) {
+                m_transform.setScale(scale);
+                m_transformChanged = true;
+            },
+    }))
+  , m_pProperties(createPropertyGroup(m_name, {m_pScaleProp}))
 {
+    m_transformChanged = true;
 }
 
 void AnariPlane::commitChanges()
 {
-    // TODO: add Transform class from s3de project
+    if (m_transformChanged)
+    {
+        const auto transformMat = toAnMatrix(m_transform.toMatrix());
+        anariSetParameter(m_pAnDevice->getHandle(), m_pAnInstance.get(), "transform", ANARI_FLOAT32_MAT4,
+                          transformMat.data());
+        anariCommitParameters(m_pAnDevice->getHandle(), m_pAnInstance.get());
+        m_transformChanged = false;
+    }
 }

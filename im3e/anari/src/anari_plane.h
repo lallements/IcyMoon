@@ -4,6 +4,7 @@
 #include "anari_device.h"
 
 #include <im3e/utils/properties/properties.h>
+#include <im3e/utils/transform.h>
 #include <im3e/utils/types.h>
 
 #include <string>
@@ -25,12 +26,16 @@ private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
 
+    Transform m_transform;
+    bool m_transformChanged{};
+
     UniquePtrWithDeleter<anari::api::Geometry> m_pAnGeometry;
     UniquePtrWithDeleter<anari::api::Material> m_pAnMaterial;
     UniquePtrWithDeleter<anari::api::Surface> m_pAnSurface;
     UniquePtrWithDeleter<anari::api::Group> m_pAnGroup;
     UniquePtrWithDeleter<anari::api::Instance> m_pAnInstance;
 
+    std::shared_ptr<PropertyValue<glm::vec3>> m_pScaleProp;
     std::shared_ptr<IPropertyGroup> m_pProperties;
 };
 

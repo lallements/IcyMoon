@@ -12,6 +12,7 @@ add_library(im3e_anari STATIC
     src/anari_plane.h
     src/anari_renderer.cpp
     src/anari_renderer.h
+    src/anari_utils.h
     src/anari_world.cpp
     src/anari_world.h
 )
