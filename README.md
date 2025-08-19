@@ -3,7 +3,7 @@
 - [How to Build](#how-to-build)
   - [Dependencies](#dependencies)
   - [ANARI SDK](#anari-sdk)
-  - [VisRTX](#visrtx)
+  - [VisRTX - Optional](#visrtx---optional)
   - [OpenUSD - Optional](#openusd---optional)
   - [Conan](#conan)
   - [Compiling](#compiling)
@@ -25,22 +25,11 @@ The following must be installed manually:
 
 ### ANARI SDK
 
-Clone the [ANARI-SDK](https://github.com/KhronosGroup/ANARI-SDK/) GitHub repo and checkout the right version:
-```
-git clone https://github.com/KhronosGroup/ANARI-SDK.git
-git checkout v0.14.0
-```
+ANARI SDK needs to be manually added to your local Conan cache. To do so, from the root folder of this project, run:
 
-Build and install using CMake:
+```bash
+conan create ./recipes/anari
 ```
-cd /path/to/anari
-mkdir build
-cd build
-cmake ..
-cmake --build . -t install
-```
-
-> Note: `sudo` might be needed to successfully install on Linux
 
 ### VisRTX - Optional
 

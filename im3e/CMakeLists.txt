@@ -1,4 +1,5 @@
 add_subdirectory(api)
+add_subdirectory(anari)
 add_subdirectory(devices)
 add_subdirectory(geo)
 add_subdirectory(guis)

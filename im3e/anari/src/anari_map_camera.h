@@ -1,20 +1,20 @@
 #pragma once
 
-#include <im3e/guis/guis.h>
-#include <im3e/utils/loggers.h>
+#include "anari_device.h"
 
-#include <anari/anari.h>
+#include <im3e/api/gui.h>
+#include <im3e/utils/loggers.h>
 
 #include <numbers>
 
 namespace im3e {
 
-class AnariMapCamera : public IImguiEventListener
+class AnariMapCamera : public IGuiEventListener
 {
 public:
-    AnariMapCamera(const ILogger& rLogger, std::shared_ptr<anari::api::Device> pAnDevice);
+    AnariMapCamera(std::shared_ptr<AnariDevice> pAnDevice);
 
-    void update();
+    void commitChanges();
 
     void onMouseMove(const glm::vec2& rClipOffset, const std::array<bool, 3U>& rMouseButtonsDown) override;
     void onMouseWheel(float scrollSteps) override;
@@ -24,8 +24,8 @@ public:
     auto getHandle() const -> ANARICamera { return m_pAnCamera.get(); }
 
 private:
+    std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
-    std::shared_ptr<anari::api::Device> m_pAnDevice;
     std::shared_ptr<anari::api::Camera> m_pAnCamera;
 
     bool m_needsUpdate{true};

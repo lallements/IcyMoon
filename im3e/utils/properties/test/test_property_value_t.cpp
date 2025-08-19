@@ -21,9 +21,11 @@ TEST(PropertyValueTTest, constructor)
 {
     static constexpr PropertyValueTConfig<bool> BoolConfig{
         .name = "Boolean",
+        .description = "Description of test property",
     };
     PropertyValueT<BoolConfig> property;
     EXPECT_THAT(property.getName(), StrEq(BoolConfig.name));
+    EXPECT_THAT(property.getDescription(), StrEq(BoolConfig.description));
     EXPECT_THAT(property.getType() == typeid(bool), IsTrue());
     EXPECT_THAT(property.getValue(), Eq(bool{}));
 }

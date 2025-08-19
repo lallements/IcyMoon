@@ -35,6 +35,7 @@ add_definitions(
     -DTBB_SUPPRESS_DEPRECATED_MESSAGES=1
 
     # GLM
+    -DGLM_ENABLE_EXPERIMENTAL
     -DGLM_FORCE_DEPTH_ZERO_TO_ONE
     -DGLM_FORCE_SILENT_WARNINGS
     -DGLM_FORCE_SWIZZLE
@@ -62,6 +63,7 @@ endif()
 add_subdirectory(cmake)
 im3e_set_coverage_flags()
 
+find_package(anari REQUIRED)
 find_package(CImg REQUIRED)
 find_package(fmt REQUIRED)
 find_package(GDAL REQUIRED)

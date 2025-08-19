@@ -48,7 +48,7 @@ auto createRenderOutputSampler(const IDevice& rDevice)
     return makeVkUniquePtr<VkSampler>(vkDevice, vkSampler, rVkFcts.vkDestroySampler);
 }
 
-void dispatchEvents(ImGuiIO& rIo, IImguiEventListener& rEventListener)
+void dispatchEvents(ImGuiIO& rIo, IGuiEventListener& rEventListener)
 {
     if (ImGui::IsItemHovered() && rIo.MouseWheel)
     {
@@ -72,7 +72,7 @@ void dispatchEvents(ImGuiIO& rIo, IImguiEventListener& rEventListener)
 }  // namespace
 
 ImguiRenderPanel::ImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline,
-                                   shared_ptr<IImguiEventListener> pEventListener)
+                                   shared_ptr<IGuiEventListener> pEventListener)
   : m_name(name)
   , m_pFramePipeline(throwIfArgNull(move(pFramePipeline), "ImGui render panel requires a frame pipeline"))
   , m_pDevice(m_pFramePipeline->getDevice())
@@ -141,7 +141,7 @@ void ImguiRenderPanel::onWindowResized(const VkExtent2D& rVkWindowSize, VkFormat
 }
 
 auto im3e::createImguiRenderPanel(string_view name, unique_ptr<IFramePipeline> pFramePipeline,
-                                  shared_ptr<IImguiEventListener> pEventListener) -> shared_ptr<IGuiPanel>
+                                  shared_ptr<IGuiEventListener> pEventListener) -> shared_ptr<IGuiPanel>
 {
     return make_shared<ImguiRenderPanel>(name, move(pFramePipeline), move(pEventListener));
 }

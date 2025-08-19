@@ -2,6 +2,8 @@
 
 #include "command_buffer.h"
 
+#include <glm/glm.hpp>
+
 #include <memory>
 #include <string>
 
@@ -40,6 +42,21 @@ public:
         Right
     };
     virtual void addPanel(Location location, std::shared_ptr<IGuiPanel> pPanel, float fraction = 0.25F) = 0;
+};
+
+class IGuiEventListener
+{
+public:
+    virtual ~IGuiEventListener() = default;
+
+    enum class MouseButton : uint32_t
+    {
+        Left = 0U,
+        Right = 1U,
+        Middle = 2U,
+    };
+    virtual void onMouseMove(const glm::vec2& rClipOffset, const std::array<bool, 3U>& rMouseButtonsDown) = 0;
+    virtual void onMouseWheel(float scrollSteps) = 0;
 };
 
 }  // namespace im3e

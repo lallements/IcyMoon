@@ -5,7 +5,9 @@ add_library(im3e_utils STATIC
     src/vk_utils.cpp
     imgui_utils.h
     loggers.h
+    math_utils.h
     stats.h
+    transform.h
     types.h
     vk_utils.h
 )
@@ -21,6 +23,7 @@ target_include_directories(im3e_utils
 target_link_libraries(im3e_utils
   PUBLIC
     fmt::fmt
+    glm::glm
     im3e_utils_core
     vulkan-memory-allocator::vulkan-memory-allocator
     Vulkan::Headers
