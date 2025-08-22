@@ -63,6 +63,15 @@ auto AnariWorld::addPlane(std::string_view name) -> std::shared_ptr<IAnariObject
     return pPlane;
 }
 
+auto AnariWorld::addHeightField(std::unique_ptr<IHeightMap> pHeightMap) -> std::shared_ptr<IAnariObject>
+{
+    auto pHeightField = std::make_shared<AnariHeightField>(m_pAnDevice, std::move(pHeightMap));
+    m_anInstances.emplace_back(pHeightField->getInstance());
+    m_pHeightFields.emplace_back(pHeightField);
+    m_instancesChanged = true;
+    return pHeightField;
+}
+
 void AnariWorld::commitChanges()
 {
     std::ranges::for_each(m_pPlanes, [](auto& pPlane) { pPlane->commitChanges(); });

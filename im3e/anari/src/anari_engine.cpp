@@ -31,9 +31,8 @@ void anStatusFct(const void* pUserData, [[maybe_unused]] ANARIDevice anDevice, [
     }
 }
 
-auto loadAnLibrary(const ILogger& rLogger)
+auto loadAnLibrary(const ILogger& rLogger, std::string& rAnLibName)
 {
-    std::string anLibName{};
     ANARILibrary anLib{};
     for (auto& rLibName : AnImplementationNames)
     {
@@ -41,18 +40,19 @@ auto loadAnLibrary(const ILogger& rLogger)
         anLib = anariLoadLibrary(rLibName.data(), anStatusFct, &rLogger);
         if (anLib)
         {
-            anLibName = rLibName;
-            rLogger.info(fmt::format("Successfully loaded ANARI implementation \"{}\"", anLibName));
+            rAnLibName = rLibName;
+            rLogger.info(fmt::format("Successfully loaded ANARI implementation \"{}\"", rAnLibName));
             break;
         }
         rLogger.debug(fmt::format("Failed to load ANARI implementation \"{}\"", rLibName));
     }
     throwIfNull<std::runtime_error>(anLib, "Could not find ANARI implementation to load");
 
-    return UniquePtrWithDeleter<anari::api::Library>(anLib, [anLibName, pLogger = &rLogger](auto* anariLib) {
-        anariUnloadLibrary(anariLib);
-        pLogger->info(fmt::format("Unloaded ANARI implementation \"{}\"", anLibName));
-    });
+    return UniquePtrWithDeleter<anari::api::Library>(
+        anLib, [anLibName = rAnLibName, pLogger = &rLogger](auto* anariLib) {
+            anariUnloadLibrary(anariLib);
+            pLogger->info(fmt::format("Unloaded ANARI implementation \"{}\"", anLibName));
+        });
 }
 
 class AnariEngine : public IAnariEngine
@@ -61,8 +61,8 @@ public:
     AnariEngine(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice)
       : m_pLogger(rLogger.createChild("ANARI"))
       , m_pDevice(throwIfArgNull(std::move(pDevice), "ANARI Engine requires a Device"))
-      , m_pAnLib(loadAnLibrary(*m_pLogger))
-      , m_pAnDevice(std::make_shared<AnariDevice>(*m_pLogger, m_pAnLib.get()))
+      , m_pAnLib(loadAnLibrary(*m_pLogger, m_anLibName))
+      , m_pAnDevice(std::make_shared<AnariDevice>(*m_pLogger, m_pAnLib.get(), m_anLibName))
     {
     }
 
@@ -75,6 +75,7 @@ private:
     std::unique_ptr<ILogger> m_pLogger;
     std::shared_ptr<IDevice> m_pDevice;
 
+    std::string m_anLibName;
     UniquePtrWithDeleter<anari::api::Library> m_pAnLib;
     std::shared_ptr<AnariDevice> m_pAnDevice;
 };

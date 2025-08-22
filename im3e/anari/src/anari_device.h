@@ -16,7 +16,7 @@ namespace im3e {
 class AnariDevice
 {
 public:
-    AnariDevice(const ILogger& rLogger, ANARILibrary anLib);
+    AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName);
 
     template <typename T>
     auto createArray1d(const std::vector<T>& rData, ANARIDataType type) -> UniquePtrWithDeleter<anari::api::Array1D>
@@ -26,12 +26,17 @@ public:
     auto createArray1d(const void* pData, ANARIDataType type, size_t count)
         -> UniquePtrWithDeleter<anari::api::Array1D>;
 
+    auto createGroup() -> UniquePtrWithDeleter<anari::api::Group>;
+    auto createInstance(ANARIGroup anGroup = nullptr) -> UniquePtrWithDeleter<anari::api::Instance>;
+
     auto createLogger(std::string_view name) -> std::unique_ptr<ILogger>;
 
     auto getHandle() const -> ANARIDevice { return m_pAnDevice.get(); }
+    auto getLibraryName() const -> std::string_view { return m_anLibName; }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
+    const std::string m_anLibName;
 
     const std::string m_anDeviceSubtype;
     const ANARIExtensions m_anExtensions;

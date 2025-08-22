@@ -2,6 +2,7 @@
 
 #include <im3e/anari/anari.h>
 #include <im3e/devices/devices.h>
+#include <im3e/geo/geo.h>
 #include <im3e/guis/guis.h>
 #include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
@@ -85,6 +86,13 @@ int main()
     auto pWorld = pFramePipeline->getWorld();
     auto pPlane = pWorld->addPlane("Ground");
 
+    auto pHeightMap = loadHeightMapFromFile(*pLogger,
+                                            HeightMapFileConfig{
+                                                .path = "/mnt/data/dev/assets/lidar_bc/bc_092g064_xli1m_utm10_2020.tif",
+                                                .readOnly = true,
+                                            });
+    auto pHeightField = pWorld->addHeightField(std::move(pHeightMap));
+
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
 
     // Properties Panel
@@ -92,6 +100,7 @@ int main()
         vector<shared_ptr<IProperty>> pProperties{
             pFramePipeline->createRendererProperties(),
             pPlane->getProperties(),
+            pHeightField->getProperties(),
         };
 
         static constexpr PropertyValueTConfig<uint32_t> LevelOfDetails{

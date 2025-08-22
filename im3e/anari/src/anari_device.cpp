@@ -71,8 +71,9 @@ auto createAnDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view
 
 }  // namespace
 
-AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib)
+AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName)
   : m_pLogger(rLogger.createChild("ANARI Device"))
+  , m_anLibName(anLibName)
   , m_anDeviceSubtype(chooseAnDeviceSubtype(*m_pLogger, anLib))
   , m_anExtensions(detectAnDeviceExtensions(*m_pLogger, anLib, m_anDeviceSubtype))
   , m_pAnDevice(createAnDevice(*m_pLogger, anLib, m_anDeviceSubtype))
@@ -88,6 +89,25 @@ auto AnariDevice::createArray1d(const void* pData, ANARIDataType type, size_t co
 
     anariCommitParameters(m_pAnDevice.get(), anArray);
     return pAnArray;
+}
+
+auto AnariDevice::createGroup() -> UniquePtrWithDeleter<anari::api::Group>
+{
+    auto anGroup = anariNewGroup(m_pAnDevice.get());
+    return UniquePtrWithDeleter<anari::api::Group>(
+        anGroup, [anDevice = m_pAnDevice.get()](auto anGroup) { anariRelease(anDevice, anGroup); });
+}
+
+auto AnariDevice::createInstance(ANARIGroup anGroup) -> UniquePtrWithDeleter<anari::api::Instance>
+{
+    auto anInstance = anariNewInstance(m_pAnDevice.get(), "transform");
+    if (anGroup)
+    {
+        anariSetParameter(m_pAnDevice.get(), anInstance, "group", ANARI_GROUP, &anGroup);
+        anariCommitParameters(m_pAnDevice.get(), anInstance);
+    }
+    return UniquePtrWithDeleter<anari::api::Instance>(
+        anInstance, [anDevice = m_pAnDevice.get()](auto anInstance) { anariRelease(anDevice, anInstance); });
 }
 
 auto AnariDevice::createLogger(std::string_view name) -> std::unique_ptr<ILogger>

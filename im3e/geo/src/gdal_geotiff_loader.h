@@ -17,6 +17,8 @@ class GdalGeoTiffHeightMap : public IHeightMap
 public:
     GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFileConfig config);
 
+    auto getName() const -> std::string override { return m_config.path.stem().string(); }
+
 private:
     std::unique_ptr<ILogger> m_pLogger;
     const HeightMapFileConfig m_config;

@@ -120,6 +120,11 @@ auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
     std::vector<std::shared_ptr<IProperty>> pProperties;
     for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
     {
+        // TODO: cleanup this workaround to fix crash with helide device and file ticket with ANARI SDK
+        if (m_pAnDevice->getLibraryName() == "helide" && pAnParam->name == std::string{"mode"})
+        {
+            continue;
+        }
         pProperties.emplace_back(createPropertyValueFromAnParameter(m_pAnDevice->getHandle(), m_pAnRenderer.get(),
                                                                     m_anRendererSubtype, pAnParam));
     }
