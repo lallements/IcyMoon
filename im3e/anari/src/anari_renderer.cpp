@@ -121,6 +121,10 @@ auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
     for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
     {
         // TODO: cleanup this workaround to fix crash with helide device and file ticket with ANARI SDK
+        if (m_pAnDevice->getLibraryName() == "visgl" && pAnParam->name == std::string{"occlusionMode"})
+        {
+            continue;
+        }
         if (m_pAnDevice->getLibraryName() == "helide" && pAnParam->name == std::string{"mode"})
         {
             continue;
