@@ -8,6 +8,8 @@ add_library(im3e_anari STATIC
     src/anari_frame_pipeline.h
     src/anari_height_field.cpp
     src/anari_height_field.h
+    src/anari_instance_set.cpp
+    src/anari_instance_set.h
     src/anari_map_camera.cpp
     src/anari_map_camera.h
     src/anari_plane.cpp

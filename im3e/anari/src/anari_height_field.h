@@ -2,6 +2,7 @@
 
 #include "anari.h"
 #include "anari_device.h"
+#include "anari_instance_set.h"
 
 #include <im3e/api/height_map.h>
 #include <im3e/utils/types.h>
@@ -11,7 +12,8 @@ namespace im3e {
 class AnariHeightField : public IAnariObject
 {
 public:
-    AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, std::unique_ptr<IHeightMap> pHeightMap);
+    AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet,
+                     std::unique_ptr<IHeightMap> pHeightMap);
 
     void commitChanges();
 
@@ -20,6 +22,7 @@ public:
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
+    AnariInstanceSet& m_rInstanceSet;
     std::unique_ptr<IHeightMap> m_pHeightMap;
 
     std::unique_ptr<ILogger> m_pLogger;

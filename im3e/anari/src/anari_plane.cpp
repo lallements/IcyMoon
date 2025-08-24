@@ -136,7 +136,7 @@ auto createPlaneInstance(const ILogger& rLogger, ANARIDevice anDevice, ANARIGrou
     anariCommitParameters(anDevice, anInstance);
 
     rLogger.debug("Created instance");
-    return UniquePtrWithDeleter<anari::api::Instance>(anInstance, [anDevice, pLogger = &rLogger](auto anInstance) {
+    return std::shared_ptr<anari::api::Instance>(anInstance, [anDevice, pLogger = &rLogger](auto anInstance) {
         anariRelease(anDevice, anInstance);
         pLogger->debug("Released instance");
     });
@@ -144,9 +144,11 @@ auto createPlaneInstance(const ILogger& rLogger, ANARIDevice anDevice, ANARIGrou
 
 }  // namespace
 
-AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice)
+AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet)
   : m_name(name)
   , m_pAnDevice(throwIfArgNull(std::move(pAnDevice), "ANARI Plane requires an ANARI device"))
+  , m_rInstanceSet(rInstanceSet)
+
   , m_pLogger(m_pAnDevice->createLogger(fmt::format("ANARI Plane - {}", m_name)))
 
   , m_pAnGeometry(createPlaneGeometry(*m_pLogger, m_pAnDevice->getHandle()))
@@ -168,6 +170,12 @@ AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDe
   , m_pProperties(createPropertyGroup(m_name, {m_pScaleProp}))
 {
     m_transformChanged = true;
+    m_rInstanceSet.insert(m_pAnInstance);
+}
+
+AnariPlane::~AnariPlane()
+{
+    m_rInstanceSet.remove(m_pAnInstance);
 }
 
 void AnariPlane::commitChanges()

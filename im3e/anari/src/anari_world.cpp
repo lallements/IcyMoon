@@ -42,6 +42,7 @@ AnariWorld::AnariWorld(std::shared_ptr<AnariDevice> pAnDevice)
   , m_pLogger(m_pAnDevice->createLogger("ANARI World"))
   , m_pAnWorld(createAnariWorld(*m_pLogger, m_pAnDevice->getHandle()))
   , m_pAnLight(createAnariLight(*m_pLogger, m_pAnDevice->getHandle()))
+  , m_instanceSet(m_pAnDevice, m_pAnWorld.get())
 {
     // Initialize world lights:
     {
@@ -56,41 +57,24 @@ AnariWorld::AnariWorld(std::shared_ptr<AnariDevice> pAnDevice)
 
 auto AnariWorld::addPlane(std::string_view name) -> std::shared_ptr<IAnariObject>
 {
-    auto pPlane = std::make_shared<AnariPlane>(name, m_pAnDevice);
-    m_anInstances.emplace_back(pPlane->getInstance());
+    auto pPlane = std::make_shared<AnariPlane>(name, m_pAnDevice, m_instanceSet);
     m_pPlanes.emplace_back(pPlane);
-    m_instancesChanged = true;
     return pPlane;
 }
 
 auto AnariWorld::addHeightField(std::unique_ptr<IHeightMap> pHeightMap) -> std::shared_ptr<IAnariObject>
 {
-    auto pHeightField = std::make_shared<AnariHeightField>(m_pAnDevice, std::move(pHeightMap));
-    m_anInstances.emplace_back(pHeightField->getInstance());
+    auto pHeightField = std::make_shared<AnariHeightField>(m_pAnDevice, m_instanceSet, std::move(pHeightMap));
     m_pHeightFields.emplace_back(pHeightField);
-    m_instancesChanged = true;
     return pHeightField;
 }
 
 void AnariWorld::commitChanges()
 {
+    std::vector<ANARIInstance> anInstances;
     std::ranges::for_each(m_pPlanes, [](auto& pPlane) { pPlane->commitChanges(); });
+    std::ranges::for_each(m_pHeightFields, [](auto& pHeightField) { pHeightField->commitChanges(); });
 
-    if (m_surfacesChanged)
-    {
-        auto pAnSurfaces = m_pAnDevice->createArray1d(m_anSurfaces, ANARI_SURFACE);
-        auto anSurfaces = pAnSurfaces.get();
-        anariSetParameter(m_pAnDevice->getHandle(), m_pAnWorld.get(), "surface", ANARI_ARRAY1D, &anSurfaces);
-        m_surfacesChanged = false;
-    }
-
-    if (m_instancesChanged)
-    {
-        auto pAnInstances = m_pAnDevice->createArray1d(m_anInstances, ANARI_INSTANCE);
-        auto anInstances = pAnInstances.get();
-        anariSetParameter(m_pAnDevice->getHandle(), m_pAnWorld.get(), "instance", ANARI_ARRAY1D, &anInstances);
-        m_instancesChanged = false;
-    }
-
+    m_instanceSet.updateWorld();
     anariCommitParameters(m_pAnDevice->getHandle(), m_pAnWorld.get());
 }

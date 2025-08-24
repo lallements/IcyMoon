@@ -2,6 +2,7 @@
 
 #include "anari_device.h"
 #include "anari_height_field.h"
+#include "anari_instance_set.h"
 #include "anari_plane.h"
 
 #include <im3e/utils/loggers.h>
@@ -34,11 +35,7 @@ private:
     std::vector<std::shared_ptr<AnariPlane>> m_pPlanes;
     std::vector<std::shared_ptr<AnariHeightField>> m_pHeightFields;
 
-    std::vector<ANARISurface> m_anSurfaces;
-    bool m_surfacesChanged{};
-
-    std::vector<ANARIInstance> m_anInstances;
-    bool m_instancesChanged{};
+    AnariInstanceSet m_instanceSet;
 };
 
 }  // namespace im3e
