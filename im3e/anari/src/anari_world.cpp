@@ -69,9 +69,13 @@ auto AnariWorld::addHeightField(std::unique_ptr<IHeightMap> pHeightMap) -> std::
     return pHeightField;
 }
 
+void AnariWorld::updateAsync(const AnariMapCamera& rCamera)
+{
+    std::ranges::for_each(m_pHeightFields, [&rCamera](auto& pHeightField) { pHeightField->updateAsync(rCamera); });
+}
+
 void AnariWorld::commitChanges()
 {
-    std::vector<ANARIInstance> anInstances;
     std::ranges::for_each(m_pPlanes, [](auto& pPlane) { pPlane->commitChanges(); });
     std::ranges::for_each(m_pHeightFields, [](auto& pHeightField) { pHeightField->commitChanges(); });
 

@@ -3,6 +3,7 @@
 #include "anari.h"
 #include "anari_device.h"
 #include "anari_instance_set.h"
+#include "anari_map_camera.h"
 
 #include <im3e/api/height_map.h>
 #include <im3e/utils/types.h>
@@ -15,6 +16,7 @@ public:
     AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet,
                      std::unique_ptr<IHeightMap> pHeightMap);
 
+    void updateAsync(const AnariMapCamera& rCamera);
     void commitChanges();
 
     auto getProperties() -> std::shared_ptr<IPropertyGroup> override { return m_pProperties; }

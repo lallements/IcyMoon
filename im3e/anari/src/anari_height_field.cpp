@@ -20,4 +20,9 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
 {
 }
 
+void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamera)
+{
+    m_pLogger->debug("updateAsync()");
+}
+
 void AnariHeightField::commitChanges() {}

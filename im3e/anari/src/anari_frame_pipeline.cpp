@@ -2,6 +2,8 @@
 
 #include <im3e/utils/core/throw_utils.h>
 
+#include <future>
+
 using namespace im3e;
 
 namespace {
@@ -128,6 +130,10 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
 
     if (m_renderingFrame)
     {
+        // Start the asynchronous update now so that the world has enough time to prepare the next frame while we wait
+        // for the current frame to complete and copy its results.
+        m_pAnWorld->updateAsync(*m_pCamera);
+
         auto pPipelineSpan = pStatsProvider->startScopedSpan("outputFrame");
         {
             auto pFrameReadySpan = pStatsProvider->startScopedSpan("waitForFrame");
@@ -148,6 +154,11 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
 
             m_currentViewportSize = rVkViewportSize;
         }
+
+        // Perform the expensive copy before we commit changes for the next frame so that the world has enough time
+        // to update its internal state before committing.
+        copyFrame(*pStatsProvider, m_pAnDevice->getHandle(), m_pAnFrame.get(), *m_pImage);
+
         {
             auto pCameraCommitSpan = pStatsProvider->startScopedSpan("commitCamera");
             m_pCamera->commitChanges();
@@ -160,7 +171,6 @@ void AnariFramePipeline::prepareExecution(const ICommandBuffer& rCommandBuffer, 
             auto pWorldCommitSpan = pStatsProvider->startScopedSpan("commitWorld");
             m_pAnWorld->commitChanges();
         }
-        copyFrame(*pStatsProvider, m_pAnDevice->getHandle(), m_pAnFrame.get(), *m_pImage);
         blitToOutputImage(m_pDevice->getFcts(), rCommandBuffer, *pStatsProvider, *m_pImage, *pOutputImage);
         {
             auto pBarrier = rCommandBuffer.startScopedBarrier("resetImageLayoutToGeneral");
