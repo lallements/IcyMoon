@@ -2,6 +2,7 @@
 
 #include "anari.h"
 #include "anari_device.h"
+#include "anari_height_field_tile.h"
 #include "anari_instance_set.h"
 #include "anari_map_camera.h"
 
@@ -20,7 +21,6 @@ public:
     void commitChanges();
 
     auto getProperties() -> std::shared_ptr<IPropertyGroup> override { return m_pProperties; }
-    auto getInstance() const -> ANARIInstance { return m_pAnInstance.get(); }
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
@@ -28,9 +28,6 @@ private:
     std::unique_ptr<IHeightMap> m_pHeightMap;
 
     std::unique_ptr<ILogger> m_pLogger;
-
-    UniquePtrWithDeleter<anari::api::Group> m_pAnGroup;
-    UniquePtrWithDeleter<anari::api::Instance> m_pAnInstance;
 
     std::shared_ptr<IPropertyGroup> m_pProperties;
 };

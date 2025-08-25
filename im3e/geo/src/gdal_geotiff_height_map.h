@@ -18,6 +18,7 @@ public:
     GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFileConfig config);
 
     auto getName() const -> std::string override { return m_config.path.stem().string(); }
+    auto getTileSize() const -> glm::u32vec2 override { return m_tileSize; }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
@@ -26,6 +27,8 @@ private:
     std::shared_ptr<IGdalInstance> m_pGdalInstance;
     GDALDatasetUniquePtr m_pDataset;
     GDALRasterBand* m_pRasterBand;
+
+    const glm::u32vec2 m_tileSize;
 };
 
 }  // namespace im3e

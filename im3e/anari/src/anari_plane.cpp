@@ -112,36 +112,6 @@ auto createPlaneSurface(const ILogger& rLogger, ANARIDevice anDevice, ANARIGeome
     });
 }
 
-auto createPlaneGroup(const ILogger& rLogger, AnariDevice& rDevice, ANARISurface anSurface)
-{
-    auto anDevice = rDevice.getHandle();
-    auto anGroup = anariNewGroup(anDevice);
-    {
-        auto pAnSurfaces = rDevice.createArray1d(std::vector<ANARISurface>{anSurface}, ANARI_SURFACE);
-        auto anSurfaces = pAnSurfaces.get();
-        anariSetParameter(anDevice, anGroup, "surface", ANARI_ARRAY1D, &anSurfaces);
-    }
-    anariCommitParameters(anDevice, anGroup);
-    rLogger.debug("Created group");
-    return UniquePtrWithDeleter<anari::api::Group>(anGroup, [anDevice, pLogger = &rLogger](auto anGroup) {
-        anariRelease(anDevice, anGroup);
-        pLogger->debug("Released group");
-    });
-}
-
-auto createPlaneInstance(const ILogger& rLogger, ANARIDevice anDevice, ANARIGroup anGroup)
-{
-    auto anInstance = anariNewInstance(anDevice, "transform");
-    anariSetParameter(anDevice, anInstance, "group", ANARI_GROUP, &anGroup);
-    anariCommitParameters(anDevice, anInstance);
-
-    rLogger.debug("Created instance");
-    return std::shared_ptr<anari::api::Instance>(anInstance, [anDevice, pLogger = &rLogger](auto anInstance) {
-        anariRelease(anDevice, anInstance);
-        pLogger->debug("Released instance");
-    });
-}
-
 }  // namespace
 
 AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet)
@@ -154,8 +124,8 @@ AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDe
   , m_pAnGeometry(createPlaneGeometry(*m_pLogger, m_pAnDevice->getHandle()))
   , m_pAnMaterial(createPlaneMaterial(*m_pLogger, m_pAnDevice->getHandle()))
   , m_pAnSurface(createPlaneSurface(*m_pLogger, m_pAnDevice->getHandle(), m_pAnGeometry.get(), m_pAnMaterial.get()))
-  , m_pAnGroup(createPlaneGroup(*m_pLogger, *m_pAnDevice, m_pAnSurface.get()))
-  , m_pAnInstance(createPlaneInstance(*m_pLogger, m_pAnDevice->getHandle(), m_pAnGroup.get()))
+  , m_pAnGroup(m_pAnDevice->createGroup({m_pAnSurface.get()}))
+  , m_pAnInstance(m_pAnDevice->createInstance(m_pAnGroup.get()))
 
   , m_pScaleProp(std::make_shared<PropertyValue<glm::vec3>>(PropertyValueConfig<glm::vec3>{
         .name = "Scale",

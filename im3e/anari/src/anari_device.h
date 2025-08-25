@@ -13,6 +13,17 @@
 
 namespace im3e {
 
+enum class AnariPrimitiveType : uint32_t
+{
+    Triangle,
+};
+
+enum class AnariMaterialType : uint32_t
+{
+    Matte,
+    PhysicallyBased,
+};
+
 class AnariDevice
 {
 public:
@@ -26,8 +37,11 @@ public:
     auto createArray1d(const void* pData, ANARIDataType type, size_t count)
         -> UniquePtrWithDeleter<anari::api::Array1D>;
 
-    auto createGroup() -> UniquePtrWithDeleter<anari::api::Group>;
+    auto createGroup(const std::vector<ANARISurface>& rAnSurface = {}) -> UniquePtrWithDeleter<anari::api::Group>;
     auto createInstance(ANARIGroup anGroup = nullptr) -> UniquePtrWithDeleter<anari::api::Instance>;
+    auto createGeometry(AnariPrimitiveType type) -> UniquePtrWithDeleter<anari::api::Geometry>;
+    auto createMaterial(AnariMaterialType type) -> UniquePtrWithDeleter<anari::api::Material>;
+    auto createSurface() -> UniquePtrWithDeleter<anari::api::Surface>;
 
     auto createLogger(std::string_view name) -> std::unique_ptr<ILogger>;
 

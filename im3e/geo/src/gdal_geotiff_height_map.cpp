@@ -1,4 +1,4 @@
-#include "gdal_geotiff_loader.h"
+#include "gdal_geotiff_height_map.h"
 
 #include "gdal_utils.h"
 
@@ -137,6 +137,13 @@ auto loadRasterBand(const ILogger& rLogger, GDALDataset& rDataSet)
     return pRasterBand;
 }
 
+auto readTileSize(GDALRasterBand& rRasterBand)
+{
+    int blockSizeX, blockSizeY;
+    rRasterBand.GetBlockSize(&blockSizeX, &blockSizeY);
+    return glm::u32vec2{blockSizeX, blockSizeY};
+}
+
 }  // namespace
 
 GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFileConfig config)
@@ -145,6 +152,8 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
   , m_pGdalInstance(getGdalInstance(rLogger))
   , m_pDataset(createGdalDataset(*m_pLogger, m_config))
   , m_pRasterBand(loadRasterBand(*m_pLogger, *m_pDataset))
+
+  , m_tileSize(readTileSize(*m_pRasterBand))
 {
     m_pLogger->info("Successfully loaded file");
 }

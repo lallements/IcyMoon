@@ -69,6 +69,28 @@ auto createAnDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view
     });
 }
 
+auto toString(AnariPrimitiveType type)
+{
+    switch (type)
+    {
+        case AnariPrimitiveType::Triangle: return "triangle";
+
+        default: break;
+    }
+    throw std::runtime_error{fmt::format("Unsupported ANARI primitive type: {}", static_cast<uint32_t>(type))};
+}
+
+auto toString(AnariMaterialType type)
+{
+    switch (type)
+    {
+        case AnariMaterialType::Matte: return "matte";
+        case AnariMaterialType::PhysicallyBased: return "physicallyBased";
+        default: break;
+    }
+    throw std::runtime_error{fmt::format("Unsupported ANARI material type: {}", static_cast<uint32_t>(type))};
+}
+
 }  // namespace
 
 AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName)
@@ -91,9 +113,16 @@ auto AnariDevice::createArray1d(const void* pData, ANARIDataType type, size_t co
     return pAnArray;
 }
 
-auto AnariDevice::createGroup() -> UniquePtrWithDeleter<anari::api::Group>
+auto AnariDevice::createGroup(const std::vector<ANARISurface>& rAnSurfaces) -> UniquePtrWithDeleter<anari::api::Group>
 {
     auto anGroup = anariNewGroup(m_pAnDevice.get());
+    if (!rAnSurfaces.empty())
+    {
+        auto pAnSurfaceArray = this->createArray1d(rAnSurfaces, ANARI_SURFACE);
+        auto anSurfaceArray = pAnSurfaceArray.get();
+        anariSetParameter(m_pAnDevice.get(), anGroup, "surface", ANARI_ARRAY1D, &anSurfaceArray);
+    }
+    anariCommitParameters(m_pAnDevice.get(), anGroup);
     return UniquePtrWithDeleter<anari::api::Group>(
         anGroup, [anDevice = m_pAnDevice.get()](auto anGroup) { anariRelease(anDevice, anGroup); });
 }
@@ -108,6 +137,27 @@ auto AnariDevice::createInstance(ANARIGroup anGroup) -> UniquePtrWithDeleter<ana
     }
     return UniquePtrWithDeleter<anari::api::Instance>(
         anInstance, [anDevice = m_pAnDevice.get()](auto anInstance) { anariRelease(anDevice, anInstance); });
+}
+
+auto AnariDevice::createGeometry(AnariPrimitiveType type) -> UniquePtrWithDeleter<anari::api::Geometry>
+{
+    auto anGeometry = anariNewGeometry(m_pAnDevice.get(), toString(type));
+    return UniquePtrWithDeleter<anari::api::Geometry>{
+        anGeometry, [this](auto anGeometry) { anariRelease(m_pAnDevice.get(), anGeometry); }};
+}
+
+auto AnariDevice::createMaterial(AnariMaterialType type) -> UniquePtrWithDeleter<anari::api::Material>
+{
+    auto anMaterial = anariNewMaterial(m_pAnDevice.get(), toString(type));
+    return UniquePtrWithDeleter<anari::api::Material>{
+        anMaterial, [this](auto anMaterial) { anariRelease(m_pAnDevice.get(), anMaterial); }};
+}
+
+auto AnariDevice::createSurface() -> UniquePtrWithDeleter<anari::api::Surface>
+{
+    auto anSurface = anariNewSurface(m_pAnDevice.get());
+    return UniquePtrWithDeleter<anari::api::Surface>{
+        anSurface, [this](auto anSurface) { anariRelease(m_pAnDevice.get(), anSurface); }};
 }
 
 auto AnariDevice::createLogger(std::string_view name) -> std::unique_ptr<ILogger>
