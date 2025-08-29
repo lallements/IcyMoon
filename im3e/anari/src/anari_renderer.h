@@ -28,6 +28,8 @@ private:
 
     const std::string m_anRendererSubtype;
     std::shared_ptr<anari::api::Renderer> m_pAnRenderer;
+
+    bool m_parametersChanged{};
 };
 
 }  // namespace im3e

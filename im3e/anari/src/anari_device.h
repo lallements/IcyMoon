@@ -27,7 +27,7 @@ enum class AnariMaterialType : uint32_t
 class AnariDevice
 {
 public:
-    AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName);
+    AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName, ANARILibrary anDebugLib);
 
     template <typename T>
     auto createArray1d(const std::vector<T>& rData, ANARIDataType type) -> UniquePtrWithDeleter<anari::api::Array1D>
@@ -54,6 +54,7 @@ private:
 
     const std::string m_anDeviceSubtype;
     const ANARIExtensions m_anExtensions;
+    UniquePtrWithDeleter<anari::api::Device> m_pAnDebugWrappedDevice;
     UniquePtrWithDeleter<anari::api::Device> m_pAnDevice;
 };
 

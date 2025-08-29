@@ -47,6 +47,7 @@ public:
     virtual auto createFramePipeline() -> std::unique_ptr<IAnariFramePipeline> = 0;
 };
 
-auto createAnariEngine(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice) -> std::unique_ptr<IAnariEngine>;
+auto createAnariEngine(const ILogger& rLogger, std::shared_ptr<IDevice> pDevice, bool debugEnabled = false)
+    -> std::unique_ptr<IAnariEngine>;
 
 }  // namespace im3e

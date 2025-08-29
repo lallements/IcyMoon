@@ -33,12 +33,12 @@ void AnariInstanceSet::remove(ANARIInstance anInstance)
     m_changed |= !!m_anInstances.erase(anInstance);
 }
 
-void AnariInstanceSet::updateWorld()
+auto AnariInstanceSet::updateWorld() -> bool
 {
     std::lock_guard lock(m_mutex);
     if (!m_changed)
     {
-        return;
+        return false;
     }
     m_changed = false;
 
@@ -59,4 +59,5 @@ void AnariInstanceSet::updateWorld()
         auto anArray = pAnArray.get();
         anariSetParameter(m_pAnDevice->getHandle(), m_anWorld, InstanceParam, ANARI_ARRAY1D, &anArray);
     }
+    return true;
 }

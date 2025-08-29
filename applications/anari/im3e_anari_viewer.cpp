@@ -67,6 +67,8 @@ auto createWorld(const ILogger& rLogger, ANARIDevice anDevice)
     return pWorld;
 }*/
 
+constexpr bool DebugEnabled = true;
+
 }  // namespace
 
 int main()
@@ -77,10 +79,10 @@ int main()
 
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
                                                           .name = "ANARI Viewer",
-                                                          .isDebugEnabled = false,
+                                                          .isDebugEnabled = DebugEnabled,
                                                       });
     auto pDevice = pApp->getDevice();
-    auto pAnEngine = createAnariEngine(*pLogger, pDevice);
+    auto pAnEngine = createAnariEngine(*pLogger, pDevice, DebugEnabled);
     auto pFramePipeline = pAnEngine->createFramePipeline();
 
     auto pWorld = pFramePipeline->getWorld();

@@ -55,47 +55,55 @@ auto getRenderParamInfo(ANARIDevice anDevice, std::string_view rendererSubtype, 
                                                        pAnParam->type, attribute.data(), attributeType));
 }
 
-template <typename T>
-auto createPropertyValue(ANARIDevice anDevice, ANARIRenderer anRenderer, std::string_view rendererSubtype,
-                         const ANARIParameter* pAnParam)
+struct PropertyFactory
 {
-    const auto* description = getRenderParamInfo<char>(anDevice, rendererSubtype, pAnParam, "description",
-                                                       ANARI_STRING);
-    const auto* defaultValue = getRenderParamInfo<T>(anDevice, rendererSubtype, pAnParam, "default", pAnParam->type);
-
-    PropertyValueConfig<T> config{
-        .name = pAnParam->name,
-        .description = description,
-        .onChange =
-            [anDevice, anRenderer, pAnParam](T newValue) {
-                anariSetParameter(anDevice, anRenderer, pAnParam->name, pAnParam->type, &newValue);
-            },
-    };
-    if (defaultValue)
+    template <typename T>
+    auto createPropertyValue(const ANARIParameter* pAnParam)
     {
-        config.defaultValue = *defaultValue;
-    }
-    return std::make_shared<PropertyValue<T>>(std::move(config));
-}
+        const auto* description = getRenderParamInfo<char>(anDevice, anRendererSubtype, pAnParam, "description",
+                                                           ANARI_STRING);
+        const auto* defaultValue = getRenderParamInfo<T>(anDevice, anRendererSubtype, pAnParam, "default",
+                                                         pAnParam->type);
 
-auto createPropertyValueFromAnParameter(ANARIDevice anDevice, ANARIRenderer anRenderer,
-                                        std::string_view rendererSubtype, const ANARIParameter* pAnParam)
-    -> std::shared_ptr<IPropertyValue>
-{
-    switch (static_cast<int>(pAnParam->type))
-    {
-        case ANARI_BOOL: return createPropertyValue<bool>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_INT32: return createPropertyValue<int32_t>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32: return createPropertyValue<float>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_STRING: return createPropertyValue<std::string>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32_VEC3: return createPropertyValue<glm::vec3>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_FLOAT32_VEC4: return createPropertyValue<glm::vec4>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_ARRAY2D: return createPropertyValue<void*>(anDevice, anRenderer, rendererSubtype, pAnParam);
-        case ANARI_UNKNOWN: throw std::runtime_error(fmt::format("Unsupported UNKNOWN ANARI data type"));
-        default: break;
+        PropertyValueConfig<T> config{
+            .name = pAnParam->name,
+            .description = description,
+            .onChange =
+                [anDevice = this->anDevice, anRenderer = this->anRenderer,
+                 onParameterChanged = this->onParameterChanged, pAnParam](T newValue) {
+                    anariSetParameter(anDevice, anRenderer, pAnParam->name, pAnParam->type, &newValue);
+                    onParameterChanged();
+                },
+        };
+        if (defaultValue)
+        {
+            config.defaultValue = *defaultValue;
+        }
+        return std::make_shared<PropertyValue<T>>(std::move(config));
     }
-    throw std::runtime_error(fmt::format("Unsupported ANARI data type: {}", static_cast<int>(pAnParam->type)));
-}
+
+    auto createPropertyValueFromAnParameter(const ANARIParameter* pAnParam) -> std::shared_ptr<IPropertyValue>
+    {
+        switch (static_cast<int>(pAnParam->type))
+        {
+            case ANARI_BOOL: return createPropertyValue<bool>(pAnParam);
+            case ANARI_INT32: return createPropertyValue<int32_t>(pAnParam);
+            case ANARI_FLOAT32: return createPropertyValue<float>(pAnParam);
+            case ANARI_STRING: return createPropertyValue<std::string>(pAnParam);
+            case ANARI_FLOAT32_VEC3: return createPropertyValue<glm::vec3>(pAnParam);
+            case ANARI_FLOAT32_VEC4: return createPropertyValue<glm::vec4>(pAnParam);
+            case ANARI_ARRAY2D: return createPropertyValue<void*>(pAnParam);
+            case ANARI_UNKNOWN: throw std::runtime_error(fmt::format("Unsupported UNKNOWN ANARI data type"));
+            default: break;
+        }
+        throw std::runtime_error(fmt::format("Unsupported ANARI data type: {}", static_cast<int>(pAnParam->type)));
+    }
+
+    ANARIDevice anDevice;
+    ANARIRenderer anRenderer;
+    std::string_view anRendererSubtype;
+    std::function<void()> onParameterChanged;
+};
 
 }  // namespace
 
@@ -109,7 +117,11 @@ AnariRenderer::AnariRenderer(std::shared_ptr<AnariDevice> pAnDevice)
 
 void AnariRenderer::commitChanges()
 {
-    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnRenderer.get());
+    if (m_parametersChanged)
+    {
+        anariCommitParameters(m_pAnDevice->getHandle(), m_pAnRenderer.get());
+        m_parametersChanged = false;
+    }
 }
 
 auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
@@ -117,6 +129,12 @@ auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
     const auto* pAnParams = static_cast<const ANARIParameter*>(anariGetObjectInfo(
         m_pAnDevice->getHandle(), ANARI_RENDERER, m_anRendererSubtype.data(), "parameter", ANARI_PARAMETER_LIST));
 
+    PropertyFactory propertyFactory{
+        .anDevice = m_pAnDevice->getHandle(),
+        .anRenderer = m_pAnRenderer.get(),
+        .anRendererSubtype = m_anRendererSubtype,
+        .onParameterChanged = [this] { m_parametersChanged = true; },
+    };
     std::vector<std::shared_ptr<IProperty>> pProperties;
     for (const auto* pAnParam = pAnParams; pAnParam->name != nullptr; pAnParam++)
     {
@@ -129,8 +147,7 @@ auto AnariRenderer::createProperties() -> std::shared_ptr<IPropertyGroup>
         {
             continue;
         }
-        pProperties.emplace_back(createPropertyValueFromAnParameter(m_pAnDevice->getHandle(), m_pAnRenderer.get(),
-                                                                    m_anRendererSubtype, pAnParam));
+        pProperties.emplace_back(propertyFactory.createPropertyValueFromAnParameter(pAnParam));
     }
     return createPropertyGroup(fmt::format("Renderer: \"{}\"", m_anRendererSubtype), pProperties);
 }

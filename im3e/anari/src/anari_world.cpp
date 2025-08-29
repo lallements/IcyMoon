@@ -79,6 +79,10 @@ void AnariWorld::commitChanges()
     std::ranges::for_each(m_pPlanes, [](auto& pPlane) { pPlane->commitChanges(); });
     std::ranges::for_each(m_pHeightFields, [](auto& pHeightField) { pHeightField->commitChanges(); });
 
-    m_instanceSet.updateWorld();
-    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnWorld.get());
+    bool needsCommit{};
+    needsCommit |= m_instanceSet.updateWorld();
+    if (needsCommit)
+    {
+        anariCommitParameters(m_pAnDevice->getHandle(), m_pAnWorld.get());
+    }
 }

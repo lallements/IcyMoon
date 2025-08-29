@@ -58,6 +58,12 @@ void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamer
 {
     if (m_lodChanged)
     {
+        // Must remove instances first as we may not add back all of the tiles:
+        for (auto& rpTile : m_pTiles)
+        {
+            m_rInstanceSet.remove(rpTile->getInstance());
+        }
+
         const auto lodLevel = m_pLodProp->getValue();
         const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
         const auto totalTileCount = tileCount.x * tileCount.y;
@@ -65,7 +71,7 @@ void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamer
         for (auto& rpTile : m_pTiles)
         {
             rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.y}, lodLevel));
-
+            m_rInstanceSet.insert(rpTile->getInstance());
             if (++iteration >= totalTileCount)
             {
                 break;

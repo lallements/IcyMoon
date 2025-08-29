@@ -17,7 +17,9 @@ public:
     void insert(ANARIInstance anInstance);
     void remove(ANARIInstance anInstance);
 
-    void updateWorld();
+    /// @brief Update the world if any changes in instances.
+    /// @return True if the world was changed (and needs committing), false otherwise.
+    auto updateWorld() -> bool;
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;

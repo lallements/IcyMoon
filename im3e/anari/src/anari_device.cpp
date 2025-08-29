@@ -93,13 +93,22 @@ auto toString(AnariMaterialType type)
 
 }  // namespace
 
-AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName)
+AnariDevice::AnariDevice(const ILogger& rLogger, ANARILibrary anLib, std::string_view anLibName,
+                         ANARILibrary anDebugLib)
   : m_pLogger(rLogger.createChild("ANARI Device"))
   , m_anLibName(anLibName)
   , m_anDeviceSubtype(chooseAnDeviceSubtype(*m_pLogger, anLib))
   , m_anExtensions(detectAnDeviceExtensions(*m_pLogger, anLib, m_anDeviceSubtype))
-  , m_pAnDevice(createAnDevice(*m_pLogger, anLib, m_anDeviceSubtype))
+  , m_pAnDebugWrappedDevice(anDebugLib ? createAnDevice(*m_pLogger, anLib, m_anDeviceSubtype) : nullptr)
+  , m_pAnDevice(anDebugLib ? createAnDevice(*m_pLogger, anDebugLib, "debug")
+                           : createAnDevice(*m_pLogger, anLib, m_anDeviceSubtype))
 {
+    if (m_pAnDebugWrappedDevice)
+    {
+        auto anWrappedDevice = m_pAnDebugWrappedDevice.get();
+        anariSetParameter(m_pAnDevice.get(), m_pAnDevice.get(), "wrappedDevice", ANARI_DEVICE, &anWrappedDevice);
+        anariCommitParameters(m_pAnDevice.get(), m_pAnDevice.get());
+    }
 }
 
 auto AnariDevice::createArray1d(const void* pData, ANARIDataType type, size_t count)
