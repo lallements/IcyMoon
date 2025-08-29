@@ -19,18 +19,18 @@ AnariInstanceSet::AnariInstanceSet(std::shared_ptr<AnariDevice> pAnDevice, ANARI
     anariUnsetParameter(m_pAnDevice->getHandle(), m_anWorld, InstanceParam);
 }
 
-void AnariInstanceSet::insert(std::shared_ptr<anari::api::Instance> pAnInstance)
+void AnariInstanceSet::insert(ANARIInstance anInstance)
 {
-    throwIfArgNull(pAnInstance.get(), "Cannot insert null to ANARI Instance Set");
+    throwIfArgNull(anInstance, "Cannot insert null to ANARI Instance Set");
 
     std::lock_guard lock(m_mutex);
-    m_changed |= m_pAnInstances.emplace(std::move(pAnInstance)).second;
+    m_changed |= m_anInstances.emplace(anInstance).second;
 }
 
-void AnariInstanceSet::remove(std::shared_ptr<anari::api::Instance> pAnInstance)
+void AnariInstanceSet::remove(ANARIInstance anInstance)
 {
     std::lock_guard lock(m_mutex);
-    m_changed |= !!m_pAnInstances.erase(pAnInstance);
+    m_changed |= !!m_anInstances.erase(anInstance);
 }
 
 void AnariInstanceSet::updateWorld()
@@ -42,17 +42,17 @@ void AnariInstanceSet::updateWorld()
     }
     m_changed = false;
 
-    if (m_pAnInstances.empty())
+    if (m_anInstances.empty())
     {
         anariUnsetParameter(m_pAnDevice->getHandle(), m_anWorld, InstanceParam);
     }
     else
     {
         std::vector<ANARIInstance> anInstances;
-        anInstances.reserve(m_pAnInstances.size());
-        for (auto& rpAnInstance : m_pAnInstances)
+        anInstances.reserve(m_anInstances.size());
+        for (auto& rAnInstance : m_anInstances)
         {
-            anInstances.emplace_back(rpAnInstance.get());
+            anInstances.emplace_back(rAnInstance);
         }
 
         auto pAnArray = m_pAnDevice->createArray1d(anInstances, ANARI_INSTANCE);

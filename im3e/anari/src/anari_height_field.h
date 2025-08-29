@@ -30,6 +30,8 @@ private:
     std::unique_ptr<ILogger> m_pLogger;
 
     std::shared_ptr<IPropertyGroup> m_pProperties;
+
+    std::vector<std::shared_ptr<AnariHeightFieldTile>> m_pTiles;
 };
 
 }  // namespace im3e

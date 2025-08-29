@@ -84,7 +84,7 @@ int main()
     auto pFramePipeline = pAnEngine->createFramePipeline();
 
     auto pWorld = pFramePipeline->getWorld();
-    auto pPlane = pWorld->addPlane("Ground");
+    // auto pPlane = pWorld->addPlane("Ground");
 
     auto pHeightMap = loadHeightMapFromFile(*pLogger,
                                             HeightMapFileConfig{
@@ -99,7 +99,7 @@ int main()
     {
         vector<shared_ptr<IProperty>> pProperties{
             pFramePipeline->createRendererProperties(),
-            pPlane->getProperties(),
+            // pPlane->getProperties(),
             pHeightField->getProperties(),
         };
 

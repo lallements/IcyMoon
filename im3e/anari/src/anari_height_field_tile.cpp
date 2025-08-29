@@ -17,15 +17,73 @@ auto createTileMaterial(AnariDevice& rAnDevice)
     return pAnMaterial;
 }
 
-auto createTileSurface(AnariDevice& rAnDevice, ANARIGeometry anGeometry, ANARIMaterial anMaterial)
+auto mapVertexBuffer(AnariDevice& rAnDevice, ANARIGeometry anGeometry, const glm::u32vec2& rTileSize)
 {
-    auto pAnSurface = rAnDevice.createSurface();
+    constexpr auto VertexBufferKey = "vertex.position";
 
-    anariSetParameter(rAnDevice.getHandle(), pAnSurface.get(), "geometry", ANARI_GEOMETRY, &anGeometry);
-    anariSetParameter(rAnDevice.getHandle(), pAnSurface.get(), "material", ANARI_MATERIAL, &anMaterial);
+    const auto vertexCount = static_cast<uint64_t>(rTileSize.x) * static_cast<uint64_t>(rTileSize.y);
+    uint64_t vertexStride{};
+    auto* pData = anariMapParameterArray1D(rAnDevice.getHandle(), anGeometry, VertexBufferKey, ANARI_FLOAT32_VEC3,
+                                           vertexCount, &vertexStride);
+    throwIfNull<std::runtime_error>(pData, "Failed to map vertex buffer of ANARI height field tile");
+    throwIfFalse<std::logic_error>(vertexStride == sizeof(glm::vec3), "Invalid vertex stride for ANARI height field");
 
-    anariCommitParameters(rAnDevice.getHandle(), pAnSurface.get());
-    return pAnSurface;
+    return UniquePtrWithDeleter<glm::vec3>{reinterpret_cast<glm::vec3*>(pData),
+                                           [anDevice = rAnDevice.getHandle(), anGeometry](auto*) {
+                                               anariUnmapParameterArray(anDevice, anGeometry, VertexBufferKey);
+                                           }};
+}
+
+auto mapIndexBuffer(AnariDevice& rAnDevice, ANARIGeometry anGeometry, uint64_t triangleCount)
+{
+    constexpr auto IndexBufferKey = "primitive.index";
+
+    uint64_t indexStride{};
+    auto* pData = anariMapParameterArray1D(rAnDevice.getHandle(), anGeometry, IndexBufferKey, ANARI_UINT32_VEC3,
+                                           triangleCount, &indexStride);
+    throwIfNull<std::runtime_error>(pData, "Failed to map index buffer of ANARI height field tile");
+    throwIfFalse<std::logic_error>(indexStride == sizeof(glm::u32vec3), "Invalid index stride for ANARI height field");
+
+    return UniquePtrWithDeleter<glm::u32vec3>{reinterpret_cast<glm::u32vec3*>(pData),
+                                              [anDevice = rAnDevice.getHandle(), anGeometry](auto*) {
+                                                  anariUnmapParameterArray(anDevice, anGeometry, IndexBufferKey);
+                                              }};
+}
+
+auto initializeIndexBuffer(AnariDevice& rAnDevice, ANARIGeometry anGeometry, const glm::u32vec2& rTileSize)
+{
+    // Each row of vertices generate 2 triangles per vertex except for the last vertex of each row i.e. 2 * (width - 1).
+    // This applies to all rows except for the last one:
+    //     (height - 1) * trianglesPerRow = (height - 1) * 2 * (width - 1) = 2 * (width - 1) * (height - 1)
+    const auto triangleCount = 2U * static_cast<uint64_t>(rTileSize.x - 1U) * static_cast<uint64_t>(rTileSize.y - 1U);
+
+    auto pIndices = mapIndexBuffer(rAnDevice, anGeometry, triangleCount);
+    auto pIndexIt = pIndices.get();
+
+    auto toIndex = [&rTileSize](uint32_t x, uint32_t y) { return rTileSize.x * y + x; };
+
+    for (uint32_t y = 0U; y < rTileSize.y - 1U; y++)
+    {
+        for (uint32_t x = 0U; x < rTileSize.x - 1U; x++)
+        {
+            *(pIndexIt++) = glm::u32vec3{toIndex(x, y), toIndex(x, y + 1U), toIndex(x + 1U, y)};
+            *(pIndexIt++) = glm::u32vec3{toIndex(x, y + 1U), toIndex(x + 1U, y + 1U), toIndex(x + 1U, y)};
+        }
+    }
+}
+
+auto initializeVertexBuffer(AnariDevice& rAnDevice, ANARIGeometry anGeometry, const glm::u32vec2& rTileSize)
+{
+    auto pVertices = mapVertexBuffer(rAnDevice, anGeometry, rTileSize);
+    auto pVertexIt = pVertices.get();
+
+    for (uint32_t y = 0U; y < rTileSize.y; y++)
+    {
+        for (uint32_t x = 0U; x < rTileSize.x; x++)
+        {
+            *(pVertexIt++) = glm::vec3{x, 0.0F, y};
+        }
+    }
 }
 
 }  // namespace
@@ -36,9 +94,30 @@ AnariHeightFieldTile::AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevic
 
   , m_pAnGeometry(m_pAnDevice->createGeometry(AnariPrimitiveType::Triangle))
   , m_pAnMaterial(createTileMaterial(*m_pAnDevice))
-  , m_pAnSurface(createTileSurface(*m_pAnDevice, m_pAnGeometry.get(), m_pAnMaterial.get()))
+  , m_pAnSurface(m_pAnDevice->createSurface(m_pAnGeometry.get(), m_pAnMaterial.get()))
 
   , m_pAnGroup(m_pAnDevice->createGroup({m_pAnSurface.get()}))
   , m_pAnInstance(m_pAnDevice->createInstance(m_pAnGroup.get()))
 {
+    initializeVertexBuffer(*m_pAnDevice, m_pAnGeometry.get(), m_tileSize);
+    initializeIndexBuffer(*m_pAnDevice, m_pAnGeometry.get(), m_tileSize);
+    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
+}
+
+void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rSampler)
+{
+    const auto tilePos = rSampler.getPos() * rSampler.getSize();
+    const auto& rActualSize = rSampler.getActualSize();
+    auto pDstVertices = mapVertexBuffer(*m_pAnDevice, m_pAnGeometry.get(), rActualSize);
+    auto pVertexIt = pDstVertices.get();
+
+    for (uint32_t y = 0U; y < rActualSize.y; y++)
+    {
+        for (uint32_t x = 0U; x < rActualSize.x; x++)
+        {
+            *(pVertexIt++) = glm::vec3{tilePos.x + x, rSampler.at(x, y), tilePos.y + y};
+        }
+    }
+    pDstVertices.reset();  // release mapping before committing changes to vertex buffer
+    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
 }

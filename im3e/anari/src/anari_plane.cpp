@@ -97,21 +97,6 @@ auto createPlaneMaterial(const ILogger& rLogger, ANARIDevice anDevice)
     });
 }
 
-auto createPlaneSurface(const ILogger& rLogger, ANARIDevice anDevice, ANARIGeometry anGeometry,
-                        ANARIMaterial anMaterial)
-{
-    auto anSurface = anariNewSurface(anDevice);
-    anariSetParameter(anDevice, anSurface, "geometry", ANARI_GEOMETRY, &anGeometry);
-    anariSetParameter(anDevice, anSurface, "material", ANARI_MATERIAL, &anMaterial);
-    anariCommitParameters(anDevice, anSurface);
-
-    rLogger.debug("Created plane surface");
-    return UniquePtrWithDeleter<anari::api::Surface>(anSurface, [anDevice, pLogger = &rLogger](auto anSurface) {
-        anariRelease(anDevice, anSurface);
-        pLogger->debug("Released plane surface");
-    });
-}
-
 }  // namespace
 
 AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet)
@@ -123,7 +108,7 @@ AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDe
 
   , m_pAnGeometry(createPlaneGeometry(*m_pLogger, m_pAnDevice->getHandle()))
   , m_pAnMaterial(createPlaneMaterial(*m_pLogger, m_pAnDevice->getHandle()))
-  , m_pAnSurface(createPlaneSurface(*m_pLogger, m_pAnDevice->getHandle(), m_pAnGeometry.get(), m_pAnMaterial.get()))
+  , m_pAnSurface(m_pAnDevice->createSurface(m_pAnGeometry.get(), m_pAnMaterial.get()))
   , m_pAnGroup(m_pAnDevice->createGroup({m_pAnSurface.get()}))
   , m_pAnInstance(m_pAnDevice->createInstance(m_pAnGroup.get()))
 
@@ -140,12 +125,12 @@ AnariPlane::AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDe
   , m_pProperties(createPropertyGroup(m_name, {m_pScaleProp}))
 {
     m_transformChanged = true;
-    m_rInstanceSet.insert(m_pAnInstance);
+    m_rInstanceSet.insert(m_pAnInstance.get());
 }
 
 AnariPlane::~AnariPlane()
 {
-    m_rInstanceSet.remove(m_pAnInstance);
+    m_rInstanceSet.remove(m_pAnInstance.get());
 }
 
 void AnariPlane::commitChanges()

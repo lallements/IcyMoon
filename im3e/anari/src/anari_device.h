@@ -41,7 +41,7 @@ public:
     auto createInstance(ANARIGroup anGroup = nullptr) -> UniquePtrWithDeleter<anari::api::Instance>;
     auto createGeometry(AnariPrimitiveType type) -> UniquePtrWithDeleter<anari::api::Geometry>;
     auto createMaterial(AnariMaterialType type) -> UniquePtrWithDeleter<anari::api::Material>;
-    auto createSurface() -> UniquePtrWithDeleter<anari::api::Surface>;
+    auto createSurface(ANARIGeometry anGeometry, ANARIMaterial anMaterial) -> UniquePtrWithDeleter<anari::api::Surface>;
 
     auto createLogger(std::string_view name) -> std::unique_ptr<ILogger>;
 

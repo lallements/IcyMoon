@@ -14,8 +14,8 @@ class AnariInstanceSet
 public:
     AnariInstanceSet(std::shared_ptr<AnariDevice> pAnDevice, ANARIWorld anWorld);
 
-    void insert(std::shared_ptr<anari::api::Instance> pInstance);
-    void remove(std::shared_ptr<anari::api::Instance> pInstance);
+    void insert(ANARIInstance anInstance);
+    void remove(ANARIInstance anInstance);
 
     void updateWorld();
 
@@ -24,7 +24,7 @@ private:
     ANARIWorld m_anWorld;
 
     mutable std::mutex m_mutex;
-    std::unordered_set<std::shared_ptr<anari::api::Instance>> m_pAnInstances;
+    std::unordered_set<ANARIInstance> m_anInstances;
     bool m_changed{};
 };
 

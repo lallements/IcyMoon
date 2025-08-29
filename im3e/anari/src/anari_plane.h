@@ -37,7 +37,7 @@ private:
     UniquePtrWithDeleter<anari::api::Material> m_pAnMaterial;
     UniquePtrWithDeleter<anari::api::Surface> m_pAnSurface;
     UniquePtrWithDeleter<anari::api::Group> m_pAnGroup;
-    std::shared_ptr<anari::api::Instance> m_pAnInstance;
+    UniquePtrWithDeleter<anari::api::Instance> m_pAnInstance;
 
     std::shared_ptr<PropertyValue<glm::vec3>> m_pScaleProp;
     std::shared_ptr<IPropertyGroup> m_pProperties;

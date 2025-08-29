@@ -153,9 +153,18 @@ auto AnariDevice::createMaterial(AnariMaterialType type) -> UniquePtrWithDeleter
         anMaterial, [this](auto anMaterial) { anariRelease(m_pAnDevice.get(), anMaterial); }};
 }
 
-auto AnariDevice::createSurface() -> UniquePtrWithDeleter<anari::api::Surface>
+auto AnariDevice::createSurface(ANARIGeometry anGeometry, ANARIMaterial anMaterial)
+    -> UniquePtrWithDeleter<anari::api::Surface>
 {
+    throwIfArgNull(anGeometry, "Cannot create ANARI Surface without Geometry");
+    throwIfArgNull(anMaterial, "Cannot create ANARI Surface without Material");
+
     auto anSurface = anariNewSurface(m_pAnDevice.get());
+
+    anariSetParameter(m_pAnDevice.get(), anSurface, "geometry", ANARI_GEOMETRY, &anGeometry);
+    anariSetParameter(m_pAnDevice.get(), anSurface, "material", ANARI_MATERIAL, &anMaterial);
+    anariCommitParameters(m_pAnDevice.get(), anSurface);
+
     return UniquePtrWithDeleter<anari::api::Surface>{
         anSurface, [this](auto anSurface) { anariRelease(m_pAnDevice.get(), anSurface); }};
 }

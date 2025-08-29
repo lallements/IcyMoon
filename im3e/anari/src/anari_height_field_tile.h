@@ -2,6 +2,7 @@
 
 #include "anari_device.h"
 
+#include <im3e/api/height_map.h>
 #include <im3e/utils/types.h>
 
 #include <anari/anari.h>
@@ -15,6 +16,10 @@ class AnariHeightFieldTile
 {
 public:
     AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevice, const glm::u32vec2& rSize);
+
+    void load(const IHeightMapTileSampler& rSampler);
+
+    auto getInstance() const -> ANARIInstance { return m_pAnInstance.get(); }
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
