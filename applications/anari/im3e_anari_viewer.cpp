@@ -97,23 +97,11 @@ int main()
 
     // Properties Panel
     {
-        vector<shared_ptr<IProperty>> pProperties{
-            pFramePipeline->createRendererProperties(),
-            // pPlane->getProperties(),
-            pHeightField->getProperties(),
-        };
-
-        static constexpr PropertyValueTConfig<uint32_t> LevelOfDetails{
-            .name = "Level of Details",
-            .description = "Index of the current level of details of the terrain being rendered",
-            .defaultValue = 0U,
-        };
-
-        auto pLodProperty = make_shared<PropertyValueT<LevelOfDetails>>();
-        auto pTestParameterGroup = createPropertyGroup("Test Parameters", {pLodProperty});
-        pProperties.emplace_back(pTestParameterGroup);
-
-        auto pPropertyGroup = createPropertyGroup("Parameters", pProperties);
+        auto pPropertyGroup = createPropertyGroup("Parameters", {
+                                                                    pFramePipeline->createRendererProperties(),
+                                                                    // pPlane->getProperties(),
+                                                                    pHeightField->getProperties(),
+                                                                });
         auto pParametersPanel = createImguiPropertyPanel(pPropertyGroup);
         pGuiWorkspace->addPanel(IGuiWorkspace::Location::Left, pParametersPanel);
     }

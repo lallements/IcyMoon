@@ -22,7 +22,8 @@ public:
 
     auto getName() const -> std::string override { return m_config.path.stem().string(); }
     auto getTileSize() const -> glm::u32vec2 override { return m_tileSize; }
-    auto getTileCounts() const -> glm::u32vec2 override { return m_tileCounts; }
+    auto getTileCount(uint32_t lod) const -> glm::u32vec2 override;
+    auto getLodCount() const -> uint32_t override { return m_lodCount; }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
@@ -33,7 +34,7 @@ private:
     GDALRasterBand* m_pRasterBand;
 
     const glm::u32vec2 m_tileSize;
-    const glm::u32vec2 m_tileCounts;
+    const uint32_t m_lodCount;
 };
 
 }  // namespace im3e

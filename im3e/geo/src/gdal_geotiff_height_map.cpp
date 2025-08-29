@@ -77,12 +77,18 @@ auto readTileSize(GDALRasterBand& rRasterBand)
     return glm::u32vec2{blockSizeX, blockSizeY};
 }
 
-auto calculateTileCounts(GDALRasterBand& rRasterBand, const glm::u32vec2& rTileSize)
+auto calculateTileCount(GDALRasterBand& rRasterBand, const glm::u32vec2& rTileSize)
 {
     return glm::u32vec2{
         (rRasterBand.GetXSize() + rTileSize.x - 1) / rTileSize.x,
         (rRasterBand.GetYSize() + rTileSize.y - 1) / rTileSize.y,
     };
+}
+
+auto readLodCount(GDALRasterBand& rRasterBand)
+{
+    // +1 for highest level of details, overviews contain downsampled levels
+    return rRasterBand.GetOverviewCount() + 1U;
 }
 
 void printRasterBandInfo(const ILogger& rLogger, GDALRasterBand& rRasterBand, string_view name)
@@ -94,7 +100,7 @@ void printRasterBandInfo(const ILogger& rLogger, GDALRasterBand& rRasterBand, st
     const auto tileSize = readTileSize(rRasterBand);
     rLogger.verbose(fmt::format("\t- Tile size: {}x{}", tileSize.x, tileSize.y));
 
-    const auto tileCounts = calculateTileCounts(rRasterBand, tileSize);
+    const auto tileCounts = calculateTileCount(rRasterBand, tileSize);
     rLogger.verbose(fmt::format("\t- Tile counts: {}x{}", tileCounts.x, tileCounts.y));
 
     const auto suggestedAccessPatternStr = convertGdalSuggestedBlockAccessPatternToString(
@@ -150,10 +156,15 @@ auto loadRasterBand(const ILogger& rLogger, GDALDataset& rDataSet)
     return pRasterBand;
 }
 
+auto getRasterBandWithLod(GDALRasterBand& rRasterBand, uint32_t lod) -> GDALRasterBand&
+{
+    return (lod == 0U) ? rRasterBand : *rRasterBand.GetOverview(lod - 1U);
+}
+
 class GdalGeoTiffHeightMapTileSampler : public IHeightMapTileSampler
 {
 public:
-    GdalGeoTiffHeightMapTileSampler(GDALRasterBand& rBand, const glm::u32vec2& rTilePos)
+    GdalGeoTiffHeightMapTileSampler(GDALRasterBand& rBand, const glm::u32vec2& rTilePos, float scale)
       : m_pos(rTilePos)
       , m_size([&rBand] {
           int sizeX, sizeY;
@@ -165,6 +176,8 @@ public:
           rBand.GetActualBlockSize(m_pos.x, m_pos.y, &actualSizeX, &actualSizeY);
           return glm::u32vec2{static_cast<uint32_t>(actualSizeX), static_cast<uint32_t>(actualSizeY)};
       }())
+      , m_scale(scale)
+
       , m_pBlock{rBand.GetLockedBlockRef(m_pos.x, m_pos.y), [](auto* pBlock) { pBlock->DropLock(); }}
       , m_pData{reinterpret_cast<const float*>(m_pBlock->GetDataRef())}
     {
@@ -176,11 +189,13 @@ public:
     auto getPos() const -> const glm::u32vec2& override { return m_pos; }
     auto getSize() const -> const glm::u32vec2& override { return m_size; }
     auto getActualSize() const -> const glm::u32vec2& override { return m_actualSize; }
+    auto getScale() const -> float override { return m_scale; }
 
 private:
     const glm::u32vec2 m_pos;
     const glm::u32vec2 m_size;
     const glm::u32vec2 m_actualSize;
+    const float m_scale;
 
     UniquePtrWithDeleter<GDALRasterBlock> m_pBlock{};
     const float* m_pData;
@@ -196,16 +211,25 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
   , m_pRasterBand(loadRasterBand(*m_pLogger, *m_pDataset))
 
   , m_tileSize(readTileSize(*m_pRasterBand))
-  , m_tileCounts(calculateTileCounts(*m_pRasterBand, m_tileSize))
+  , m_lodCount(readLodCount(*m_pRasterBand))
 {
     m_pLogger->info("Successfully loaded file");
 }
 
-auto GdalGeoTiffHeightMap::getTileSampler(const glm::u32vec2& rTilePos, uint32_t level)
+auto GdalGeoTiffHeightMap::getTileSampler(const glm::u32vec2& rTilePos, uint32_t lod)
     -> std::unique_ptr<IHeightMapTileSampler>
 {
-    auto* pBand = (level == 0U) ? m_pRasterBand : m_pRasterBand->GetOverview(level - 1U);
-    return std::make_unique<GdalGeoTiffHeightMapTileSampler>(*pBand, rTilePos);
+    throwIfFalse<invalid_argument>(lod < m_lodCount, fmt::format("Invalid input LOD: {} > max {}", lod, m_lodCount));
+    auto& rBand = getRasterBandWithLod(*m_pRasterBand, lod);
+    const auto scale = pow(2.0F, lod);
+    return std::make_unique<GdalGeoTiffHeightMapTileSampler>(rBand, rTilePos, scale);
+}
+
+auto GdalGeoTiffHeightMap::getTileCount(uint32_t lod) const -> glm::u32vec2
+{
+    throwIfFalse<invalid_argument>(lod < m_lodCount, fmt::format("Invalid input LOD: {} > max {}", lod, m_lodCount));
+    auto& rBand = getRasterBandWithLod(*m_pRasterBand, lod);
+    return calculateTileCount(rBand, m_tileSize);
 }
 
 auto im3e::loadHeightMapFromFile(const ILogger& rLogger, HeightMapFileConfig config) -> unique_ptr<IHeightMap>

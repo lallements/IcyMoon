@@ -27,20 +27,56 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
   , m_pHeightMap(throwIfArgNull(std::move(pHeightMap), "ANARI Height Map requires a height map"))
   , m_pLogger(m_pAnDevice->createLogger(fmt::format("ANARI Height Field - {}", m_pHeightMap->getName())))
 
-  , m_pProperties(createPropertyGroup(m_pHeightMap->getName(), {}))
+  , m_pLodProp(std::make_shared<PropertyValue<uint32_t>>(PropertyValueConfig<uint32_t>{
+        .name = "Level of Details",
+        .description = "Determines level of details of the height field where 0 is highest details.",
+        .defaultValue = 0U,
+        .onChange = [this](auto) { m_lodChanged = true; },
+    }))
+  , m_pProperties(createPropertyGroup(m_pHeightMap->getName(), {m_pLodProp}))
 
   , m_pTiles(initializeTiles(m_pAnDevice, m_pHeightMap->getTileSize(), 4U))
 {
-    const auto tileCounts = m_pHeightMap->getTileCounts();
+    const auto lodLevel = m_pLodProp->getValue();
+    const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
+    const auto totalTileCount = tileCount.x * tileCount.y;
     uint32_t iteration{};
     for (auto& rpTile : m_pTiles)
     {
-        rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCounts.x, iteration / tileCounts.y}, 0U));
+        rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.x}, lodLevel));
+        rpTile->commitChanges();
         m_rInstanceSet.insert(rpTile->getInstance());
-        iteration++;
+
+        if (++iteration >= totalTileCount)
+        {
+            break;
+        }
     }
 }
 
-void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamera) {}
+void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamera)
+{
+    if (m_lodChanged)
+    {
+        const auto lodLevel = m_pLodProp->getValue();
+        const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
+        const auto totalTileCount = tileCount.x * tileCount.y;
+        uint32_t iteration{};
+        for (auto& rpTile : m_pTiles)
+        {
+            rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.y}, lodLevel));
 
-void AnariHeightField::commitChanges() {}
+            if (++iteration >= totalTileCount)
+            {
+                break;
+            }
+        }
+
+        m_lodChanged = false;
+    }
+}
+
+void AnariHeightField::commitChanges()
+{
+    std::ranges::for_each(m_pTiles, [](auto& rpTile) { rpTile->commitChanges(); });
+}

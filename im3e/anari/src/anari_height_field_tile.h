@@ -18,12 +18,15 @@ public:
     AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevice, const glm::u32vec2& rSize);
 
     void load(const IHeightMapTileSampler& rSampler);
+    void commitChanges();
 
     auto getInstance() const -> ANARIInstance { return m_pAnInstance.get(); }
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
     const glm::u32vec2 m_tileSize;
+
+    bool m_geometryChanged{};
 
     UniquePtrWithDeleter<anari::api::Geometry> m_pAnGeometry;
     UniquePtrWithDeleter<anari::api::Material> m_pAnMaterial;

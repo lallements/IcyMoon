@@ -7,6 +7,7 @@
 #include "anari_map_camera.h"
 
 #include <im3e/api/height_map.h>
+#include <im3e/utils/properties/properties.h>
 #include <im3e/utils/types.h>
 
 namespace im3e {
@@ -29,6 +30,8 @@ private:
 
     std::unique_ptr<ILogger> m_pLogger;
 
+    bool m_lodChanged{};
+    std::shared_ptr<PropertyValue<uint32_t>> m_pLodProp;
     std::shared_ptr<IPropertyGroup> m_pProperties;
 
     std::vector<std::shared_ptr<AnariHeightFieldTile>> m_pTiles;

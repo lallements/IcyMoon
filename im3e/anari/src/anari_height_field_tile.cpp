@@ -106,7 +106,8 @@ AnariHeightFieldTile::AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevic
 
 void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rSampler)
 {
-    const auto tilePos = rSampler.getPos() * rSampler.getSize();
+    const auto scale = rSampler.getScale();
+    const auto tilePos = glm::vec2(rSampler.getPos() * rSampler.getSize()) * scale;
     const auto& rActualSize = rSampler.getActualSize();
     auto pDstVertices = mapVertexBuffer(*m_pAnDevice, m_pAnGeometry.get(), rActualSize);
     auto pVertexIt = pDstVertices.get();
@@ -115,9 +116,19 @@ void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rS
     {
         for (uint32_t x = 0U; x < rActualSize.x; x++)
         {
-            *(pVertexIt++) = glm::vec3{tilePos.x + x, rSampler.at(x, y), tilePos.y + y};
+            *(pVertexIt++) = glm::vec3{tilePos.x + x * scale, rSampler.at(x, y), tilePos.y + y * scale};
         }
     }
     pDstVertices.reset();  // release mapping before committing changes to vertex buffer
-    anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
+
+    m_geometryChanged = true;
+}
+
+void AnariHeightFieldTile::commitChanges()
+{
+    if (m_geometryChanged)
+    {
+        anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
+        m_geometryChanged = false;
+    }
 }
