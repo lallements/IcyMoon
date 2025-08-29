@@ -112,11 +112,19 @@ void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rS
     auto pDstVertices = mapVertexBuffer(*m_pAnDevice, m_pAnGeometry.get(), rActualSize);
     auto pVertexIt = pDstVertices.get();
 
+    constexpr glm::vec3 NanVec{
+        std::numeric_limits<float>::quiet_NaN(),
+        std::numeric_limits<float>::quiet_NaN(),
+        std::numeric_limits<float>::quiet_NaN(),
+    };
+
     for (uint32_t y = 0U; y < rActualSize.y; y++)
     {
         for (uint32_t x = 0U; x < rActualSize.x; x++)
         {
-            *(pVertexIt++) = glm::vec3{tilePos.x + x * scale, rSampler.at(x, y), tilePos.y + y * scale};
+            const auto height = rSampler.at(x, y);
+            *(pVertexIt++) = (height == NanVec.y) ? NanVec
+                                                  : glm::vec3{tilePos.x + x * scale, height, tilePos.y + y * scale};
         }
     }
     pDstVertices.reset();  // release mapping before committing changes to vertex buffer

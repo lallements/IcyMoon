@@ -7,6 +7,8 @@
 #include <fmt/format.h>
 #include <fmt/std.h>
 
+#include <limits>
+
 using namespace im3e;
 using namespace std;
 
@@ -180,11 +182,29 @@ public:
 
       , m_pBlock{rBand.GetLockedBlockRef(m_pos.x, m_pos.y), [](auto* pBlock) { pBlock->DropLock(); }}
       , m_pData{reinterpret_cast<const float*>(m_pBlock->GetDataRef())}
+
+      , m_pMaskBlock([this, &rBand]() -> UniquePtrWithDeleter<GDALRasterBlock> {
+          auto pMaskBand = rBand.GetMaskBand();
+          if (!pMaskBand)
+          {
+              return nullptr;
+          }
+          return UniquePtrWithDeleter<GDALRasterBlock>{pMaskBand->GetLockedBlockRef(m_pos.x, m_pos.y),
+                                                       [](auto* pBlock) { pBlock->DropLock(); }};
+      }())
+      , m_pMaskData(m_pMaskBlock ? reinterpret_cast<const uint8_t*>(m_pMaskBlock->GetDataRef()) : nullptr)
     {
     }
 
-    auto at(uint32_t x, uint32_t y) const -> float override { return *(m_pData + y * m_size.x + x); }
-    auto at(const glm::u32vec2& rPos) const -> float override { return *(m_pData + rPos.y * m_size.x + rPos.x); }
+    auto at(uint32_t x, uint32_t y) const -> float override
+    {
+        if (m_pMaskData && *(m_pMaskData + y * m_size.x + x) == 0U)
+        {
+            return std::numeric_limits<float>::quiet_NaN();
+        }
+        return *(m_pData + y * m_size.x + x);
+    }
+    auto at(const glm::u32vec2& rPos) const -> float override { return this->at(rPos.x, rPos.y); }
 
     auto getPos() const -> const glm::u32vec2& override { return m_pos; }
     auto getSize() const -> const glm::u32vec2& override { return m_size; }
@@ -199,6 +219,9 @@ private:
 
     UniquePtrWithDeleter<GDALRasterBlock> m_pBlock{};
     const float* m_pData;
+
+    UniquePtrWithDeleter<GDALRasterBlock> m_pMaskBlock{};
+    const uint8_t* m_pMaskData;
 };
 
 }  // namespace
