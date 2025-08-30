@@ -90,7 +90,7 @@ int main()
 
     auto pHeightMap = loadHeightMapFromFile(*pLogger,
                                             HeightMapFileConfig{
-                                                .path = "/mnt/data/dev/assets/lidar_bc/bc_092g064_xli1m_utm10_2020.tif",
+                                                .path = "/mnt/data/dev/assets/lidar_bc/bc_092g054_xl1m_utm10_2019.tif",
                                                 .readOnly = true,
                                             });
     auto pHeightField = pWorld->addHeightField(std::move(pHeightMap));

@@ -115,11 +115,8 @@ auto AnariDevice::createArray1d(const void* pData, ANARIDataType type, size_t co
     -> UniquePtrWithDeleter<anari::api::Array1D>
 {
     auto anArray = anariNewArray1D(m_pAnDevice.get(), pData, nullptr, nullptr, type, count);
-    auto pAnArray = UniquePtrWithDeleter<anari::api::Array1D>(
+    return UniquePtrWithDeleter<anari::api::Array1D>(
         anArray, [anDevice = m_pAnDevice.get()](auto anArray) { anariRelease(anDevice, anArray); });
-
-    anariCommitParameters(m_pAnDevice.get(), anArray);
-    return pAnArray;
 }
 
 auto AnariDevice::createGroup(const std::vector<ANARISurface>& rAnSurfaces) -> UniquePtrWithDeleter<anari::api::Group>

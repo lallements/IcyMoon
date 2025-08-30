@@ -108,26 +108,52 @@ void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rS
 {
     const auto scale = rSampler.getScale();
     const auto tilePos = glm::vec2(rSampler.getPos() * rSampler.getSize()) * scale;
+    // const auto& rSize = rSampler.getSize();
     const auto& rActualSize = rSampler.getActualSize();
+
+    // Prepare the vertex buffer first, the sampler sets invalid samples to NaN:
     auto pDstVertices = mapVertexBuffer(*m_pAnDevice, m_pAnGeometry.get(), rActualSize);
     auto pVertexIt = pDstVertices.get();
-
-    constexpr glm::vec3 NanVec{
-        std::numeric_limits<float>::quiet_NaN(),
-        std::numeric_limits<float>::quiet_NaN(),
-        std::numeric_limits<float>::quiet_NaN(),
+    auto setVertex = [&](uint32_t x, uint32_t y, float height) {
+        *(pVertexIt + rActualSize.x * y + x) = glm::vec3{
+            tilePos.x + x * scale,
+            height,
+            tilePos.y + y * scale,
+        };
     };
+
+    m_tmpIndices.clear();
+    auto toIndex = [&rActualSize](uint32_t x, uint32_t y) { return rActualSize.x * y + x; };
 
     for (uint32_t y = 0U; y < rActualSize.y; y++)
     {
         for (uint32_t x = 0U; x < rActualSize.x; x++)
         {
-            const auto height = rSampler.at(x, y);
-            *(pVertexIt++) = (height == NanVec.y) ? NanVec
-                                                  : glm::vec3{tilePos.x + x * scale, height, tilePos.y + y * scale};
+            bool isCurrentValid = rSampler.isValid(x, y);
+            if (isCurrentValid)
+            {
+                setVertex(x, y, rSampler.at(x, y));
+            }
+
+            if (!rSampler.isValid(x, y + 1U) || !rSampler.isValid(x + 1U, y))
+            {
+                continue;
+            }
+
+            if (isCurrentValid)
+            {
+                m_tmpIndices.emplace_back(toIndex(x, y), toIndex(x, y + 1U), toIndex(x + 1U, y));
+            }
+
+            if (rSampler.isValid(x + 1U, y + 1U))
+            {
+                m_tmpIndices.emplace_back(toIndex(x, y + 1U), toIndex(x + 1U, y + 1U), toIndex(x + 1U, y));
+            }
         }
     }
-    pDstVertices.reset();  // release mapping before committing changes to vertex buffer
+
+    auto pDstIndices = mapIndexBuffer(*m_pAnDevice, m_pAnGeometry.get(), m_tmpIndices.size());
+    std::ranges::copy(m_tmpIndices, pDstIndices.get());
 
     m_geometryChanged = true;
 }

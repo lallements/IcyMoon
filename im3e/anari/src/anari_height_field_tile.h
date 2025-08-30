@@ -34,6 +34,8 @@ private:
 
     UniquePtrWithDeleter<anari::api::Group> m_pAnGroup;
     UniquePtrWithDeleter<anari::api::Instance> m_pAnInstance;
+
+    std::vector<glm::u32vec3> m_tmpIndices;
 };
 
 }  // namespace im3e

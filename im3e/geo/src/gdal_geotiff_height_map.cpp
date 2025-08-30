@@ -149,7 +149,7 @@ auto loadRasterBand(const ILogger& rLogger, GDALDataset& rDataSet)
 
         const string overviewName = fmt::format("overview[{}]", i);
         printRasterBandInfo(rLogger, *pOverview, overviewName);
-        if (auto pMask = pRasterBand->GetMaskBand())
+        if (auto pMask = pOverview->GetMaskBand())
         {
             printRasterBandInfo(rLogger, *pMask, fmt::format("{} mask", overviewName));
         }
@@ -179,6 +179,15 @@ public:
           return glm::u32vec2{static_cast<uint32_t>(actualSizeX), static_cast<uint32_t>(actualSizeY)};
       }())
       , m_scale(scale)
+      , m_noDataValue([&]() -> std::optional<float> {
+          int noDataValueFound{};
+          const auto noDataValue = rBand.GetNoDataValue(&noDataValueFound);
+          if (noDataValueFound)
+          {
+              return noDataValue;
+          }
+          return std::nullopt;
+      }())
 
       , m_pBlock{rBand.GetLockedBlockRef(m_pos.x, m_pos.y), [](auto* pBlock) { pBlock->DropLock(); }}
       , m_pData{reinterpret_cast<const float*>(m_pBlock->GetDataRef())}
@@ -196,15 +205,13 @@ public:
     {
     }
 
-    auto at(uint32_t x, uint32_t y) const -> float override
-    {
-        if (m_pMaskData && *(m_pMaskData + y * m_size.x + x) == 0U)
-        {
-            return std::numeric_limits<float>::quiet_NaN();
-        }
-        return *(m_pData + y * m_size.x + x);
-    }
+    auto at(uint32_t x, uint32_t y) const -> float override { return *(m_pData + y * m_size.x + x); }
     auto at(const glm::u32vec2& rPos) const -> float override { return this->at(rPos.x, rPos.y); }
+
+    auto isValid(uint32_t x, uint32_t y) const -> bool override
+    {
+        return x < m_actualSize.x && y < m_actualSize.y && m_pMaskData && *(m_pMaskData + y * m_size.x + x) != 0U;
+    }
 
     auto getPos() const -> const glm::u32vec2& override { return m_pos; }
     auto getSize() const -> const glm::u32vec2& override { return m_size; }
@@ -216,6 +223,7 @@ private:
     const glm::u32vec2 m_size;
     const glm::u32vec2 m_actualSize;
     const float m_scale;
+    const std::optional<float> m_noDataValue;
 
     UniquePtrWithDeleter<GDALRasterBlock> m_pBlock{};
     const float* m_pData;

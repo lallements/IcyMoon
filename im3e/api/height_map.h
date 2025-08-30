@@ -15,6 +15,8 @@ public:
     virtual auto at(uint32_t x, uint32_t y) const -> float = 0;
     virtual auto at(const glm::u32vec2& rPos) const -> float = 0;
 
+    virtual auto isValid(uint32_t x, uint32_t y) const -> bool = 0;
+
     virtual auto getPos() const -> const glm::u32vec2& = 0;
     virtual auto getSize() const -> const glm::u32vec2& = 0;
     virtual auto getActualSize() const -> const glm::u32vec2& = 0;

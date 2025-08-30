@@ -35,7 +35,7 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
     }))
   , m_pProperties(createPropertyGroup(m_pHeightMap->getName(), {m_pLodProp}))
 
-  , m_pTiles(initializeTiles(m_pAnDevice, m_pHeightMap->getTileSize(), 4U))
+  , m_pTiles(initializeTiles(m_pAnDevice, m_pHeightMap->getTileSize(), 2U))
 {
     const auto lodLevel = m_pLodProp->getValue();
     const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
