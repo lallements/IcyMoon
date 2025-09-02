@@ -1,7 +1,7 @@
 add_library(im3e_geo STATIC
     geo.h
-    src/gdal_geotiff_loader.cpp
-    src/gdal_geotiff_loader.h
+    src/gdal_geotiff_height_map.cpp
+    src/gdal_geotiff_height_map.h
     src/gdal_instance.cpp
     src/gdal_instance.h
     src/gdal_utils.h

@@ -2,6 +2,7 @@
 
 #include "anari.h"
 #include "anari_device.h"
+#include "anari_instance_set.h"
 
 #include <im3e/utils/properties/properties.h>
 #include <im3e/utils/transform.h>
@@ -14,7 +15,8 @@ namespace im3e {
 class AnariPlane : public IAnariObject
 {
 public:
-    AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice);
+    AnariPlane(std::string_view name, std::shared_ptr<AnariDevice> pAnDevice, AnariInstanceSet& rInstanceSet);
+    ~AnariPlane();
 
     void commitChanges();
 
@@ -24,6 +26,8 @@ public:
 private:
     const std::string m_name;
     std::shared_ptr<AnariDevice> m_pAnDevice;
+    AnariInstanceSet& m_rInstanceSet;
+
     std::unique_ptr<ILogger> m_pLogger;
 
     Transform m_transform;

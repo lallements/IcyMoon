@@ -2,6 +2,7 @@
 
 #include <im3e/anari/anari.h>
 #include <im3e/devices/devices.h>
+#include <im3e/geo/geo.h>
 #include <im3e/guis/guis.h>
 #include <im3e/utils/core/throw_utils.h>
 #include <im3e/utils/loggers.h>
@@ -66,6 +67,8 @@ auto createWorld(const ILogger& rLogger, ANARIDevice anDevice)
     return pWorld;
 }*/
 
+constexpr bool DebugEnabled = true;
+
 }  // namespace
 
 int main()
@@ -76,35 +79,31 @@ int main()
 
     auto pApp = createGlfwWindowApplication(*pLogger, WindowApplicationConfig{
                                                           .name = "ANARI Viewer",
-                                                          .isDebugEnabled = false,
+                                                          .isDebugEnabled = DebugEnabled,
                                                       });
     auto pDevice = pApp->getDevice();
-    auto pAnEngine = createAnariEngine(*pLogger, pDevice);
+    auto pAnEngine = createAnariEngine(*pLogger, pDevice, DebugEnabled);
     auto pFramePipeline = pAnEngine->createFramePipeline();
 
     auto pWorld = pFramePipeline->getWorld();
-    auto pPlane = pWorld->addPlane("Ground");
+    // auto pPlane = pWorld->addPlane("Ground");
+
+    auto pHeightMap = loadHeightMapFromFile(*pLogger,
+                                            HeightMapFileConfig{
+                                                .path = "/mnt/data/dev/assets/lidar_bc/bc_092g054_xl1m_utm10_2019.tif",
+                                                .readOnly = true,
+                                            });
+    auto pHeightField = pWorld->addHeightField(std::move(pHeightMap));
 
     auto pGuiWorkspace = createImguiWorkspace("ANARI");
 
     // Properties Panel
     {
-        vector<shared_ptr<IProperty>> pProperties{
-            pFramePipeline->createRendererProperties(),
-            pPlane->getProperties(),
-        };
-
-        static constexpr PropertyValueTConfig<uint32_t> LevelOfDetails{
-            .name = "Level of Details",
-            .description = "Index of the current level of details of the terrain being rendered",
-            .defaultValue = 0U,
-        };
-
-        auto pLodProperty = make_shared<PropertyValueT<LevelOfDetails>>();
-        auto pTestParameterGroup = createPropertyGroup("Test Parameters", {pLodProperty});
-        pProperties.emplace_back(pTestParameterGroup);
-
-        auto pPropertyGroup = createPropertyGroup("Parameters", pProperties);
+        auto pPropertyGroup = createPropertyGroup("Parameters", {
+                                                                    pFramePipeline->createRendererProperties(),
+                                                                    // pPlane->getProperties(),
+                                                                    pHeightField->getProperties(),
+                                                                });
         auto pParametersPanel = createImguiPropertyPanel(pPropertyGroup);
         pGuiWorkspace->addPanel(IGuiWorkspace::Location::Left, pParametersPanel);
     }

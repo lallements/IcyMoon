@@ -75,17 +75,10 @@ These variables will be available when using the Conan virtual environment (see 
 
 The project is compiled using Conan and CMake.
 Dependencies are automatically downloaded and installed using `conan install`.
-To do so, first create a `build` folder from the root of the project:
-
-```bash
-mkdir build
-cd build
-```
-
-Then, run the `conan install` command from the `build` folder with one of the profiles under the `profiles` folder:
+To do so, run the `conan install` command from the root folder with one of the profiles under the `profiles` folder:
 
 ```base
-conan install .. -pr:a ../profiles/<my_profile> --build=missing
+conan install . -pr:a ../profiles/<my_profile> --build=missing
 ```
 
 > Important: On Linux, conan may fail due to missing packages. In this case, a command of the form "apt-get install ..." will appear in the error message. Use this command in sudo to install the missing packages.

@@ -106,6 +106,7 @@ public:
     auto getDescription() const -> std::string override { return m_config.description; }
     auto getType() const -> std::type_index { return typeid(Type); }
     auto getAnyValue() const -> std::any { return m_value; }
+    auto getValue() const -> Type { return std::any_cast<Type>(m_value); }
 
 private:
     PropertyValueConfig<T> m_config;

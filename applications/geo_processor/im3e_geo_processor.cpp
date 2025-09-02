@@ -21,10 +21,11 @@ int main(int argc, char** argv)
     throwIfFalse<invalid_argument>(
         argc == ExpectedArgc, fmt::format("Invalid number of arguments passed to application: expected {}, got {}.\n\n"
                                           "Expected Usage:\n"
-                                          "\t{} srcPath dstPath\n"
+                                          "\t{} action filePath\n"
                                           "with:\n"
                                           " - action: action to perform. Current options are:\n"
                                           "\t- info: print information about the given file\n"
+                                          "\t- rebuild: rebuild overviews of the given file\""
                                           " - filePath: path to the file to process\n",
                                           ExpectedArgc - 1U, argc - 1U, appRelativePath.filename()));
 
@@ -39,6 +40,11 @@ int main(int argc, char** argv)
     {
         pLogger->setLevelFilter(LogLevel::Verbose);
         auto pHeightMap = loadHeightMapFromFile(*pLogger, HeightMapFileConfig{.path = filePath, .readOnly = true});
+    }
+    else if (action == "rebuild")
+    {
+        auto pHeightMap = loadHeightMapFromFile(*pLogger, HeightMapFileConfig{.path = filePath, .readOnly = false});
+        pHeightMap->rebuildPyramid();
     }
     else
     {

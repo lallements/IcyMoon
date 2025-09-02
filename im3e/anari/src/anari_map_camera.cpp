@@ -90,7 +90,7 @@ void AnariMapCamera::setAspectRatio(float aspectRatio)
 
 void AnariMapCamera::PerspectiveState::setCameraParameters(ANARIDevice anDevice, ANARICamera anCamera) const
 {
-    anariSetParameter(anDevice, anCamera, "fovY", ANARI_FLOAT32, &fovY);
+    anariSetParameter(anDevice, anCamera, "fovy", ANARI_FLOAT32, &fovY);
     anariSetParameter(anDevice, anCamera, "aspect", ANARI_FLOAT32, &aspectRatio);
     anariSetParameter(anDevice, anCamera, "near", ANARI_FLOAT32, &near);
     anariSetParameter(anDevice, anCamera, "far", ANARI_FLOAT32, &far);
