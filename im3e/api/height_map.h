@@ -28,6 +28,10 @@ class IHeightMap
 public:
     virtual ~IHeightMap() = default;
 
+    /// @brief Rebuild the tile pyramid of the height map.
+    /// The height map cannot be in read-only mode.
+    virtual void rebuildPyramid() = 0;
+
     virtual auto getTileSampler(const glm::u32vec2& rTilePos, uint32_t lod)
         -> std::unique_ptr<IHeightMapTileSampler> = 0;
 

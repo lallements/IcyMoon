@@ -104,7 +104,7 @@ AnariHeightFieldTile::AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevic
     anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
 }
 
-void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rSampler)
+auto AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rSampler) -> bool
 {
     const auto scale = rSampler.getScale();
     const auto tilePos = glm::vec2(rSampler.getPos() * rSampler.getSize()) * scale;
@@ -152,10 +152,18 @@ void AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rS
         }
     }
 
+    // If the index array is empty at this point, this means that the current tile did not contain any useful data to
+    // load (e.g. if all the data is masked out). In this case, leave early and let the user know by returning false.
+    if (m_tmpIndices.empty())
+    {
+        return false;
+    }
+
     auto pDstIndices = mapIndexBuffer(*m_pAnDevice, m_pAnGeometry.get(), m_tmpIndices.size());
     std::ranges::copy(m_tmpIndices, pDstIndices.get());
 
     m_geometryChanged = true;
+    return true;
 }
 
 void AnariHeightFieldTile::commitChanges()

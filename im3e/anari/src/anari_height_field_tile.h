@@ -17,7 +17,11 @@ class AnariHeightFieldTile
 public:
     AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevice, const glm::u32vec2& rSize);
 
-    void load(const IHeightMapTileSampler& rSampler);
+    /// @brief Loads the given height map tile into memory.
+    /// @return True if the tile was successfully loaded, False if given tile did not contain any data to load. For
+    /// example, a given tile might have its data completely masked out.
+    auto load(const IHeightMapTileSampler& rSampler) -> bool;
+
     void commitChanges();
 
     auto getInstance() const -> ANARIInstance { return m_pAnInstance.get(); }

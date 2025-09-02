@@ -247,6 +247,50 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
     m_pLogger->info("Successfully loaded file");
 }
 
+namespace {
+
+auto buildPyramidProgressFunction(double progress, const char* pMessage, void* pUserData) -> int
+{
+    auto pLogger = reinterpret_cast<ILogger*>(pUserData);
+    if (pMessage)
+    {
+        pLogger->info(fmt::format("Building Pyramid - {:.2f}% complete: {})", progress * 100.0, pMessage));
+    }
+    else
+    {
+        pLogger->info(fmt::format("Building Pyramid - {:.2f}% complete", progress * 100.0));
+    }
+    return true;
+}
+
+}  // namespace
+
+void GdalGeoTiffHeightMap::rebuildPyramid()
+{
+    throwIfFalse<std::logic_error>(!m_config.readOnly, "Cannot rebuild pyramid of GeoTIFF while in read-only mode");
+
+    std::vector<int> decimationFactors{};
+    glm::u32vec2 currSize{m_pRasterBand->GetXSize(), m_pRasterBand->GetYSize()};
+    float currFactor = 1.0F;
+    while (currSize.x > m_tileSize.x || currSize.y > m_tileSize.y)
+    {
+        const auto prevSize = currSize;
+        currSize = (currSize + 1U) / 2U;
+        currFactor *= 2.0F;
+        decimationFactors.emplace_back(currFactor);
+
+        m_pLogger->info(fmt::format("level {}: {}x{} => {}x{}, factor = {}", decimationFactors.size(), prevSize.x,
+                                    prevSize.y, currSize.x, currSize.y, decimationFactors.back()));
+    }
+
+    const int targetBandIndex = 1U;
+
+    const auto returnCode = m_pDataset->BuildOverviews("BILINEAR", decimationFactors.size(), decimationFactors.data(),
+                                                       1U, &targetBandIndex, &buildPyramidProgressFunction,
+                                                       m_pLogger.get());
+    throwIfFalse<std::runtime_error>(returnCode == CE_None, "Failed to build pyramid of GeoTIFF");
+}
+
 auto GdalGeoTiffHeightMap::getTileSampler(const glm::u32vec2& rTilePos, uint32_t lod)
     -> std::unique_ptr<IHeightMapTileSampler>
 {

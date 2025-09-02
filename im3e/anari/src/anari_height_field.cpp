@@ -43,7 +43,12 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
     uint32_t iteration{};
     for (auto& rpTile : m_pTiles)
     {
-        rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.x}, lodLevel));
+        // if no data was loaded from the tile, try to load the next tile.
+        while (
+            !rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.x}, lodLevel)))
+        {
+            iteration++;
+        }
         rpTile->commitChanges();
         m_rInstanceSet.insert(rpTile->getInstance());
 
@@ -70,7 +75,12 @@ void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamer
         uint32_t iteration{};
         for (auto& rpTile : m_pTiles)
         {
-            rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.y}, lodLevel));
+            // if no data was loaded from the tile, try to load the next tile.
+            while (!rpTile->load(
+                *m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.y}, lodLevel)))
+            {
+                iteration++;
+            }
             m_rInstanceSet.insert(rpTile->getInstance());
             if (++iteration >= totalTileCount)
             {

@@ -17,6 +17,8 @@ class GdalGeoTiffHeightMap : public IHeightMap
 public:
     GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFileConfig config);
 
+    void rebuildPyramid() override;
+
     auto getTileSampler(const glm::u32vec2& rTilePos, uint32_t level)
         -> std::unique_ptr<IHeightMapTileSampler> override;
 
