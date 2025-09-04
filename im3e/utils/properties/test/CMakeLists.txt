@@ -5,6 +5,7 @@ im3e_add_unit_tests_executable(
     test_property_change_notifier.cpp
     test_property_group.cpp
     test_property_value_t.cpp
+    test_property_value.cpp
 )
 
 target_include_directories(test_im3e_utils_properties

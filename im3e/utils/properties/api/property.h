@@ -3,6 +3,7 @@
 #include <any>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string_view>
 #include <typeindex>
 #include <vector>
@@ -29,6 +30,8 @@ public:
     virtual auto getDescription() const -> std::string = 0;
     virtual auto getType() const -> std::type_index = 0;
     virtual auto getAnyValue() const -> std::any = 0;
+    virtual auto getAnyMinValue() const -> std::optional<std::any> = 0;
+    virtual auto getAnyMaxValue() const -> std::optional<std::any> = 0;
 };
 
 class IPropertyGroup : public IProperty

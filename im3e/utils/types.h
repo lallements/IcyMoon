@@ -38,4 +38,15 @@ auto makeVkUniquePtr(VkDevice vkDevice, T pValue,
     });
 }
 
+// Helper to detect less than operator
+template <typename T, typename = void>
+struct isLessThanComparable : std::false_type
+{
+};
+
+template <typename T>
+struct isLessThanComparable<T, std::void_t<decltype(std::declval<T>() < std::declval<T>())>> : std::true_type
+{
+};
+
 }  // namespace im3e
