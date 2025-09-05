@@ -120,7 +120,7 @@ public:
       : m_config(std::move(config))
       , m_value(config.defaultValue)
     {
-        if constexpr (isLessThanComparable<Type>::value)
+        if constexpr (HasLessThanOperator<Type>::value)
         {
             if (m_config.minValue.has_value())
             {
@@ -145,6 +145,19 @@ public:
             return;
         }
         m_value = std::move(value);
+
+        if constexpr (HasLessThanOperator<Type>::value)
+        {
+            if (m_config.minValue.has_value())
+            {
+                m_value = std::max(m_config.minValue.value(), m_value);
+            }
+            if (m_config.maxValue.has_value())
+            {
+                m_value = std::min(m_config.maxValue.value(), m_value);
+            }
+        }
+
         m_notifier.notifyChanged();
         if (m_config.onChange)
         {
