@@ -5,8 +5,8 @@
 #include <im3e/api/device.h>
 #include <im3e/api/frame_pipeline.h>
 #include <im3e/api/image.h>
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/types.h>
 
 #include <functional>
 #include <memory>

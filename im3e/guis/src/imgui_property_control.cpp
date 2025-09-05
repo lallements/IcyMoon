@@ -106,20 +106,40 @@ public:
       : ImguiBasePropertyControl(move(pProperty))
       , m_value(any_cast<int32_t>(m_pProperty->getAnyValue()))
     {
+        if (auto anyMinValueOpt = m_pProperty->getAnyMinValue(); anyMinValueOpt.has_value())
+        {
+            m_minValue = std::any_cast<int32_t>(anyMinValueOpt.value());
+        }
+        if (auto anyMaxValueOpt = m_pProperty->getAnyMaxValue(); anyMaxValueOpt.has_value())
+        {
+            m_maxValue = std::any_cast<int32_t>(anyMaxValueOpt.value());
+        }
     }
 
     void draw() override
     {
         const auto inputId = fmt::format("##{}", m_pProperty->getName());
-        if (ImGui::InputInt(inputId.c_str(), &m_value))
+        if (m_minValue.has_value() && m_maxValue.has_value())
         {
-            m_pProperty->setAnyValue(static_cast<int32_t>(m_value));
+            if (ImGui::SliderInt(inputId.c_str(), &m_value, m_minValue.value(), m_maxValue.value()))
+            {
+                m_pProperty->setAnyValue(static_cast<int32_t>(m_value));
+            }
+        }
+        else
+        {
+            if (ImGui::InputInt(inputId.c_str(), &m_value))
+            {
+                m_pProperty->setAnyValue(static_cast<int32_t>(m_value));
+            }
         }
         m_value = any_cast<int32_t>(m_pProperty->getAnyValue());
     }
 
 private:
     int m_value{};
+    std::optional<int> m_minValue{};
+    std::optional<int> m_maxValue{};
 };
 
 class ImguiUint32PropertyControl : public ImguiBasePropertyControl
@@ -129,21 +149,41 @@ public:
       : ImguiBasePropertyControl(move(pProperty))
       , m_value(any_cast<uint32_t>(m_pProperty->getAnyValue()))
     {
+        if (auto anyMinValueOpt = m_pProperty->getAnyMinValue(); anyMinValueOpt.has_value())
+        {
+            m_minValue = std::any_cast<uint32_t>(anyMinValueOpt.value());
+        }
+        if (auto anyMaxValueOpt = m_pProperty->getAnyMaxValue(); anyMaxValueOpt.has_value())
+        {
+            m_maxValue = std::any_cast<uint32_t>(anyMaxValueOpt.value());
+        }
     }
 
     void draw() override
     {
         const auto inputId = fmt::format("##{}", m_pProperty->getName());
-        if (ImGui::InputInt(inputId.c_str(), &m_value))
+        if (m_minValue.has_value() && m_maxValue.has_value())
         {
-            m_value = max(m_value, 0);
-            m_pProperty->setAnyValue(static_cast<uint32_t>(m_value));
+            if (ImGui::SliderInt(inputId.c_str(), &m_value, m_minValue.value(), m_maxValue.value()))
+            {
+                m_pProperty->setAnyValue(static_cast<uint32_t>(m_value));
+            }
+        }
+        else
+        {
+            if (ImGui::InputInt(inputId.c_str(), &m_value))
+            {
+                m_value = max(m_value, 0);
+                m_pProperty->setAnyValue(static_cast<uint32_t>(m_value));
+            }
         }
         m_value = any_cast<uint32_t>(m_pProperty->getAnyValue());
     }
 
 private:
     int m_value{};
+    std::optional<int> m_minValue;
+    std::optional<int> m_maxValue;
 };
 
 class ImguiFloatPropertyControl : public ImguiBasePropertyControl
@@ -153,20 +193,40 @@ public:
       : ImguiBasePropertyControl(move(pProperty))
       , m_value(any_cast<float>(m_pProperty->getAnyValue()))
     {
+        if (auto anyMinValueOpt = m_pProperty->getAnyMinValue(); anyMinValueOpt.has_value())
+        {
+            m_minValue = std::any_cast<float>(anyMinValueOpt.value());
+        }
+        if (auto anyMaxValueOpt = m_pProperty->getAnyMaxValue(); anyMaxValueOpt.has_value())
+        {
+            m_maxValue = std::any_cast<float>(anyMaxValueOpt.value());
+        }
     }
 
     void draw() override
     {
         const auto inputId = fmt::format("##{}", m_pProperty->getName());
-        if (ImGui::InputFloat(inputId.c_str(), &m_value, 0.0F, 0.0F))
+        if (m_minValue.has_value() && m_maxValue.has_value())
         {
-            m_pProperty->setAnyValue(m_value);
+            if (ImGui::SliderFloat(inputId.c_str(), &m_value, m_minValue.value(), m_maxValue.value()))
+            {
+                m_pProperty->setAnyValue(m_value);
+            }
+        }
+        else
+        {
+            if (ImGui::InputFloat(inputId.c_str(), &m_value, 0.0F, 0.0F))
+            {
+                m_pProperty->setAnyValue(m_value);
+            }
         }
         m_value = any_cast<float>(m_pProperty->getAnyValue());
     }
 
 private:
     float m_value{};
+    std::optional<float> m_minValue{};
+    std::optional<float> m_maxValue{};
 };
 
 class ImguiVec3PropertyControl : public ImguiBasePropertyControl

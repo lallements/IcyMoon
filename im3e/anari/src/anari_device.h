@@ -2,8 +2,8 @@
 
 #include "anari.h"
 
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/types.h>
 
 #include <anari/frontend/anari_extension_utility.h>
 

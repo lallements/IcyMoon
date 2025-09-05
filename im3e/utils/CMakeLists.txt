@@ -8,7 +8,6 @@ add_library(im3e_utils STATIC
     math_utils.h
     stats.h
     transform.h
-    types.h
     vk_utils.h
 )
 

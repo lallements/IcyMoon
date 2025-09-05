@@ -31,6 +31,8 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
         .name = "Level of Details",
         .description = "Determines level of details of the height field where 0 is highest details.",
         .defaultValue = 0U,
+        .minValue = 0U,
+        .maxValue = m_pHeightMap->getLodCount() - 1U,
         .onChange = [this](auto) { m_lodChanged = true; },
     }))
   , m_pProperties(createPropertyGroup(m_pHeightMap->getName(), {m_pLodProp}))

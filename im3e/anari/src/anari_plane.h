@@ -4,9 +4,9 @@
 #include "anari_device.h"
 #include "anari_instance_set.h"
 
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/properties/properties.h>
 #include <im3e/utils/transform.h>
-#include <im3e/utils/types.h>
 
 #include <string>
 

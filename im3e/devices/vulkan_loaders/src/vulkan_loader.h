@@ -2,7 +2,7 @@
 
 #include "vulkan_loaders.h"
 
-#include <im3e/utils/types.h>
+#include <im3e/utils/core/types.h>
 
 namespace im3e {
 
