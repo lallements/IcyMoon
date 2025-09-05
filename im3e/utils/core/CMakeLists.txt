@@ -2,6 +2,7 @@ add_library(im3e_utils_core STATIC
     src/platform_utils.cpp
     platform_utils.h
     throw_utils.h
+    types.h
 )
 
 target_include_directories(im3e_utils_core

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <im3e/utils/core/throw_utils.h>
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/loggers.h>
-#include <im3e/utils/types.h>
 
 #include <fmt/format.h>
 #include <vk_mem_alloc.h>
@@ -21,6 +21,27 @@ constexpr bool operator!=(const VkExtent2D& rVkExtent1, const VkExtent2D& rVkExt
 }
 
 namespace im3e {
+
+template <typename T>
+using VkUniquePtr = std::unique_ptr<typename std::remove_pointer<T>::type, std::function<void(T)>>;
+
+template <typename T>
+using VkSharedPtr = std::shared_ptr<typename std::remove_pointer<T>::type>;
+
+template <typename T>
+using VkWeakPtr = std::weak_ptr<typename std::remove_pointer<T>::type>;
+
+template <typename T>
+auto makeVkUniquePtr(VkDevice vkDevice, T pValue,
+                     std::function<void(VkDevice, T, const VkAllocationCallbacks*)> destructor)
+{
+    return VkUniquePtr<T>(pValue, [vkDevice, destructor](auto* pV) {
+        if (destructor)
+        {
+            destructor(vkDevice, pV, nullptr);
+        }
+    });
+}
 
 inline void throwIfVkFailed(VkResult vkResult, std::string_view errorMessage)
 {

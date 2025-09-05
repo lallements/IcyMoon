@@ -2,8 +2,8 @@
 
 #include "property_change_notifier.h"
 
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/properties/api/property.h>
-#include <im3e/utils/types.h>
 
 #include <optional>
 #include <type_traits>

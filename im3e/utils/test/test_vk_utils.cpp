@@ -31,6 +31,18 @@ TEST(VkUtilsTest, VkExtent2DDiffOperator)
     EXPECT_THAT(vkExtent1 != vkExtent4, IsTrue());
 }
 
+TEST(VkUtilsTest, makeVkUniquePtr)
+{
+    const auto mockVkDevice = reinterpret_cast<VkDevice>(0x34ef5a);
+    const auto mockVkImage = reinterpret_cast<VkImage>(0x23e45d);
+    MockFunction<void(VkDevice, VkImage, const VkAllocationCallbacks*)> mockDestructor;
+
+    auto pUniquePtr = makeVkUniquePtr<VkImage>(mockVkDevice, mockVkImage, mockDestructor.AsStdFunction());
+
+    EXPECT_CALL(mockDestructor, Call(mockVkDevice, mockVkImage, IsNull()));
+    pUniquePtr.reset();
+}
+
 TEST(VkUtilsTest, throwIfVkFailedThrowsOnFailure)
 {
     EXPECT_THROW(throwIfVkFailed(VK_ERROR_UNKNOWN, "Expected Failure"), runtime_error);

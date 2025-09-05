@@ -7,8 +7,8 @@
 #include "anari_map_camera.h"
 
 #include <im3e/api/height_map.h>
+#include <im3e/utils/core/types.h>
 #include <im3e/utils/properties/properties.h>
-#include <im3e/utils/types.h>
 
 namespace im3e {
 

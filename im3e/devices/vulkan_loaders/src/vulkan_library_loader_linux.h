@@ -1,7 +1,7 @@
 #pragma once
 
 #include <im3e/utils/core/throw_utils.h>
-#include <im3e/utils/types.h>
+#include <im3e/utils/core/types.h>
 
 #include <dlfcn.h>
 #include <vulkan/vulkan.h>
