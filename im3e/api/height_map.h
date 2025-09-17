@@ -36,6 +36,7 @@ public:
         -> std::unique_ptr<IHeightMapTileSampler> = 0;
 
     virtual auto getName() const -> std::string = 0;
+    virtual auto getSize() const -> glm::u32vec2 = 0;
     virtual auto getTileSize() const -> glm::u32vec2 = 0;
     virtual auto getTileCount(uint32_t lod) const -> glm::u32vec2 = 0;
     virtual auto getLodCount() const -> uint32_t = 0;

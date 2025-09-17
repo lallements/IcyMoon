@@ -34,6 +34,7 @@ using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::SetArgPointee;
 using ::testing::StrEq;
+using ::testing::StrictMock;
 using ::testing::Test;
 using ::testing::Unused;
 using ::testing::Values;

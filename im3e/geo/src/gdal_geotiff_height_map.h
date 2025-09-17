@@ -23,6 +23,7 @@ public:
         -> std::unique_ptr<IHeightMapTileSampler> override;
 
     auto getName() const -> std::string override { return m_config.path.stem().string(); }
+    auto getSize() const -> glm::u32vec2 override { return m_size; }
     auto getTileSize() const -> glm::u32vec2 override { return m_tileSize; }
     auto getTileCount(uint32_t lod) const -> glm::u32vec2 override;
     auto getLodCount() const -> uint32_t override { return m_lodCount; }
@@ -35,6 +36,7 @@ private:
     GDALDatasetUniquePtr m_pDataset;
     GDALRasterBand* m_pRasterBand;
 
+    const glm::u32vec2 m_size;
     const glm::u32vec2 m_tileSize;
     const uint32_t m_lodCount;
 };

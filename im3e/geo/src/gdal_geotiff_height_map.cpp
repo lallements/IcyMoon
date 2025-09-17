@@ -72,6 +72,11 @@ auto createGdalDataset(const ILogger& rLogger, const HeightMapFileConfig& rConfi
     return pDataset;
 }
 
+auto readSize(GDALRasterBand& rRasterBand)
+{
+    return glm::u32vec2{rRasterBand.GetXSize(), rRasterBand.GetYSize()};
+}
+
 auto readTileSize(GDALRasterBand& rRasterBand)
 {
     int blockSizeX, blockSizeY;
@@ -97,7 +102,9 @@ void printRasterBandInfo(const ILogger& rLogger, GDALRasterBand& rRasterBand, st
 {
     rLogger.verbose(fmt::format("Information for {}:", name));
     rLogger.verbose(fmt::format("\t- Data type: {}", convertGdalDataTypeToString(rRasterBand.GetRasterDataType())));
-    rLogger.verbose(fmt::format("\t- Size: {}x{}", rRasterBand.GetXSize(), rRasterBand.GetYSize()));
+
+    const auto size = readSize(rRasterBand);
+    rLogger.verbose(fmt::format("\t- Size: {}x{}", size.x, size.y));
 
     const auto tileSize = readTileSize(rRasterBand);
     rLogger.verbose(fmt::format("\t- Tile size: {}x{}", tileSize.x, tileSize.y));
@@ -241,6 +248,7 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
   , m_pDataset(createGdalDataset(*m_pLogger, m_config))
   , m_pRasterBand(loadRasterBand(*m_pLogger, *m_pDataset))
 
+  , m_size(readSize(*m_pRasterBand))
   , m_tileSize(readTileSize(*m_pRasterBand))
   , m_lodCount(readLodCount(*m_pRasterBand))
 {

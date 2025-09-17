@@ -4,10 +4,12 @@ im3e_add_mock_library(
   SOURCES
     src/mock_command_buffer.cpp
     src/mock_device.cpp
+    src/mock_height_map.cpp
     src/mock_image.cpp
     src/mock_vulkan_functions.cpp
     mock_command_buffer.h
     mock_device.h
+    mock_height_map.h
     mock_image.h
     mock_vulkan_functions.h
 )
