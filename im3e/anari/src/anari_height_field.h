@@ -7,6 +7,7 @@
 #include "anari_map_camera.h"
 
 #include <im3e/api/height_map.h>
+#include <im3e/geo/geo.h>
 #include <im3e/utils/core/types.h>
 #include <im3e/utils/properties/properties.h>
 
@@ -29,8 +30,9 @@ private:
     std::unique_ptr<IHeightMap> m_pHeightMap;
 
     std::unique_ptr<ILogger> m_pLogger;
+    std::shared_ptr<HeightMapQuadTreeNode> m_pQuadTreeRoot;
 
-    bool m_lodChanged{};
+    bool m_lodChanged = true;
     std::shared_ptr<PropertyValue<uint32_t>> m_pLodProp;
     std::shared_ptr<IPropertyGroup> m_pProperties;
 

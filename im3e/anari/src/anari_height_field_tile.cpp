@@ -104,7 +104,7 @@ AnariHeightFieldTile::AnariHeightFieldTile(std::shared_ptr<AnariDevice> pAnDevic
     anariCommitParameters(m_pAnDevice->getHandle(), m_pAnGeometry.get());
 }
 
-auto AnariHeightFieldTile::load([[maybe_unused]] const IHeightMapTileSampler& rSampler) -> bool
+auto AnariHeightFieldTile::load(const IHeightMapTileSampler& rSampler) -> bool
 {
     const auto scale = rSampler.getScale();
     const auto tilePos = glm::vec2(rSampler.getPos() * rSampler.getSize()) * scale;

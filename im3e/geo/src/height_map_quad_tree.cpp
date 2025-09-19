@@ -1,5 +1,7 @@
 #include "geo.h"
 
+#include <im3e/utils/core/throw_utils.h>
+
 using namespace im3e;
 
 namespace {
@@ -48,6 +50,18 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
 }
 
 }  // namespace
+
+auto HeightMapQuadTreeNode::findVisible(const ICamera&, uint32_t lod) const -> std::vector<glm::u32vec3>
+{
+    throwIfFalse<std::invalid_argument>(
+        lod <= this->lod, fmt::format("Invalid lod {} passed to quad tree of max level {}", lod, this->lod));
+
+    std::vector<glm::u32vec3> visibleTileIds;
+
+    visibleTileIds.emplace_back(glm::u32vec3{0U, 0U, lod});
+
+    return visibleTileIds;
+}
 
 auto im3e::generateHeightMapQuadTree(const IHeightMap& rHeightMap) -> std::shared_ptr<HeightMapQuadTreeNode>
 {

@@ -2,6 +2,7 @@
 
 #include "anari_device.h"
 
+#include <im3e/api/camera.h>
 #include <im3e/api/gui.h>
 #include <im3e/utils/loggers.h>
 
@@ -9,7 +10,7 @@
 
 namespace im3e {
 
-class AnariMapCamera : public IGuiEventListener
+class AnariMapCamera : public ICamera, public IGuiEventListener
 {
 public:
     AnariMapCamera(std::shared_ptr<AnariDevice> pAnDevice);

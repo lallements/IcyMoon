@@ -26,6 +26,7 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
   , m_rInstanceSet(rInstanceSet)
   , m_pHeightMap(throwIfArgNull(std::move(pHeightMap), "ANARI Height Map requires a height map"))
   , m_pLogger(m_pAnDevice->createLogger(fmt::format("ANARI Height Field - {}", m_pHeightMap->getName())))
+  , m_pQuadTreeRoot(generateHeightMapQuadTree(*m_pHeightMap))
 
   , m_pLodProp(std::make_shared<PropertyValue<uint32_t>>(PropertyValueConfig<uint32_t>{
         .name = "Level of Details",
@@ -37,60 +38,35 @@ AnariHeightField::AnariHeightField(std::shared_ptr<AnariDevice> pAnDevice, Anari
     }))
   , m_pProperties(createPropertyGroup(m_pHeightMap->getName(), {m_pLodProp}))
 
-  , m_pTiles(initializeTiles(m_pAnDevice, m_pHeightMap->getTileSize(), 2U))
+  , m_pTiles(initializeTiles(m_pAnDevice, m_pHeightMap->getTileSize(), 10U))
 {
-    const auto lodLevel = m_pLodProp->getValue();
-    const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
-    const auto totalTileCount = tileCount.x * tileCount.y;
-    uint32_t iteration{};
-    for (auto& rpTile : m_pTiles)
-    {
-        // if no data was loaded from the tile, try to load the next tile.
-        while (
-            !rpTile->load(*m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.x}, lodLevel)))
-        {
-            iteration++;
-        }
-        rpTile->commitChanges();
-        m_rInstanceSet.insert(rpTile->getInstance());
-
-        if (++iteration >= totalTileCount)
-        {
-            break;
-        }
-    }
 }
 
 void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamera)
 {
-    if (m_lodChanged)
+    if (!m_lodChanged)
     {
-        // Must remove instances first as we may not add back all of the tiles:
-        for (auto& rpTile : m_pTiles)
-        {
-            m_rInstanceSet.remove(rpTile->getInstance());
-        }
+        return;
+    }
+    m_lodChanged = false;
 
-        const auto lodLevel = m_pLodProp->getValue();
-        const auto tileCount = m_pHeightMap->getTileCount(lodLevel);
-        const auto totalTileCount = tileCount.x * tileCount.y;
-        uint32_t iteration{};
-        for (auto& rpTile : m_pTiles)
+    const auto visibleTileIds = m_pQuadTreeRoot->findVisible(rCamera, m_pLodProp->getValue());
+
+    // Must remove instances first as we may not add back all of the tiles:
+    for (auto& rpTile : m_pTiles)
+    {
+        m_rInstanceSet.remove(rpTile->getInstance());
+    }
+
+    uint32_t nextTileIdx{};
+    for (auto& rTileId : visibleTileIds)
+    {
+        auto& rpTile = m_pTiles[nextTileIdx];
+        if (rpTile->load(*m_pHeightMap->getTileSampler(rTileId.xy(), rTileId.z)))
         {
-            // if no data was loaded from the tile, try to load the next tile.
-            while (!rpTile->load(
-                *m_pHeightMap->getTileSampler({iteration % tileCount.x, iteration / tileCount.y}, lodLevel)))
-            {
-                iteration++;
-            }
             m_rInstanceSet.insert(rpTile->getInstance());
-            if (++iteration >= totalTileCount)
-            {
-                break;
-            }
+            nextTileIdx++;
         }
-
-        m_lodChanged = false;
     }
 }
 
