@@ -23,13 +23,17 @@ public:
     void setAspectRatio(float ratio);
 
     auto getHandle() const -> ANARICamera { return m_pAnCamera.get(); }
+    auto getViewFrustum() const -> ViewFrustum { return m_viewFrustum; }
 
 private:
+    void update();
+    auto createViewFrustum() const -> ViewFrustum;
+
     std::shared_ptr<AnariDevice> m_pAnDevice;
     std::unique_ptr<ILogger> m_pLogger;
     std::shared_ptr<anari::api::Camera> m_pAnCamera;
 
-    bool m_needsUpdate{true};
+    bool m_needsCommit{true};
 
     struct PerspectiveState
     {
@@ -56,12 +60,20 @@ private:
 
         auto generateMatrix() const -> glm::mat4;
 
+        auto getPosition() const -> const glm::vec3& { return m_position; }
+        auto getDirection() const -> const glm::vec3& { return m_direction; }
+        auto getUp() const -> const glm::vec3& { return m_up; }
+        auto getRight() const -> const glm::vec3& { return m_right; }
+
     private:
         glm::vec3 m_position;
         glm::vec3 m_direction;
         glm::vec3 m_up;
+        glm::vec3 m_right;
     };
     ViewState m_view;
+
+    ViewFrustum m_viewFrustum;
 };
 
 }  // namespace im3e

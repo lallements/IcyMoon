@@ -2,12 +2,14 @@ add_library(im3e_utils STATIC
     src/stats_provider.cpp
     src/stream_logger.cpp
     src/stream_logger.h
+    src/view_frustum.cpp
     src/vk_utils.cpp
     imgui_utils.h
     loggers.h
     math_utils.h
     stats.h
     transform.h
+    view_frustum.h
     vk_utils.h
 )
 
