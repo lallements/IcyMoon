@@ -39,6 +39,8 @@ public:
     MOCK_METHOD(glm::u32vec2, getTileSize, (), (const, override));
     MOCK_METHOD(glm::u32vec2, getTileCount, (uint32_t lod), (const, override));
     MOCK_METHOD(uint32_t, getLodCount, (), (const, override));
+    MOCK_METHOD(float, getMinHeight, (), (const, override));
+    MOCK_METHOD(float, getMaxHeight, (), (const, override));
 };
 
 }  // namespace im3e

@@ -21,27 +21,27 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
         return;
     }
     const auto childLod = rParentNode.lod - 1U;
-    const auto childTileWorldSize = glm::ceil(rParentTileWorldSize / 2.0F);
+    const auto childTileWorldSize = glm::vec3{glm::ceil(rParentTileWorldSize / 2.0F),
+                                              rParentNode.maxWorldPos.z - rParentNode.minWorldPos.z};
 
     for (auto y = 0U; y < 2U; y++)
     {
         for (auto x = 0U; x < 2U; x++)
         {
-            const auto localChildWorldPos = glm::vec2{x, y} * childTileWorldSize;
-            const auto childWorldSize = glm::min(localChildWorldPos + childTileWorldSize, rParentNode.worldSize) -
-                                        localChildWorldPos;
-            if (childWorldSize.x < 0.0F || childWorldSize.y < 0.0F)
+            const auto childMinWorldPos = rParentNode.minWorldPos + glm::vec3{x, y, 0.0F} * childTileWorldSize;
+            const auto childMaxWorldPos = glm::min(childMinWorldPos + childTileWorldSize, rParentNode.maxWorldPos);
+            if (childMaxWorldPos.x <= childMinWorldPos.x || childMaxWorldPos.y <= childMinWorldPos.y)
             {
                 // If the child world size is negative, this means that this child tile is outside of the boundaries
-                // of the parent. It should be therefore not be skipped:
+                // of the parent. It should therefore be skipped:
                 continue;
             }
 
             auto pChildNode = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
                 .lod = childLod,
                 .tilePos = 2U * rParentNode.tilePos + glm::u32vec2{x, y},
-                .worldPos = rParentNode.worldPos + localChildWorldPos,
-                .worldSize = childWorldSize,
+                .minWorldPos = childMinWorldPos,
+                .maxWorldPos = childMaxWorldPos,
             });
             rParentNode.pChildren[y * 2U + x] = pChildNode;
             generateTreeNodeChildren(*pChildNode, childTileWorldSize);
@@ -51,7 +51,7 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
 
 }  // namespace
 
-auto HeightMapQuadTreeNode::findVisible(const ICamera&, uint32_t lod) const -> std::vector<glm::u32vec3>
+auto HeightMapQuadTreeNode::findVisible(const ViewFrustum&, uint32_t lod) const -> std::vector<glm::u32vec3>
 {
     throwIfFalse<std::invalid_argument>(
         lod <= this->lod, fmt::format("Invalid lod {} passed to quad tree of max level {}", lod, this->lod));
@@ -65,17 +65,14 @@ auto HeightMapQuadTreeNode::findVisible(const ICamera&, uint32_t lod) const -> s
 
 auto im3e::generateHeightMapQuadTree(const IHeightMap& rHeightMap) -> std::shared_ptr<HeightMapQuadTreeNode>
 {
-    // TODO:
-    // We should generate the tree with cells present regardless of whether tiles actually exist.
-    // However, we do need to add a bool to determine whether the current cell contains an actual tile
-
     const auto size = rHeightMap.getSize();
     const auto tileSize = rHeightMap.getTileSize();
     const auto lodCount = calculateLodCount(size, tileSize);
 
     auto pRoot = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
         .lod = lodCount - 1U,
-        .worldSize = glm::vec2{size},
+        .minWorldPos = glm::vec3{0.0F, 0.0F, rHeightMap.getMinHeight()},
+        .maxWorldPos = glm::vec3{size, rHeightMap.getMaxHeight()},
     });
 
     const auto tileWorldSize = glm::vec2{tileSize} * static_cast<float>(std::pow(2U, pRoot->lod));

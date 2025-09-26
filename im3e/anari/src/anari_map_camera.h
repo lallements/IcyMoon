@@ -2,15 +2,15 @@
 
 #include "anari_device.h"
 
-#include <im3e/api/camera.h>
 #include <im3e/api/gui.h>
 #include <im3e/utils/loggers.h>
+#include <im3e/utils/view_frustum.h>
 
 #include <numbers>
 
 namespace im3e {
 
-class AnariMapCamera : public ICamera, public IGuiEventListener
+class AnariMapCamera : public IGuiEventListener
 {
 public:
     AnariMapCamera(std::shared_ptr<AnariDevice> pAnDevice);
@@ -23,7 +23,7 @@ public:
     void setAspectRatio(float ratio);
 
     auto getHandle() const -> ANARICamera { return m_pAnCamera.get(); }
-    auto getViewFrustum() const -> ViewFrustum { return m_viewFrustum; }
+    auto getViewFrustum() const -> const ViewFrustum& { return m_viewFrustum; }
 
 private:
     void update();

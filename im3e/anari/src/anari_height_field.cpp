@@ -50,7 +50,7 @@ void AnariHeightField::updateAsync([[maybe_unused]] const AnariMapCamera& rCamer
     }
     m_lodChanged = false;
 
-    const auto visibleTileIds = m_pQuadTreeRoot->findVisible(rCamera, m_pLodProp->getValue());
+    const auto visibleTileIds = m_pQuadTreeRoot->findVisible(rCamera.getViewFrustum(), m_pLodProp->getValue());
 
     // Must remove instances first as we may not add back all of the tiles:
     for (auto& rpTile : m_pTiles)

@@ -40,6 +40,8 @@ public:
     virtual auto getTileSize() const -> glm::u32vec2 = 0;
     virtual auto getTileCount(uint32_t lod) const -> glm::u32vec2 = 0;
     virtual auto getLodCount() const -> uint32_t = 0;
+    virtual auto getMinHeight() const -> float = 0;
+    virtual auto getMaxHeight() const -> float = 0;
 };
 
 }  // namespace im3e

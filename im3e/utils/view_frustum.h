@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 
+#include <array>
 #include <numbers>
 
 namespace im3e {
@@ -32,22 +33,28 @@ public:
     };
     ViewFrustum(const PerspectiveConfig& rConfig);
 
-    auto getNearPlane() const { return m_nearPlane; }
-    auto getFarPlane() const { return m_farPlane; }
-    auto getTopPlane() const { return m_topPlane; }
-    auto getBottomPlane() const { return m_bottomPlane; }
-    auto getLeftPlane() const { return m_leftPlane; }
-    auto getRightPlane() const { return m_rightPlane; }
+    /// @brief Test if a given AABB is partially or fully inside the view frustum.
+    /// @param rMin Min point of the AABB
+    /// @param rMax Max point of the AABB
+    /// @pre rMin is assumed to have min values and rMax to have max values. No validation is performed.
+    /// @return True if the given AABB is at least partially inside the current frustum.
+    auto isAABBInside(const glm::vec3& rMinPoint, const glm::vec3& rMaxPoint) const -> bool;
+
+    auto getNearPlane() const -> const Plane& { return m_planes[NearPlaneIdx]; }
+    auto getFarPlane() const -> const Plane& { return m_planes[FarPlaneIdx]; }
+    auto getTopPlane() const -> const Plane& { return m_planes[TopPlaneIdx]; }
+    auto getBottomPlane() const -> const Plane& { return m_planes[BottomPlaneIdx]; }
+    auto getLeftPlane() const -> const Plane& { return m_planes[LeftPlaneIdx]; }
+    auto getRightPlane() const -> const Plane& { return m_planes[RightPlaneIdx]; }
 
 private:
-    Plane m_nearPlane{};
-    Plane m_farPlane{};
-
-    Plane m_topPlane{};
-    Plane m_bottomPlane{};
-
-    Plane m_leftPlane{};
-    Plane m_rightPlane{};
+    static constexpr size_t NearPlaneIdx{0U};
+    static constexpr size_t FarPlaneIdx{1U};
+    static constexpr size_t TopPlaneIdx{2U};
+    static constexpr size_t BottomPlaneIdx{3U};
+    static constexpr size_t LeftPlaneIdx{4U};
+    static constexpr size_t RightPlaneIdx{5U};
+    std::array<Plane, 6U> m_planes;
 };
 
 }  // namespace im3e

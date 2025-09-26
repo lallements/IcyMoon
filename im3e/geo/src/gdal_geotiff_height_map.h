@@ -9,6 +9,7 @@
 #include <gdal_priv.h>
 
 #include <memory>
+#include <numeric>
 
 namespace im3e {
 
@@ -27,6 +28,8 @@ public:
     auto getTileSize() const -> glm::u32vec2 override { return m_tileSize; }
     auto getTileCount(uint32_t lod) const -> glm::u32vec2 override;
     auto getLodCount() const -> uint32_t override { return m_lodCount; }
+    auto getMinHeight() const -> float override { return m_minHeight; }
+    auto getMaxHeight() const -> float override { return m_maxHeight; }
 
 private:
     std::unique_ptr<ILogger> m_pLogger;
@@ -39,6 +42,9 @@ private:
     const glm::u32vec2 m_size;
     const glm::u32vec2 m_tileSize;
     const uint32_t m_lodCount;
+
+    const float m_minHeight = std::numeric_limits<float>::min();
+    const float m_maxHeight = std::numeric_limits<float>::max();
 };
 
 }  // namespace im3e

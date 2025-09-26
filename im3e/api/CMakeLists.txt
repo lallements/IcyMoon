@@ -1,5 +1,4 @@
 add_library(im3e_api INTERFACE
-    camera.h
     command_buffer.h
     device.h
     frame_pipeline.h

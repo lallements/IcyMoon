@@ -251,6 +251,9 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
   , m_size(readSize(*m_pRasterBand))
   , m_tileSize(readTileSize(*m_pRasterBand))
   , m_lodCount(readLodCount(*m_pRasterBand))
+
+  , m_minHeight(static_cast<float>(m_pRasterBand->GetMinimum()))
+  , m_maxHeight(static_cast<float>(m_pRasterBand->GetMaximum()))
 {
     m_pLogger->info("Successfully loaded file");
 }
