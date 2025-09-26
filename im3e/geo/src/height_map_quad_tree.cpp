@@ -49,18 +49,40 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
     }
 }
 
+void findVisibleInQuadTree(const HeightMapQuadTreeNode& rNode, const ViewFrustum& rViewFrustum, uint32_t lod,
+                           std::vector<glm::u32vec3>& rVisibleTileIDs)
+{
+    if (!rViewFrustum.isAABBInside(rNode.minWorldPos, rNode.maxWorldPos))
+    {
+        return;
+    }
+
+    if (rNode.lod == lod)
+    {
+        rVisibleTileIDs.emplace_back(glm::u32vec3{rNode.tilePos, rNode.lod});
+        return;
+    }
+
+    for (auto& rpChild : rNode.pChildren)
+    {
+        if (rpChild)
+        {
+            findVisibleInQuadTree(*rpChild, rViewFrustum, lod, rVisibleTileIDs);
+        }
+    }
+}
+
 }  // namespace
 
-auto HeightMapQuadTreeNode::findVisible(const ViewFrustum&, uint32_t lod) const -> std::vector<glm::u32vec3>
+auto HeightMapQuadTreeNode::findVisible(const ViewFrustum& rViewFrustum, uint32_t lod) const
+    -> std::vector<glm::u32vec3>
 {
     throwIfFalse<std::invalid_argument>(
         lod <= this->lod, fmt::format("Invalid lod {} passed to quad tree of max level {}", lod, this->lod));
 
-    std::vector<glm::u32vec3> visibleTileIds;
-
-    visibleTileIds.emplace_back(glm::u32vec3{0U, 0U, lod});
-
-    return visibleTileIds;
+    std::vector<glm::u32vec3> visibleTileIDs;
+    findVisibleInQuadTree(*this, rViewFrustum, lod, visibleTileIDs);
+    return visibleTileIDs;
 }
 
 auto im3e::generateHeightMapQuadTree(const IHeightMap& rHeightMap) -> std::shared_ptr<HeightMapQuadTreeNode>

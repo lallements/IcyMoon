@@ -139,13 +139,20 @@ TEST(HeightMapQuadTreeTest, findVisible)
     EXPECT_CALL(heightMap, getMaxHeight()).WillRepeatedly(Return(TestMaxHeight));
 
     const ViewFrustum::PerspectiveConfig viewConfig{
-        .position = glm::vec3{0.0F, 20.0F, 0.0F},
+        .near = 0.1F,
+        .far = 10000.0F,
+        .position = glm::vec3{20.0F, 1000.0F, 10.0F},
         .direction = glm::vec3{0.0F, -1.0F, 0.0F},
         .up = glm::vec3{0.0F, 0.0F, -1.0F},
         .right = glm::vec3{1.0F, 0.0F, 0.0F},
     };
 
     const auto pTreeRoot = generateHeightMapQuadTree(heightMap);
-    const auto visibleTiles = pTreeRoot->findVisible(viewConfig, 0U);
-    EXPECT_THAT(visibleTiles.size(), Eq(2U));
+    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 2U),
+                ContainerEq(std::vector<glm::u32vec3>{glm::u32vec3{0U, 0U, 2U}}));
+    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 0U), ContainerEq(std::vector<glm::u32vec3>{
+                                                            glm::u32vec3{0U, 0U, 0U},
+                                                            glm::u32vec3{1U, 0U, 0U},
+                                                            glm::u32vec3{0U, 1U, 0U},
+                                                        }));
 }
