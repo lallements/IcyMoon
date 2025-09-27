@@ -156,12 +156,14 @@ auto AnariHeightFieldTile::load(const IHeightMapTileSampler& rSampler) -> bool
     // load (e.g. if all the data is masked out). In this case, leave early and let the user know by returning false.
     if (m_tmpIndices.empty())
     {
+        m_tileID.reset();
         return false;
     }
 
     auto pDstIndices = mapIndexBuffer(*m_pAnDevice, m_pAnGeometry.get(), m_tmpIndices.size());
     std::ranges::copy(m_tmpIndices, pDstIndices.get());
 
+    m_tileID = rSampler.getTileID();
     m_geometryChanged = true;
     return true;
 }

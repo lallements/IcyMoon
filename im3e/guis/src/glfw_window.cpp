@@ -45,6 +45,14 @@ auto createWindow(const ILogger& rLogger, const GlfwWindow::Config& rConfig, Glf
     glfwGetWindowSize(pGlfwWindow, &width, &height);
     rLogger.info(fmt::format("Created window of size {}x{}", width, height));
 
+    // Setting the GLFW_MAXIMIMZED flag above is not always enough. Sometimes, when the window is open on a different
+    // screen than the primary one, the window does not show maximized untile glfwMaximizeWindow() is called.
+    glfwShowWindow(pGlfwWindow);
+    if (rConfig.maximized)
+    {
+        glfwMaximizeWindow(pGlfwWindow);
+    }
+
     return UniquePtrWithDeleter<GLFWwindow>(pGlfwWindow, [](auto* pW) { glfwDestroyWindow(pW); });
 }
 

@@ -9,6 +9,7 @@
 
 namespace glm {
 
+void PrintTo(const glm::u16vec3& rVec, std::ostream* pStream);
 void PrintTo(const glm::u32vec2& rVec, std::ostream* pStream);
 void PrintTo(const glm::u32vec3& rVec, std::ostream* pStream);
 void PrintTo(const glm::vec2& rVec, std::ostream* pStream);

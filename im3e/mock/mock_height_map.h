@@ -17,7 +17,7 @@ public:
 
     MOCK_METHOD(bool, isValid, (uint32_t x, uint32_t y), (const, override));
 
-    MOCK_METHOD(const glm::u32vec2&, getPos, (), (const, override));
+    MOCK_METHOD(glm::u32vec2, getPos, (), (const, override));
     MOCK_METHOD(const glm::u32vec2&, getSize, (), (const, override));
     MOCK_METHOD(const glm::u32vec2&, getActualSize, (), (const, override));
     MOCK_METHOD(float, getScale, (), (const, override));
@@ -31,6 +31,7 @@ public:
 
     MOCK_METHOD(void, rebuildPyramid, (), (override));
 
+    MOCK_METHOD(std::unique_ptr<IHeightMapTileSampler>, getTileSampler, (const TileID& rTileID), (override));
     MOCK_METHOD(std::unique_ptr<IHeightMapTileSampler>, getTileSampler, (const glm::u32vec2& rTilePos, uint32_t lod),
                 (override));
 

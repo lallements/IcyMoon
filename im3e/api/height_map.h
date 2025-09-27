@@ -1,5 +1,7 @@
 #pragma once
 
+#include <im3e/utils/math_utils.h>
+
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -17,7 +19,8 @@ public:
 
     virtual auto isValid(uint32_t x, uint32_t y) const -> bool = 0;
 
-    virtual auto getPos() const -> const glm::u32vec2& = 0;
+    virtual auto getTileID() const -> const TileID& = 0;
+    virtual auto getPos() const -> glm::u32vec2 = 0;
     virtual auto getSize() const -> const glm::u32vec2& = 0;
     virtual auto getActualSize() const -> const glm::u32vec2& = 0;
     virtual auto getScale() const -> float = 0;
@@ -32,6 +35,7 @@ public:
     /// The height map cannot be in read-only mode.
     virtual void rebuildPyramid() = 0;
 
+    virtual auto getTileSampler(const TileID& rTileID) -> std::unique_ptr<IHeightMapTileSampler> = 0;
     virtual auto getTileSampler(const glm::u32vec2& rTilePos, uint32_t lod)
         -> std::unique_ptr<IHeightMapTileSampler> = 0;
 

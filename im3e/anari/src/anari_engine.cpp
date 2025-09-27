@@ -26,7 +26,8 @@ void anStatusFct(const void* pUserData, [[maybe_unused]] ANARIDevice anDevice, [
         case ANARI_SEVERITY_WARNING: pLogger->warning(message); break;
         case ANARI_SEVERITY_PERFORMANCE_WARNING: pLogger->verbose(fmt::format("[PERFORMANCE] {}", message)); break;
         case ANARI_SEVERITY_INFO: pLogger->info(message); break;
-        case ANARI_SEVERITY_DEBUG: pLogger->debug(message); break;
+        case ANARI_SEVERITY_DEBUG:  // Debug messages are too verbose and not that useful for development
+            break;
         default: pLogger->verbose(fmt::format("[UNKNOWN] {}", message)); break;
     }
 }

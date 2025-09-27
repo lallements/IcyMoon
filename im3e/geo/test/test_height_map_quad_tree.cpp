@@ -12,11 +12,10 @@ namespace {
 
 void expectTreesEqual(HeightMapQuadTreeNode& rParent, HeightMapQuadTreeNode& rExpectedParent)
 {
-    const auto errorMessage = fmt::format("Tree Node at LOD {} and Tile Pos ({}, {})", rExpectedParent.lod,
-                                          rExpectedParent.tilePos.x, rExpectedParent.tilePos.y);
+    const auto errorMessage = fmt::format("Tree Node at Tile ID ({}, {}, {})", rExpectedParent.tileID.x,
+                                          rExpectedParent.tileID.y, rExpectedParent.tileID.z);
 
-    EXPECT_THAT(rParent.lod, Eq(rExpectedParent.lod)) << errorMessage;
-    EXPECT_THAT(rParent.tilePos, Eq(rExpectedParent.tilePos)) << errorMessage;
+    EXPECT_THAT(rParent.tileID, Eq(rExpectedParent.tileID)) << errorMessage;
     EXPECT_THAT(rParent.minWorldPos, FloatEq(rExpectedParent.minWorldPos)) << errorMessage;
     EXPECT_THAT(rParent.maxWorldPos, FloatEq(rExpectedParent.maxWorldPos)) << errorMessage;
     for (auto i = 0U; i < 4U; i++)
@@ -46,7 +45,7 @@ TEST(HeightMapQuadTreeTest, generateHeightMapQuadTree)
 
     // Expected Level 2: a single tile
     auto pExpectedRoot = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-        .lod = 2U,
+        .tileID = TileID{0U, 0U, 2U},
         .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
         .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
     });
@@ -54,14 +53,13 @@ TEST(HeightMapQuadTreeTest, generateHeightMapQuadTree)
     // Expected Level 1: 2x1 tiles
     {
         pExpectedRoot->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 1U,
+            .tileID = TileID{0U, 0U, 1U},
             .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{520.0F, 1024.0F, TestMaxHeight},
         });
         pExpectedRoot->pChildren[1] = nullptr;
         pExpectedRoot->pChildren[2] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 1U,
-            .tilePos = glm::u32vec2{0U, 1U},
+            .tileID = TileID{0U, 1U, 1U},
             .minWorldPos = glm::vec3{0.0F, 1024.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
         });
@@ -72,38 +70,33 @@ TEST(HeightMapQuadTreeTest, generateHeightMapQuadTree)
     {
         auto pChild0L1 = pExpectedRoot->pChildren[0];
         pChild0L1->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
+            .tileID = TileID{0U, 0U, 0U},
             .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{512.0F, 512.0F, TestMaxHeight},
         });
         pChild0L1->pChildren[1] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
-            .tilePos = glm::u32vec2{1U, 0U},
+            .tileID = TileID{1U, 0U, 0U},
             .minWorldPos = glm::vec3{512.0F, 0.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{520.0F, 512.0F, TestMaxHeight},
         });
         pChild0L1->pChildren[2] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
-            .tilePos = glm::u32vec2{0U, 1U},
+            .tileID = TileID{0U, 1U, 0U},
             .minWorldPos = glm::vec3{0.0F, 512.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{512.0F, 1024.0F, TestMaxHeight},
         });
         pChild0L1->pChildren[3] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
-            .tilePos = glm::u32vec2{1U, 1U},
+            .tileID = TileID{1U, 1U, 0U},
             .minWorldPos = glm::vec3{512.0F, 512.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{520.0F, 1024.0F, TestMaxHeight},
         });
         auto pChild1L1 = pExpectedRoot->pChildren[2];
         pChild1L1->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
-            .tilePos = glm::u32vec2{0U, 2U},
+            .tileID = TileID{0U, 2U, 0U},
             .minWorldPos = glm::vec3{0.0F, 1024.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{512.0F, 1050.0F, TestMaxHeight},
         });
         pChild1L1->pChildren[1] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-            .lod = 0U,
-            .tilePos = glm::u32vec2{1U, 2U},
+            .tileID = TileID{1U, 2U, 0U},
             .minWorldPos = glm::vec3{512.0F, 1024.0F, TestMinHeight},
             .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
         });
@@ -148,11 +141,10 @@ TEST(HeightMapQuadTreeTest, findVisible)
     };
 
     const auto pTreeRoot = generateHeightMapQuadTree(heightMap);
-    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 2U),
-                ContainerEq(std::vector<glm::u32vec3>{glm::u32vec3{0U, 0U, 2U}}));
-    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 0U), ContainerEq(std::vector<glm::u32vec3>{
-                                                            glm::u32vec3{0U, 0U, 0U},
-                                                            glm::u32vec3{1U, 0U, 0U},
-                                                            glm::u32vec3{0U, 1U, 0U},
+    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 2U), ContainerEq(std::vector<TileID>{TileID{0U, 0U, 2U}}));
+    EXPECT_THAT(pTreeRoot->findVisible(viewConfig, 0U), ContainerEq(std::vector<TileID>{
+                                                            TileID{0U, 0U, 0U},
+                                                            TileID{1U, 0U, 0U},
+                                                            TileID{0U, 1U, 0U},
                                                         }));
 }

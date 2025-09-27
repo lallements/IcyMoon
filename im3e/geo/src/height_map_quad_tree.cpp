@@ -16,17 +16,17 @@ auto calculateLodCount(const glm::u32vec2& rSize, const glm::u32vec2& rTileSize)
 
 auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec2& rParentTileWorldSize)
 {
-    if (rParentNode.lod == 0U)
+    if (rParentNode.tileID.z == 0U)
     {
         return;
     }
-    const auto childLod = rParentNode.lod - 1U;
+    const auto childLod = rParentNode.tileID.z - 1U;
     const auto childTileWorldSize = glm::vec3{glm::ceil(rParentTileWorldSize / 2.0F),
                                               rParentNode.maxWorldPos.z - rParentNode.minWorldPos.z};
 
-    for (auto y = 0U; y < 2U; y++)
+    for (uint16_t y = 0U; y < 2U; y++)
     {
-        for (auto x = 0U; x < 2U; x++)
+        for (uint16_t x = 0U; x < 2U; x++)
         {
             const auto childMinWorldPos = rParentNode.minWorldPos + glm::vec3{x, y, 0.0F} * childTileWorldSize;
             const auto childMaxWorldPos = glm::min(childMinWorldPos + childTileWorldSize, rParentNode.maxWorldPos);
@@ -38,8 +38,7 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
             }
 
             auto pChildNode = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-                .lod = childLod,
-                .tilePos = 2U * rParentNode.tilePos + glm::u32vec2{x, y},
+                .tileID = TileID{uint16_t{2U} * rParentNode.tileID.xy() + glm::u16vec2{x, y}, childLod},
                 .minWorldPos = childMinWorldPos,
                 .maxWorldPos = childMaxWorldPos,
             });
@@ -50,16 +49,16 @@ auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec
 }
 
 void findVisibleInQuadTree(const HeightMapQuadTreeNode& rNode, const ViewFrustum& rViewFrustum, uint32_t lod,
-                           std::vector<glm::u32vec3>& rVisibleTileIDs)
+                           std::vector<TileID>& rVisibleTileIDs)
 {
     if (!rViewFrustum.isAABBInside(rNode.minWorldPos, rNode.maxWorldPos))
     {
         return;
     }
 
-    if (rNode.lod == lod)
+    if (rNode.tileID.z == lod)
     {
-        rVisibleTileIDs.emplace_back(glm::u32vec3{rNode.tilePos, rNode.lod});
+        rVisibleTileIDs.emplace_back(rNode.tileID);
         return;
     }
 
@@ -74,13 +73,12 @@ void findVisibleInQuadTree(const HeightMapQuadTreeNode& rNode, const ViewFrustum
 
 }  // namespace
 
-auto HeightMapQuadTreeNode::findVisible(const ViewFrustum& rViewFrustum, uint32_t lod) const
-    -> std::vector<glm::u32vec3>
+auto HeightMapQuadTreeNode::findVisible(const ViewFrustum& rViewFrustum, uint32_t lod) const -> std::vector<TileID>
 {
     throwIfFalse<std::invalid_argument>(
-        lod <= this->lod, fmt::format("Invalid lod {} passed to quad tree of max level {}", lod, this->lod));
+        lod <= this->tileID.z, fmt::format("Invalid lod {} passed to quad tree of max level {}", lod, this->tileID.z));
 
-    std::vector<glm::u32vec3> visibleTileIDs;
+    std::vector<TileID> visibleTileIDs;
     findVisibleInQuadTree(*this, rViewFrustum, lod, visibleTileIDs);
     return visibleTileIDs;
 }
@@ -92,12 +90,12 @@ auto im3e::generateHeightMapQuadTree(const IHeightMap& rHeightMap) -> std::share
     const auto lodCount = calculateLodCount(size, tileSize);
 
     auto pRoot = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
-        .lod = lodCount - 1U,
+        .tileID = TileID{0U, 0U, lodCount - 1U},
         .minWorldPos = glm::vec3{0.0F, 0.0F, rHeightMap.getMinHeight()},
         .maxWorldPos = glm::vec3{size, rHeightMap.getMaxHeight()},
     });
 
-    const auto tileWorldSize = glm::vec2{tileSize} * static_cast<float>(std::pow(2U, pRoot->lod));
+    const auto tileWorldSize = glm::vec2{tileSize} * static_cast<float>(std::pow(2U, pRoot->tileID.z));
     generateTreeNodeChildren(*pRoot, tileWorldSize);
     return pRoot;
 }

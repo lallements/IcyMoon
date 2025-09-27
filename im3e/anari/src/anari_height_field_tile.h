@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <optional>
 
 namespace im3e {
 
@@ -25,10 +26,13 @@ public:
     void commitChanges();
 
     auto getInstance() const -> ANARIInstance { return m_pAnInstance.get(); }
+    auto getTileID() const -> std::optional<TileID> { return m_tileID; }
 
 private:
     std::shared_ptr<AnariDevice> m_pAnDevice;
     const glm::u32vec2 m_tileSize;
+
+    std::optional<TileID> m_tileID;
 
     bool m_geometryChanged{};
 
