@@ -9,6 +9,9 @@
 
 namespace glm {
 
+void PrintTo(const glm::u16vec3& rVec, std::ostream* pStream);
+void PrintTo(const glm::u32vec2& rVec, std::ostream* pStream);
+void PrintTo(const glm::u32vec3& rVec, std::ostream* pStream);
 void PrintTo(const glm::vec2& rVec, std::ostream* pStream);
 void PrintTo(const glm::vec3& rVec, std::ostream* pStream);
 void PrintTo(const glm::vec4& rVec, std::ostream* pStream);
@@ -21,8 +24,8 @@ namespace im3e {
 
 inline auto FloatEq(const glm::vec2& rVec)
 {
-    return testing::AllOf(testing::Field(&glm::vec3::x, testing::FloatEq(rVec.x)),
-                          testing::Field(&glm::vec3::y, testing::FloatEq(rVec.y)));
+    return testing::AllOf(testing::Field(&glm::vec2::x, testing::FloatEq(rVec.x)),
+                          testing::Field(&glm::vec2::y, testing::FloatEq(rVec.y)));
 }
 
 inline auto FloatEq(const glm::vec3& rVec)
@@ -50,8 +53,8 @@ inline auto FloatEq(const glm::quat& rQuat)
 
 inline auto FloatNear(const glm::vec2& rVec, float maxAbsError = std::numeric_limits<float>::epsilon())
 {
-    return testing::AllOf(testing::Field(&glm::vec3::x, testing::FloatNear(rVec.x, maxAbsError)),
-                          testing::Field(&glm::vec3::y, testing::FloatNear(rVec.y, maxAbsError)));
+    return testing::AllOf(testing::Field(&glm::vec2::x, testing::FloatNear(rVec.x, maxAbsError)),
+                          testing::Field(&glm::vec2::y, testing::FloatNear(rVec.y, maxAbsError)));
 }
 
 inline auto FloatNear(const glm::vec3& rVec, float maxAbsError = std::numeric_limits<float>::epsilon())

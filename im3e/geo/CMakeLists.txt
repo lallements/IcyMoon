@@ -5,6 +5,7 @@ add_library(im3e_geo STATIC
     src/gdal_instance.cpp
     src/gdal_instance.h
     src/gdal_utils.h
+    src/height_map_quad_tree.cpp
 )
 
 target_include_directories(im3e_geo
@@ -22,3 +23,5 @@ target_link_libraries(im3e_geo
     GDAL::GDAL
     im3e_utils
 )
+
+add_subdirectory(test)

@@ -72,6 +72,11 @@ auto createGdalDataset(const ILogger& rLogger, const HeightMapFileConfig& rConfi
     return pDataset;
 }
 
+auto readSize(GDALRasterBand& rRasterBand)
+{
+    return glm::u32vec2{rRasterBand.GetXSize(), rRasterBand.GetYSize()};
+}
+
 auto readTileSize(GDALRasterBand& rRasterBand)
 {
     int blockSizeX, blockSizeY;
@@ -97,7 +102,9 @@ void printRasterBandInfo(const ILogger& rLogger, GDALRasterBand& rRasterBand, st
 {
     rLogger.verbose(fmt::format("Information for {}:", name));
     rLogger.verbose(fmt::format("\t- Data type: {}", convertGdalDataTypeToString(rRasterBand.GetRasterDataType())));
-    rLogger.verbose(fmt::format("\t- Size: {}x{}", rRasterBand.GetXSize(), rRasterBand.GetYSize()));
+
+    const auto size = readSize(rRasterBand);
+    rLogger.verbose(fmt::format("\t- Size: {}x{}", size.x, size.y));
 
     const auto tileSize = readTileSize(rRasterBand);
     rLogger.verbose(fmt::format("\t- Tile size: {}x{}", tileSize.x, tileSize.y));
@@ -166,8 +173,8 @@ auto getRasterBandWithLod(GDALRasterBand& rRasterBand, uint32_t lod) -> GDALRast
 class GdalGeoTiffHeightMapTileSampler : public IHeightMapTileSampler
 {
 public:
-    GdalGeoTiffHeightMapTileSampler(GDALRasterBand& rBand, const glm::u32vec2& rTilePos, float scale)
-      : m_pos(rTilePos)
+    GdalGeoTiffHeightMapTileSampler(GDALRasterBand& rBand, const TileID& rTileID, float scale)
+      : m_tileID(rTileID)
       , m_size([&rBand] {
           int sizeX, sizeY;
           rBand.GetBlockSize(&sizeX, &sizeY);
@@ -175,7 +182,7 @@ public:
       }())
       , m_actualSize([this, &rBand] {
           int actualSizeX, actualSizeY;
-          rBand.GetActualBlockSize(m_pos.x, m_pos.y, &actualSizeX, &actualSizeY);
+          rBand.GetActualBlockSize(m_tileID.x, m_tileID.y, &actualSizeX, &actualSizeY);
           return glm::u32vec2{static_cast<uint32_t>(actualSizeX), static_cast<uint32_t>(actualSizeY)};
       }())
       , m_scale(scale)
@@ -189,7 +196,10 @@ public:
           return std::nullopt;
       }())
 
-      , m_pBlock{rBand.GetLockedBlockRef(m_pos.x, m_pos.y), [](auto* pBlock) { pBlock->DropLock(); }}
+      , m_pBlock{throwIfNull<std::runtime_error>(rBand.GetLockedBlockRef(m_tileID.x, m_tileID.y),
+                                                 fmt::format("Failed to read GDAL height map tile with ID ({}; {}; {})",
+                                                             m_tileID.x, m_tileID.y, m_tileID.z)),
+                 [](auto* pBlock) { pBlock->DropLock(); }}
       , m_pData{reinterpret_cast<const float*>(m_pBlock->GetDataRef())}
 
       , m_pMaskBlock([this, &rBand]() -> UniquePtrWithDeleter<GDALRasterBlock> {
@@ -198,7 +208,7 @@ public:
           {
               return nullptr;
           }
-          return UniquePtrWithDeleter<GDALRasterBlock>{pMaskBand->GetLockedBlockRef(m_pos.x, m_pos.y),
+          return UniquePtrWithDeleter<GDALRasterBlock>{pMaskBand->GetLockedBlockRef(m_tileID.x, m_tileID.y),
                                                        [](auto* pBlock) { pBlock->DropLock(); }};
       }())
       , m_pMaskData(m_pMaskBlock ? reinterpret_cast<const uint8_t*>(m_pMaskBlock->GetDataRef()) : nullptr)
@@ -213,13 +223,14 @@ public:
         return x < m_actualSize.x && y < m_actualSize.y && m_pMaskData && *(m_pMaskData + y * m_size.x + x) != 0U;
     }
 
-    auto getPos() const -> const glm::u32vec2& override { return m_pos; }
+    auto getTileID() const -> const TileID& override { return m_tileID; }
+    auto getPos() const -> glm::u32vec2 override { return m_tileID.xy(); }
     auto getSize() const -> const glm::u32vec2& override { return m_size; }
     auto getActualSize() const -> const glm::u32vec2& override { return m_actualSize; }
     auto getScale() const -> float override { return m_scale; }
 
 private:
-    const glm::u32vec2 m_pos;
+    const TileID m_tileID;
     const glm::u32vec2 m_size;
     const glm::u32vec2 m_actualSize;
     const float m_scale;
@@ -241,8 +252,12 @@ GdalGeoTiffHeightMap::GdalGeoTiffHeightMap(const ILogger& rLogger, HeightMapFile
   , m_pDataset(createGdalDataset(*m_pLogger, m_config))
   , m_pRasterBand(loadRasterBand(*m_pLogger, *m_pDataset))
 
+  , m_size(readSize(*m_pRasterBand))
   , m_tileSize(readTileSize(*m_pRasterBand))
   , m_lodCount(readLodCount(*m_pRasterBand))
+
+  , m_minHeight(static_cast<float>(m_pRasterBand->GetMinimum()))
+  , m_maxHeight(static_cast<float>(m_pRasterBand->GetMaximum()))
 {
     m_pLogger->info("Successfully loaded file");
 }
@@ -291,13 +306,22 @@ void GdalGeoTiffHeightMap::rebuildPyramid()
     throwIfFalse<std::runtime_error>(returnCode == CE_None, "Failed to build pyramid of GeoTIFF");
 }
 
+auto GdalGeoTiffHeightMap::getTileSampler(const TileID& rTileID) -> std::unique_ptr<IHeightMapTileSampler>
+{
+    throwIfFalse<invalid_argument>(rTileID.z < m_lodCount,
+                                   fmt::format("Invalid input LOD: {} > max {}", rTileID.z, m_lodCount));
+    auto& rBand = getRasterBandWithLod(*m_pRasterBand, rTileID.z);
+    const auto scale = pow(2.0F, rTileID.z);
+    return std::make_unique<GdalGeoTiffHeightMapTileSampler>(rBand, rTileID, scale);
+}
+
 auto GdalGeoTiffHeightMap::getTileSampler(const glm::u32vec2& rTilePos, uint32_t lod)
     -> std::unique_ptr<IHeightMapTileSampler>
 {
     throwIfFalse<invalid_argument>(lod < m_lodCount, fmt::format("Invalid input LOD: {} > max {}", lod, m_lodCount));
     auto& rBand = getRasterBandWithLod(*m_pRasterBand, lod);
     const auto scale = pow(2.0F, lod);
-    return std::make_unique<GdalGeoTiffHeightMapTileSampler>(rBand, rTilePos, scale);
+    return std::make_unique<GdalGeoTiffHeightMapTileSampler>(rBand, TileID{rTilePos.x, rTilePos.y, lod}, scale);
 }
 
 auto GdalGeoTiffHeightMap::getTileCount(uint32_t lod) const -> glm::u32vec2

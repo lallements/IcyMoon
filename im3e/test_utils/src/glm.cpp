@@ -2,6 +2,21 @@
 
 #include <fmt/format.h>
 
+void glm::PrintTo(const glm::u16vec3& rVec, std::ostream* pStream)
+{
+    *pStream << fmt::format("({}, {}, {})", rVec.x, rVec.y, rVec.z);
+}
+
+void glm::PrintTo(const glm::u32vec2& rVec, std::ostream* pStream)
+{
+    *pStream << fmt::format("({}, {})", rVec.x, rVec.y);
+}
+
+void glm::PrintTo(const glm::u32vec3& rVec, std::ostream* pStream)
+{
+    *pStream << fmt::format("({}, {}, {})", rVec.x, rVec.y, rVec.z);
+}
+
 void glm::PrintTo(const glm::vec2& rVec, std::ostream* pStream)
 {
     *pStream << fmt::format("({}, {})", rVec.x, rVec.y);

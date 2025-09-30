@@ -7,8 +7,17 @@
 #include "anari_map_camera.h"
 
 #include <im3e/api/height_map.h>
+#include <im3e/geo/geo.h>
 #include <im3e/utils/core/types.h>
+#include <im3e/utils/math_utils.h>
 #include <im3e/utils/properties/properties.h>
+
+#include <chrono>
+#include <deque>
+#include <map>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace im3e {
 
@@ -29,12 +38,15 @@ private:
     std::unique_ptr<IHeightMap> m_pHeightMap;
 
     std::unique_ptr<ILogger> m_pLogger;
+    std::shared_ptr<HeightMapQuadTreeNode> m_pQuadTreeRoot;
 
-    bool m_lodChanged{};
+    bool m_lodChanged = true;
     std::shared_ptr<PropertyValue<uint32_t>> m_pLodProp;
     std::shared_ptr<IPropertyGroup> m_pProperties;
 
-    std::vector<std::shared_ptr<AnariHeightFieldTile>> m_pTiles;
+    std::vector<std::unique_ptr<AnariHeightFieldTile>> m_pTiles;
+    std::vector<UniquePtrWithDeleter<AnariHeightFieldTile>> m_pVisibleTiles;
+    std::deque<AnariHeightFieldTile*> m_pAvailableTilesQueue;
 };
 
 }  // namespace im3e
