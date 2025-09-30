@@ -14,23 +14,23 @@ auto calculateLodCount(const glm::u32vec2& rSize, const glm::u32vec2& rTileSize)
     return static_cast<uint32_t>(downsampleCount) + 1U;  // add 1 to account for the base level
 }
 
-auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec2& rParentTileWorldSize)
+auto generateTreeNodeChildren(HeightMapQuadTreeNode& rParentNode, const glm::vec3& rParentTileWorldSize)
 {
     if (rParentNode.tileID.z == 0U)
     {
         return;
     }
     const auto childLod = rParentNode.tileID.z - 1U;
-    const auto childTileWorldSize = glm::vec3{glm::ceil(rParentTileWorldSize / 2.0F),
-                                              rParentNode.maxWorldPos.z - rParentNode.minWorldPos.z};
+    const auto childTileWorldSize = glm::vec3{glm::ceil(rParentTileWorldSize.x / 2.0F), rParentTileWorldSize.y,
+                                              glm::ceil(rParentTileWorldSize.z / 2.0F)};
 
     for (uint16_t y = 0U; y < 2U; y++)
     {
         for (uint16_t x = 0U; x < 2U; x++)
         {
-            const auto childMinWorldPos = rParentNode.minWorldPos + glm::vec3{x, y, 0.0F} * childTileWorldSize;
+            const auto childMinWorldPos = rParentNode.minWorldPos + glm::vec3{x, 0.0F, y} * childTileWorldSize;
             const auto childMaxWorldPos = glm::min(childMinWorldPos + childTileWorldSize, rParentNode.maxWorldPos);
-            if (childMaxWorldPos.x <= childMinWorldPos.x || childMaxWorldPos.y <= childMinWorldPos.y)
+            if (childMaxWorldPos.x <= childMinWorldPos.x || childMaxWorldPos.z <= childMinWorldPos.z)
             {
                 // If the child world size is negative, this means that this child tile is outside of the boundaries
                 // of the parent. It should therefore be skipped:
@@ -91,11 +91,13 @@ auto im3e::generateHeightMapQuadTree(const IHeightMap& rHeightMap) -> std::share
 
     auto pRoot = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
         .tileID = TileID{0U, 0U, lodCount - 1U},
-        .minWorldPos = glm::vec3{0.0F, 0.0F, rHeightMap.getMinHeight()},
-        .maxWorldPos = glm::vec3{size, rHeightMap.getMaxHeight()},
+        .minWorldPos = glm::vec3{0.0F, rHeightMap.getMinHeight(), 0.0F},
+        .maxWorldPos = glm::vec3{size.x, rHeightMap.getMaxHeight(), size.y},
     });
 
-    const auto tileWorldSize = glm::vec2{tileSize} * static_cast<float>(std::pow(2U, pRoot->tileID.z));
+    const auto tileSizeAtMaxLevel = glm::vec2{tileSize} * static_cast<float>(std::pow(2U, pRoot->tileID.z));
+    const auto tileWorldSize = glm::vec3{tileSizeAtMaxLevel.x, pRoot->maxWorldPos.y - pRoot->minWorldPos.y,
+                                         tileSizeAtMaxLevel.y};
     generateTreeNodeChildren(*pRoot, tileWorldSize);
     return pRoot;
 }

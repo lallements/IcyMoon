@@ -196,7 +196,10 @@ public:
           return std::nullopt;
       }())
 
-      , m_pBlock{rBand.GetLockedBlockRef(m_tileID.x, m_tileID.y), [](auto* pBlock) { pBlock->DropLock(); }}
+      , m_pBlock{throwIfNull<std::runtime_error>(rBand.GetLockedBlockRef(m_tileID.x, m_tileID.y),
+                                                 fmt::format("Failed to read GDAL height map tile with ID ({}; {}; {})",
+                                                             m_tileID.x, m_tileID.y, m_tileID.z)),
+                 [](auto* pBlock) { pBlock->DropLock(); }}
       , m_pData{reinterpret_cast<const float*>(m_pBlock->GetDataRef())}
 
       , m_pMaskBlock([this, &rBand]() -> UniquePtrWithDeleter<GDALRasterBlock> {

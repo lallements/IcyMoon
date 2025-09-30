@@ -46,22 +46,22 @@ TEST(HeightMapQuadTreeTest, generateHeightMapQuadTree)
     // Expected Level 2: a single tile
     auto pExpectedRoot = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
         .tileID = TileID{0U, 0U, 2U},
-        .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
-        .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
+        .minWorldPos = glm::vec3{0.0F, TestMinHeight, 0.0F},
+        .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 1050.0F},
     });
 
     // Expected Level 1: 2x1 tiles
     {
         pExpectedRoot->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{0U, 0U, 1U},
-            .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{520.0F, 1024.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{0.0F, TestMinHeight, 0.0F},
+            .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 1024.0F},
         });
         pExpectedRoot->pChildren[1] = nullptr;
         pExpectedRoot->pChildren[2] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{0U, 1U, 1U},
-            .minWorldPos = glm::vec3{0.0F, 1024.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{0.0F, TestMinHeight, 1024.0F},
+            .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 1050.0F},
         });
         pExpectedRoot->pChildren[3] = nullptr;
     }
@@ -71,34 +71,34 @@ TEST(HeightMapQuadTreeTest, generateHeightMapQuadTree)
         auto pChild0L1 = pExpectedRoot->pChildren[0];
         pChild0L1->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{0U, 0U, 0U},
-            .minWorldPos = glm::vec3{0.0F, 0.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{512.0F, 512.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{0.0F, TestMinHeight, 0.0F},
+            .maxWorldPos = glm::vec3{512.0F, TestMaxHeight, 512.0F},
         });
         pChild0L1->pChildren[1] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{1U, 0U, 0U},
-            .minWorldPos = glm::vec3{512.0F, 0.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{520.0F, 512.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{512.0F, TestMinHeight, 0.0F},
+            .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 512.0F},
         });
         pChild0L1->pChildren[2] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{0U, 1U, 0U},
-            .minWorldPos = glm::vec3{0.0F, 512.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{512.0F, 1024.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{0.0F, TestMinHeight, 512.0F},
+            .maxWorldPos = glm::vec3{512.0F, TestMaxHeight, 1024.0F},
         });
         pChild0L1->pChildren[3] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{1U, 1U, 0U},
-            .minWorldPos = glm::vec3{512.0F, 512.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{520.0F, 1024.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{512.0F, TestMinHeight, 512.0F},
+            .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 1024.0F},
         });
         auto pChild1L1 = pExpectedRoot->pChildren[2];
         pChild1L1->pChildren[0] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{0U, 2U, 0U},
-            .minWorldPos = glm::vec3{0.0F, 1024.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{512.0F, 1050.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{0.0F, TestMinHeight, 1024.0F},
+            .maxWorldPos = glm::vec3{512.0F, TestMaxHeight, 1050.0F},
         });
         pChild1L1->pChildren[1] = std::make_shared<HeightMapQuadTreeNode>(HeightMapQuadTreeNode{
             .tileID = TileID{1U, 2U, 0U},
-            .minWorldPos = glm::vec3{512.0F, 1024.0F, TestMinHeight},
-            .maxWorldPos = glm::vec3{520.0F, 1050.0F, TestMaxHeight},
+            .minWorldPos = glm::vec3{512.0F, TestMinHeight, 1024.0F},
+            .maxWorldPos = glm::vec3{520.0F, TestMaxHeight, 1050.0F},
         });
         pChild1L1->pChildren[2] = nullptr;
         pChild1L1->pChildren[3] = nullptr;
@@ -146,5 +146,6 @@ TEST(HeightMapQuadTreeTest, findVisible)
                                                             TileID{0U, 0U, 0U},
                                                             TileID{1U, 0U, 0U},
                                                             TileID{0U, 1U, 0U},
+                                                            TileID{1U, 1U, 0U},
                                                         }));
 }
