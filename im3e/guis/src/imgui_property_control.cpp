@@ -66,7 +66,8 @@ public:
 
     void draw() override
     {
-        if (ImGui::InputText(fmt::format("##{}", m_pProperty->getName()).c_str(), &m_value))
+        if (ImGui::InputText(fmt::format("##{}", m_pProperty->getName()).c_str(), &m_value);
+            ImGui::IsItemDeactivatedAfterEdit())
         {
             m_pProperty->setAnyValue(m_value);
         }
@@ -128,7 +129,7 @@ public:
         }
         else
         {
-            if (ImGui::InputInt(inputId.c_str(), &m_value))
+            if (ImGui::InputInt(inputId.c_str(), &m_value); ImGui::IsItemDeactivatedAfterEdit())
             {
                 m_pProperty->setAnyValue(static_cast<int32_t>(m_value));
             }
@@ -171,7 +172,7 @@ public:
         }
         else
         {
-            if (ImGui::InputInt(inputId.c_str(), &m_value))
+            if (ImGui::InputInt(inputId.c_str(), &m_value); ImGui::IsItemDeactivatedAfterEdit())
             {
                 m_value = max(m_value, 0);
                 m_pProperty->setAnyValue(static_cast<uint32_t>(m_value));
@@ -215,7 +216,7 @@ public:
         }
         else
         {
-            if (ImGui::InputFloat(inputId.c_str(), &m_value, 0.0F, 0.0F))
+            if (ImGui::InputFloat(inputId.c_str(), &m_value, 0.0F, 0.0F, "%.3f"); ImGui::IsItemDeactivatedAfterEdit())
             {
                 m_pProperty->setAnyValue(m_value);
             }
@@ -240,7 +241,8 @@ public:
 
     void draw() override
     {
-        if (ImGui::InputFloat3(fmt::format("##{}", m_pProperty->getName()).c_str(), glm::value_ptr(m_value)))
+        if (ImGui::InputFloat3(fmt::format("##{}", m_pProperty->getName()).c_str(), glm::value_ptr(m_value));
+            ImGui::IsItemDeactivatedAfterEdit())
         {
             m_pProperty->setAnyValue(m_value);
         }
@@ -262,7 +264,8 @@ public:
 
     void draw() override
     {
-        if (ImGui::InputFloat4(fmt::format("##{}", m_pProperty->getName()).c_str(), glm::value_ptr(m_value)))
+        if (ImGui::InputFloat4(fmt::format("##{}", m_pProperty->getName()).c_str(), glm::value_ptr(m_value));
+            ImGui::IsItemDeactivatedAfterEdit())
         {
             m_pProperty->setAnyValue(m_value);
         }
@@ -286,7 +289,8 @@ public:
     {
         vector<float> value{m_value.w, m_value.x, m_value.y, m_value.z};
 
-        if (ImGui::InputFloat4(fmt::format("##{}", m_pProperty->getName()).c_str(), value.data()))
+        if (ImGui::InputFloat4(fmt::format("##{}", m_pProperty->getName()).c_str(), value.data());
+            ImGui::IsItemDeactivatedAfterEdit())
         {
             m_pProperty->setAnyValue(glm::quat(value[0], value[1], value[2], value[3]));
         }
